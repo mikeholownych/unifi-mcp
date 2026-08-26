@@ -1,11 +1,32 @@
-[tool.poetry]
+[project]
 name = "unifi-mcp"
 version = "0.8.0"
 description = "MCP server for UniFi Network and Protect API integration"
 readme = "README.md"
 license = "MIT"
-authors = ["Mike Holownych <mike@holownych.com>"]
+authors = [{name = "Mike Holownych", email = "mike@holownych.com"}]
 keywords = ["mcp", "unifi", "ubiquiti", "network", "automation"]
+requires-python = ">=3.14"
+dependencies = [
+    "mcp>=1.9.0",
+    "httpx>=0.28.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "tenacity>=8.0.0",
+    "cachetools>=5.0.0",
+]
+
+[project.optional-dependencies]
+protect = ["uiprotect>=6.0.0"]
+
+[project.scripts]
+unifi-mcp = "unifi_mcp.server:main"
+
+[project.urls]
+Repository = "https://github.com/mikeholownych/unifi-mcp"
+"Original Project" = "https://github.com/gbassaragh/Unifi-mcp"
+
+[tool.poetry]
 packages = [{include = "unifi_mcp", from = "src"}]
 
 [tool.poetry.urls]
