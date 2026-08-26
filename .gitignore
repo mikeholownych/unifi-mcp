@@ -77,3 +77,4 @@ logs/
 # --- Build artifacts ---
 poetry.lock.bak
 uv.lock.bak
+mcp-publisher
