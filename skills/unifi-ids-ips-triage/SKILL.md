@@ -1,6 +1,6 @@
 ---
 name: unifi-ids-ips-triage
-description: Use when investigating UniFi threat management alerts, IDS/IPS events, blocked "threats", a device or website stopped working after enabling IPS, or tuning intrusion prevention.
+description: Use when investigating UniFi threat management alerts, IDS/IPS events, blocked "threats", a device or website stopped working after enabling IPS, or tuning intrusion prevention. Triggers: "threat detected", "intrusion alert", "ips blocked my device", "false positive".
 argument-hint: [alert or symptom]
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: unifi-troubleshoot-client
-description: Use when a specific device or client has network problems on UniFi — slow WiFi, dropped connections, can't connect, blocked from the internet, or roaming issues.
+description: Use when a specific device or client has network problems on UniFi — slow WiFi, dropped connections, can't connect, blocked from the internet, or roaming issues. Triggers: "iphone keeps disconnecting", "laptop slow wifi", "device can't connect", "dropped connection".
 argument-hint: [device name, IP, or MAC]
 ---
 

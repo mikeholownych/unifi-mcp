@@ -24,9 +24,8 @@ it works from outside but fails *inside* your own walls.
 
 A working external→internal flow needs ALL of:
 
-1. **Port forward entry** — UI: Settings → Firewall & Traffic Management →
-   Port Forwarding (no MCP tool exists for this; give exact click-path:
-   name, protocol tcp/udp, WAN port, forward-to IP, target port).
+1. **Port forward entry** — use `create_port_forward` (name, protocol, WAN port,
+   forward-to IP, target port). Verify with `get_port_forwards` after.
 2. **Zone policy EXTERNAL→<service zone>** ALLOW for that port
    (`create_firewall_policy`, source zone = External/WAN zone id,
    destination = service's zone). Predefined catch-alls usually BLOCK this

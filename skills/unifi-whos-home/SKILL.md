@@ -1,6 +1,6 @@
 ---
 name: unifi-whos-home
-description: Use when someone asks what devices are connected to their WiFi, who is on the network, whether a stranger is using their WiFi, or to identify an unknown device.
+description: Use when someone asks what devices are connected to their WiFi, who is on the network, whether a stranger is using their WiFi, or to identify an unknown device. Triggers: "who is on my wifi", "is anyone using my network", "unknown device", "connected devices", "who is on the network".
 argument-hint: [concern, e.g. "unknown device"]
 ---
 

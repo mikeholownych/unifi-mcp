@@ -1,6 +1,6 @@
 ---
 name: unifi-setup-new-device
-description: Use when someone bought a new TV, camera, console, speaker, smart plug, thermostat or any gadget and needs help getting it online, connecting it, or fixing its setup.
+description: Use when someone bought a new TV, camera, console, speaker, smart plug, thermostat or any gadget and needs help getting it online, connecting it, or fixing its setup. Triggers: "connect my printer", "new tv setup", "get it online", "gadget won't connect".
 argument-hint: [device type, e.g. new smart plug]
 ---
 

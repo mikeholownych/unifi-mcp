@@ -949,3 +949,60 @@ class UniFiNetworkClient(UniFiHTTPClient):
         endpoint = self._site_endpoint("stat/routing", site)
         response = await self.get(endpoint)
         return response.get("data", [])
+
+    # =========================================================================
+    # Port Forwarding
+    # =========================================================================
+
+    async def get_port_forwards(self, site: str | None = None) -> list[dict[str, Any]]:
+        """Get all port forwarding rules.
+
+        Returns the configured port forwards. Each rule maps an external
+        port+protocol on the gateway to an internal IP+port.
+
+        Args:
+            site: Site name
+
+        Returns:
+            List of port forward rule dictionaries
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("port forwarding rules")
+
+        endpoint = self._site_endpoint("rest/portforward", site)
+        response = await self.get(endpoint)
+        return response.get("data", [])
+
+    async def create_port_forward(
+        self, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Create a port forwarding rule.
+
+        Args:
+            data: Port forward configuration object
+            site: Site name
+
+        Returns:
+            Created port forward rule
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("port forwarding rule creation")
+
+        endpoint = self._site_endpoint("rest/portforward", site)
+        response = await self.post(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def delete_port_forward(
+        self, rule_id: str, site: str | None = None
+    ) -> None:
+        """Delete a port forwarding rule.
+
+        Args:
+            rule_id: Port forward rule ID
+            site: Site name
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("port forwarding rule deletion")
+
+        endpoint = self._site_endpoint(f"rest/portforward/{rule_id}", site)
+        await self.delete(endpoint)

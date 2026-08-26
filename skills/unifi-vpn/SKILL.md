@@ -1,6 +1,6 @@
 ---
 name: unifi-vpn
-description: Use when setting up remote access to home/office via VPN on UniFi, WireGuard or Teleport configuration, VPN connects but can't reach devices, slow VPN, or diagnosing tunnel problems.
+description: Use when setting up remote access to home/office via VPN on UniFi, WireGuard or Teleport configuration, VPN connects but can't reach devices, slow VPN, or diagnosing tunnel problems. Triggers: "vpn setup", "teleport not working", "wireguard", "vpn slow", "tunnel problems".
 argument-hint: [setup | diagnose]
 disable-model-invocation: true
 ---

@@ -304,6 +304,36 @@ async def delete_firewall_policy(
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_port_forwards(ctx: Context, site: str = "default", device: str | None = None):
+    """Get all port forwarding rules (external port+protocol → internal IP+port)."""
+    return await site_tools.get_port_forwards(ctx, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_port_forward(
+    ctx: Context,
+    name: str,
+    dst_port: str,
+    fwd_ip: str,
+    fwd_port: str,
+    proto: str = "tcp_udp",
+    enabled: bool = True,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Create a port forwarding rule on the gateway."""
+    return await site_tools.create_port_forward(ctx, name, dst_port, fwd_ip, fwd_port, proto, enabled, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_port_forward(
+    ctx: Context, rule_id: str, confirm: bool = False, site: str = "default", device: str | None = None
+):
+    """Delete a port forwarding rule. Requires confirm=true."""
+    return await site_tools.delete_port_forward(ctx, rule_id, confirm, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_all_sites_health(ctx: Context, device: str | None = None):
     """Get health overview across all sites."""
     return await insight_tools.get_all_sites_health(ctx, device)

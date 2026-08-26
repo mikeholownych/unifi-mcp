@@ -1,6 +1,6 @@
 ---
 name: unifi-wifi-optimize
-description: Use when someone wants to optimize UniFi WiFi performance, fix slow WiFi, tune AP channels or channel width, enable WPA3, set band steering, or improve wireless coverage.
+description: Use when someone wants to optimize UniFi WiFi performance, fix slow WiFi, tune AP channels or channel width, enable WPA3, set band steering, or improve wireless coverage. Triggers: "slow wifi", "optimize wifi", "wifi channels", "slow house wifi", "wifi performance".
 argument-hint: [SSID name]
 disable-model-invocation: true
 ---

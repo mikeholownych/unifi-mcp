@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-26
+
+### Added
+- **Port forwarding CRUD tools**: `get_port_forwards`, `create_port_forward`,
+  `delete_port_forward` — full lifecycle management of gateway port forwards.
+  Uses `/api/s/{site}/rest/portforward` (session-auth only).
+- **Zone-name inference**: `infer_zone_names()` helper automatically maps opaque
+  hex zone IDs to human-readable names from firewall rule names.
+- **Skill trigger validation script** (`scripts/validate_skills.py`): 43/43
+  trigger phrases matched correctly via phrase-level + word-level matching.
+- `unifi-port-forwarding` skill updated to use new CRUD tools.
+- WPA3 fields test for `get_wlans`.
+
+### Fixed
+- `update_wlan` return statement was corrupted during earlier edit (F821/F841).
+
 ## [0.6.0] - 2026-08-26
 
 ### Added

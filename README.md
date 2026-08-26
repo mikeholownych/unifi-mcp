@@ -10,7 +10,7 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 
 - **Fixed local session authentication routing** — in `UNIFI_MODE=local`, requests now correctly use the traditional controller API (`/proxy/network`) with cookie + CSRF session auth. Upstream always routed through the Integration API regardless of mode.
 - **Mode-aware base URL resolution** — `api_base_url` now respects the configured auth mode instead of unconditionally returning the Integration API endpoint.
-- **Expanded test suite** — 40 passing tests covering config, network client behavior, server tool registration, and Protect integrations.
+- **Expanded test suite** — 51 passing tests covering config, network client behavior, server tool registration, and Protect integrations.
 
 ## Features
 
@@ -255,6 +255,7 @@ Or in `opencode.json`:
 - `kick_client` - Disconnect a client
 - `forget_client` - Remove from known clients
 - `get_client_traffic` - Get traffic statistics
+- `reserve_client_ip` - Reserve IP via DHCP reservation
 
 ### Site Management
 - `list_sites` - List all sites
@@ -267,6 +268,8 @@ Or in `opencode.json`:
 - `get_firewall_rules` - Get legacy firewall rules
 - `get_firewall_policies` - Get zone-based firewall policies (UniFi Network 9+)
 - `get_routing_table` - Get routing table
+- `get_port_forwards` - Get port forwarding rules
+- `create_port_forward` / `delete_port_forward` - Manage port forwards
 
 ### Configuration Management (writes)
 - `create_wlan` / `update_wlan` / `delete_wlan` - Manage wireless networks

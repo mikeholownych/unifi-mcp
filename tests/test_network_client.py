@@ -253,3 +253,98 @@ class TestFirewallPolicyWrites:
         )
         client = UniFiNetworkClient(ctx)
         await client.delete_firewall_policy("pol1")
+
+
+PF_DATA = {"meta": {"rc": "ok"}, "data": [
+    {
+        "_id": "pf1",
+        "name": "NAS HTTPS",
+        "enabled": True,
+        "dst_port": "443",
+        "fwd_ip": "192.168.1.100",
+        "fwd_port": "443",
+        "proto": "tcp",
+        "site_id": "default",
+    }
+]}
+
+
+class TestPortForwardWrites:
+    @respx.mock
+    async def test_get_port_forwards(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.get("https://10.0.0.1/proxy/network/api/s/default/rest/portforward").respond(
+            json=PF_DATA
+        )
+        client = UniFiNetworkClient(ctx)
+        rules = await client.get_port_forwards()
+        assert len(rules) == 1
+        assert rules[0]["name"] == "NAS HTTPS"
+        assert rules[0]["fwd_port"] == "443"
+
+    @respx.mock
+    async def test_create_port_forward(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.post("https://10.0.0.1/proxy/network/api/s/default/rest/portforward").respond(
+            json={"meta": {"rc": "ok"}, "data": [{"_id": "pf2", "name": "NVR RTSP"}]}
+        )
+        client = UniFiNetworkClient(ctx)
+        result = await client.create_port_forward({"name": "NVR RTSP", "dst_port": "554"})
+        assert result["_id"] == "pf2"
+
+    @respx.mock
+    async def test_delete_port_forward(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.delete("https://10.0.0.1/proxy/network/api/s/default/rest/portforward/pf1").respond(
+            json={"meta": {"rc": "ok"}}
+        )
+        client = UniFiNetworkClient(ctx)
+        await client.delete_port_forward("pf1")
+
+    @respx.mock
+    async def test_empty_port_forwards(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.get("https://10.0.0.1/proxy/network/api/s/default/rest/portforward").respond(
+            json={"meta": {"rc": "ok"}, "data": []}
+        )
+        client = UniFiNetworkClient(ctx)
+        rules = await client.get_port_forwards()
+        assert rules == []
+
+
+WPA3_WLAN = {
+    "data": [{
+        "_id": "wpa3test",
+        "name": "TestWPA3",
+        "essid": "TestWPA3",
+        "enabled": True,
+        "security": "wpapsk",
+        "wpa_mode": "wpa3",
+        "wpa_enc": "ccmp",
+        "wpa3_support": True,
+        "wpa3_transition": True,
+        "pmf_mode": "optional",
+        "bss_transition": True,
+    }]
+}
+
+
+class TestWlanWPA3:
+    @respx.mock
+    async def test_get_wlans_includes_wpa3_fields(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.get("https://10.0.0.1/proxy/network/api/s/default/rest/wlanconf").respond(
+            json=WPA3_WLAN
+        )
+        client = UniFiNetworkClient(ctx)
+        wlans = await client.get_wlans()
+        w = wlans[0]
+        assert w["wpa3_support"] is True
+        assert w["wpa3_transition"] is True
+        assert w["pmf_mode"] == "optional"
+        assert w["bss_transition"] is True

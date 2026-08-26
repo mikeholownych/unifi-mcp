@@ -431,6 +431,196 @@ async def update_wlan(
     }
 
 
+async def get_port_forwards(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> list[dict[str, Any]]:
+    """Get all port forwarding rules.
+
+    Returns the configured port forwards (external port+protocol → internal
+    IP+port on the gateway). Useful for diagnosing why a self-hosted service
+    is unreachable externally or for planning new forwards.
+
+    Args:
+        ctx: MCP context
+        site: Site name
+
+    Returns:
+        List of port forward rules with name, ports, target IP, and protocol
+    """
+    client = _get_client(ctx, device)
+    rules = await client.get_port_forwards(site)
+    return [
+        {
+            "name": r.get("name", ""),
+            "enabled": r.get("enabled", True),
+            "dst_port": r.get("dst_port", ""),
+            "fwd_ip": r.get("fwd_ip", ""),
+            "fwd_port": r.get("fwd_port", ""),
+            "protocol": r.get("proto", "tcp_udp"),
+            "site_id": r.get("site_id", ""),
+            "rule_id": r.get("_id"),
+        }
+        for r in rules
+    ]
+
+
+async def create_port_forward(
+    ctx: Context,
+    name: str,
+    dst_port: str,
+    fwd_ip: str,
+    fwd_port: str,
+    proto: str = "tcp_udp",
+    enabled: bool = True,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Create a port forwarding rule on the gateway.
+
+    Maps an external port+protocol to an internal IP+port. Before creating,
+    verify the target device is reachable internally (see unifi-port-forwarding
+    skill for the three-part requirement: forward + EXTERNAL→zone policy + listener).
+
+    Args:
+        ctx: MCP context
+        name: Rule name (e.g. "NAS HTTPS")
+        dst_port: External port or range (e.g. "5000" or "8000-8100")
+        fwd_ip: Internal destination IP (e.g. "192.168.1.100")
+        fwd_port: Internal destination port (e.g. "443")
+        proto: Protocol: tcp, udp, tcp_udp, icmp, igmp, icmpv6
+        enabled: Create enabled or disabled
+        site: Site name
+
+    Returns:
+        Created rule summary
+    """
+    client = _get_client(ctx, device)
+    data: dict[str, Any] = {
+        "name": name,
+        "dst_port": dst_port,
+        "fwd_ip": fwd_ip,
+        "fwd_port": fwd_port,
+        "proto": proto,
+        "enabled": enabled,
+        "site_id": site,
+        "rule_index": 0,
+    }
+    try:
+        created = await client.create_port_forward(data, site)
+    except Exception as e:
+        return {"success": False, "message": f"Controller rejected rule: {e}"}
+
+    return {
+        "success": True,
+        "id": created.get("_id"),
+        "name": created.get("name"),
+        "dst_port": created.get("dst_port"),
+        "fwd_ip": created.get("fwd_ip"),
+        "fwd_port": created.get("fwd_port"),
+    }
+
+
+async def delete_port_forward(
+    ctx: Context,
+    rule_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Delete a port forwarding rule. Requires confirm=True.
+
+    Args:
+        ctx: MCP context
+        rule_id: Port forward rule ID (from get_port_forwards)
+        confirm: Must be True to actually delete
+        site: Site name
+
+    Returns:
+        Deletion status
+    """
+    if not confirm:
+        return {"success": False, "message": "Set confirm=true to delete this port forwarding rule."}
+    client = _get_client(ctx, device)
+    rules = await client.get_port_forwards(site)
+    target = next((r for r in rules if r.get("_id") == rule_id), None)
+    if target is None:
+        return {"success": False, "message": f"Port forward rule not found: {rule_id}"}
+    await client.delete_port_forward(rule_id, site)
+    return {"success": True, "deleted": target.get("name")}
+
+
+# ---------------------------------------------------------------------------
+# Zone-name inference from firewall policy rule names
+# ---------------------------------------------------------------------------
+
+# Known zone-name anchors: substrings that, when found in a rule name,
+# identify a zone.  The last match wins (more specific patterns first).
+_ZONE_ANCHORS: list[tuple[str, str]] = [
+    # Services / infrastructure
+    ("DNS Servers", "DNS Servers"),
+    ("DNS Server", "DNS Servers"),
+    ("SERVERS", "SERVERS"),
+    ("Servers", "SERVERS"),
+    ("INFRA", "INFRA_SPECIAL"),
+    ("IPTV", "IPTV"),
+    ("BELL", "BELL_TV"),
+    ("Bell", "BELL_TV"),
+    ("Microtik", "Microtik"),
+    ("TMX", "TMX_NET"),
+    # Zones that appear by zone-suffix in rule names
+    ("Zone-701", "ZONE_701"),
+    ("Zone-702", "ZONE_702"),
+    ("Zone-703", "ZONE_703"),
+    # Human / home
+    ("Mike", "HOME"),
+    ("Alicia", "HOME"),
+    ("Mike-Desktop", "HOME"),
+    ("Everyone", "HOME"),
+    # Network-side / WAN
+    ("External", "WAN"),
+    ("WAN", "WAN"),
+    ("Gateway", "Gateway"),
+]
+
+
+def infer_zone_names(
+    policies: list[dict[str, Any]],
+) -> dict[str, str]:
+    """Infer human-readable zone names from firewall policy rule names.
+
+    UniFi Network 10 uses opaque hex zone IDs; this function maps each
+    unique zone_id to a human-friendly name by examining custom (non-predefined)
+    and predefined policy names for readable anchors.
+
+    Returns:
+        Dict mapping zone_id → inferred human name
+    """
+    zone_scores: dict[str, dict[str, int]] = {}
+
+    for p in policies:
+        # Focus on custom rules first; fall back to predefined
+        name = p.get("name", "") or ""
+        for side in ("source", "destination"):
+            zone_id = (p.get(side) or {}).get("zone_id")
+            if not zone_id:
+                continue
+            if zone_id not in zone_scores:
+                zone_scores[zone_id] = {}
+            # Score each anchor
+            for anchor, canonical in _ZONE_ANCHORS:
+                if anchor in name:
+                    zone_scores[zone_id][canonical] = zone_scores[zone_id].get(canonical, 0) + 1
+
+    # Pick highest-scoring name per zone
+    result: dict[str, str] = {}
+    for zone_id, scores in zone_scores.items():
+        if scores:
+            result[zone_id] = max(scores, key=scores.get)
+        else:
+            result[zone_id] = f"Zone {zone_id[-4:]}"
+    return result
+
+
 async def create_wlan(
     ctx: Context,
     name: str,

@@ -1,6 +1,6 @@
 ---
 name: unifi-mdns-discovery
-description: Use when AirPrint, AirPlay, Chromecast, Sonos, casting, or printer discovery fails between devices on different networks/VLANs, devices vanish from apps after segmentation, or when configuring multicast, IGMP snooping, or mDNS settings.
+description: Use when AirPrint, AirPlay, Chromecast, Sonos, casting, or printer discovery fails between devices on different networks/VLANs, devices vanish from apps after segmentation, or when configuring multicast, IGMP snooping, or mDNS settings. Triggers: "devices vanished after vlan change", "sonos not found", "chromecast not discovered", "airplay missing".
 argument-hint: [what can't be discovered by what]
 ---
 

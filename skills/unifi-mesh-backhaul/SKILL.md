@@ -1,6 +1,6 @@
 ---
 name: unifi-mesh-backhaul
-description: Use when WiFi near a mesh extender or far room is slow, checking wireless uplink quality, Beacon HD / FlexHD / mesh AP performance, deciding where to add an AP, or diagnosing multi-hop mesh issues.
+description: Use when WiFi near a mesh extender or far room is slow, checking wireless uplink quality, Beacon HD / FlexHD / mesh AP performance, deciding where to add an AP, or diagnosing multi-hop mesh issues. Triggers: "full bars but slow", "mesh extender slow", "back bedroom speed", "wireless uplink".
 argument-hint: [problem area or AP name]
 ---
 
