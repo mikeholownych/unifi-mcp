@@ -358,3 +358,314 @@ async def get_routing_table(ctx: Context, site: str = "default", device: str | N
         })
 
     return result
+
+
+async def _resolve_wlan(client: UniFiNetworkClient, wlan_id_or_name: str, site: str) -> str:
+    """Resolve a WLAN identifier (ID or SSID name) to its ID."""
+    wlans = await client.get_wlans(site)
+    for w in wlans:
+        if w.get("_id") == wlan_id_or_name or w.get("name") == wlan_id_or_name:
+            return w["_id"]
+    raise KeyError(f"WLAN not found: {wlan_id_or_name}")
+
+
+async def update_wlan(
+    ctx: Context,
+    wlan: str,
+    enabled: bool | None = None,
+    hide_ssid: bool | None = None,
+    passphrase: str | None = None,
+    wpa3_support: bool | None = None,
+    wpa3_transition: bool | None = None,
+    pmf_mode: str | None = None,
+    bss_transition: bool | None = None,
+    fast_roaming_enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Update a wireless network (SSID) by ID or name.
+
+    Only provided fields are changed. pmf_mode: disabled|optional|required.
+    Enabling WPA3 transition keeps WPA2 compatibility for legacy clients.
+
+    Args:
+        ctx: MCP context
+        wlan: WLAN ID or SSID name
+        enabled: Enable/disable the SSID
+        hide_ssid: Hide the SSID from broadcast
+        passphrase: New WiFi password (min 8 chars)
+        wpa3_support: Enable WPA3 support
+        wpa3_transition: WPA2/WPA3 transition mode
+        pmf_mode: Protected Management Frames mode
+        bss_transition: 802.11k/v band/AP steering
+        fast_roaming_enabled: 802.11r fast roaming
+        site: Site name
+
+    Returns:
+        Updated WLAN configuration summary
+    """
+    client = _get_client(ctx, device)
+    wid = await _resolve_wlan(client, wlan, site)
+
+    data: dict[str, Any] = {}
+    for key, val in [
+        ("enabled", enabled), ("hide_ssid", hide_ssid), ("x_passphrase", passphrase),
+        ("wpa3_support", wpa3_support), ("wpa3_transition", wpa3_transition),
+        ("pmf_mode", pmf_mode), ("bss_transition", bss_transition),
+        ("fast_roaming_enabled", fast_roaming_enabled),
+    ]:
+        if val is not None:
+            data[key] = val
+    if not data:
+        return {"success": False, "message": "No fields to update provided"}
+
+    result = await client.update_wlan(wid, data, site)
+    return {
+        "success": True,
+        "name": result.get("name"),
+        "applied": {k: result.get(k) for k in data},
+    }
+
+
+async def create_wlan(
+    ctx: Context,
+    name: str,
+    passphrase: str,
+    network_conf_id: str | None = None,
+    wpa3_transition: bool = True,
+    hide_ssid: bool = False,
+    is_guest: bool = False,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Create a wireless network (SSID).
+
+    Uses WPA2/WPA3 transition security by default. Passphrase must be 8-63 chars.
+
+    Args:
+        ctx: MCP context
+        name: SSID name
+        passphrase: WiFi password (8-63 chars)
+        network_conf_id: Network ID to attach to (defaults to main network)
+        wpa3_transition: Use WPA2/WPA3 transition mode
+        hide_ssid: Broadcast hidden
+        is_guest: Mark as guest network
+        site: Site name
+
+    Returns:
+        Created WLAN configuration summary
+    """
+    client = _get_client(ctx, device)
+    if not (8 <= len(passphrase) <= 63):
+        return {"success": False, "message": "Passphrase must be 8-63 characters"}
+
+    data: dict[str, Any] = {
+        "name": name,
+        "x_passphrase": passphrase,
+        "security": "wpapsk",
+        "wpa_mode": "wpa2",
+        "wpa_enc": "ccmp",
+        "enabled": True,
+        "hide_ssid": hide_ssid,
+        "is_guest": is_guest,
+        "wlan_band": "both",
+        "bc_filter_enabled": False,
+    }
+    if network_conf_id:
+        data["networkconf_id"] = network_conf_id
+    if wpa3_transition:
+        data.update({"wpa3_support": True, "wpa3_transition": True, "pmf_mode": "optional"})
+
+    # Mirror an existing WLAN's AP group assignment so the new SSID lands on
+    # the same AP set; Network 10 rejects creates without a valid group.
+    existing = await client.get_wlans(site)
+    if existing:
+        for key in ("ap_group_ids", "ap_group_mode"):
+            val = existing[0].get(key)
+            if val is not None:
+                data[key] = val
+
+    result = await client.create_wlan(data, site)
+    return {
+        "success": bool(result),
+        "id": result.get("_id"),
+        "name": result.get("name"),
+    }
+
+
+async def delete_wlan(
+    ctx: Context,
+    wlan: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Delete a wireless network (SSID). Requires confirm=True.
+
+    Args:
+        ctx: MCP context
+        wlan: WLAN ID or SSID name
+        confirm: Must be True to actually delete
+        site: Site name
+
+    Returns:
+        Deletion status
+    """
+    if not confirm:
+        return {"success": False, "message": "Set confirm=true to delete. This disconnects all clients on that SSID."}
+    client = _get_client(ctx, device)
+    wid = await _resolve_wlan(client, wlan, site)
+    await client.delete_wlan(wid, site)
+    return {"success": True, "deleted": wlan}
+
+
+async def create_firewall_policy(
+    ctx: Context,
+    name: str,
+    action: str,
+    src_zone_id: str,
+    dst_zone_id: str,
+    protocol: str = "all",
+    description: str | None = None,
+    client_macs: list[str] | None = None,
+    index: int | None = None,
+    enabled: bool = True,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Create a zone-based firewall policy (UniFi Network 9+).
+
+    Zone IDs come from get_firewall_policies. action: ALLOW|BLOCK|REJECT.
+    protocol: all|tcp|udp|tcp_udp|icmp|igmp|icmpv6.
+    client_macs restricts the source to specific devices (matching_target=CLIENT).
+
+    Args:
+        ctx: MCP context
+        name: Policy name
+        action: ALLOW, BLOCK, or REJECT
+        src_zone_id: Source zone ID
+        dst_zone_id: Destination zone ID
+        protocol: Protocol selector
+        description: Optional description
+        client_macs: Restrict source to these MAC addresses
+        index: Rule order index (lower evaluates earlier)
+        enabled: Create enabled or disabled
+        site: Site name
+
+    Returns:
+        Created policy summary
+    """
+    client = _get_client(ctx, device)
+    action_u = action.upper()
+    if action_u not in ("ALLOW", "BLOCK", "REJECT"):
+        return {"success": False, "message": "action must be ALLOW, BLOCK, or REJECT"}
+
+    policy: dict[str, Any] = {
+        "action": action_u,
+        "protocol": protocol,
+        "enabled": enabled,
+        "ip_version": "BOTH",
+        "connection_state_type": "ALL",
+        "connection_states": [],
+        "create_allow_respond": True,
+        "logging": False,
+        "name": name,
+        "schedule": {"mode": "ALWAYS"},
+        "source": {
+            "match_opposite_ports": False,
+            "matching_target": "CLIENT" if client_macs else "ANY",
+            "port_matching_type": "ANY",
+            "zone_id": src_zone_id,
+        },
+        "destination": {
+            "match_opposite_ports": False,
+            "matching_target": "ANY",
+            "port_matching_type": "ANY",
+            "zone_id": dst_zone_id,
+        },
+    }
+    if client_macs:
+        policy["source"]["client_macs"] = [m.lower() for m in client_macs]
+    if description:
+        policy["description"] = description
+    # Note: explicit indexes in the 30000+ range are rejected by the controller;
+    # only send an index when the caller explicitly provides one.
+    if index is not None:
+        policy["index"] = index
+
+    try:
+        created = await client.create_firewall_policy(policy, site)
+    except Exception as e:
+        return {"success": False, "message": f"Controller rejected policy: {e}"}
+
+    return {
+        "success": True,
+        "id": created.get("_id"),
+        "name": created.get("name"),
+        "action": created.get("action"),
+        "src_zone": src_zone_id[-4:],
+        "dst_zone": dst_zone_id[-4:],
+        "note": "An auto-generated '(Return)' companion rule is typically added by the controller.",
+    }
+
+
+async def set_firewall_policy_enabled(
+    ctx: Context,
+    policy_id: str,
+    enabled: bool,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Enable or disable a zone-based firewall policy.
+
+    Args:
+        ctx: MCP context
+        policy_id: Policy ID (from get_firewall_policies)
+        enabled: True to enable, False to disable
+        site: Site name
+
+    Returns:
+        Update status
+    """
+    client = _get_client(ctx, device)
+    policies = await client.get_firewall_policies(site)
+    target = next((p for p in policies if p.get("_id") == policy_id), None)
+    if target is None:
+        return {"success": False, "message": f"Policy not found: {policy_id}"}
+
+    merged = {**target, "enabled": enabled}
+    merged.pop("hits", None)
+    merged.pop("last_hit", None)
+    await client.update_firewall_policy(policy_id, merged, site)
+    return {"success": True, "policy": target.get("name"), "enabled": enabled}
+
+
+async def delete_firewall_policy(
+    ctx: Context,
+    policy_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Delete a zone-based firewall policy. Requires confirm=True.
+
+    Args:
+        ctx: MCP context
+        policy_id: Policy ID
+        confirm: Must be True to actually delete
+        site: Site name
+
+    Returns:
+        Deletion status
+    """
+    if not confirm:
+        return {"success": False, "message": "Set confirm=true to delete this firewall policy."}
+    client = _get_client(ctx, device)
+    policies = await client.get_firewall_policies(site)
+    target = next((p for p in policies if p.get("_id") == policy_id), None)
+    if target is None:
+        return {"success": False, "message": f"Policy not found: {policy_id}"}
+    if target.get("predefined"):
+        return {"success": False, "message": "Refusing to delete a predefined controller policy."}
+    await client.delete_firewall_policy(policy_id, site)
+    return {"success": True, "deleted": target.get("name")}

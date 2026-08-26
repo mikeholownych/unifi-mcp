@@ -231,6 +231,9 @@ class UniFiHTTPClient:
         try:
             data = response.json()
         except Exception as e:
+            # 204 No Content / empty bodies (common on DELETE) are success
+            if not response.content:
+                return {"meta": {"rc": "ok"}}
             raise UniFiAPIError(f"Failed to parse response: {e}") from e
 
         # Cloud API returns data directly without meta wrapper

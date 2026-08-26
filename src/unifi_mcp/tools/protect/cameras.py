@@ -462,3 +462,60 @@ async def get_recent_activity(
         "total_events": len(events),
         "events": events,
     }
+
+
+async def export_camera_clip(
+    ctx: Context,
+    camera: str,
+    start_ts: int,
+    end_ts: int,
+    output_path: str,
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Export a camera recording clip (MP4) to a local file.
+
+    Times are epoch milliseconds. Requires username/password configured for the
+    Protect device. The server process needs write access to output_path.
+
+    Args:
+        ctx: MCP context
+        camera: Camera ID or name (resolved by name if not an ID)
+        start_ts: Clip start time (epoch milliseconds)
+        end_ts: Clip end time (epoch milliseconds)
+        output_path: Destination file path for the MP4
+        device: Optional Protect device name
+
+    Returns:
+        Export result with file path and size
+    """
+    import pathlib
+
+    client = _get_protect_client(ctx, device)
+
+    # Resolve camera by ID or name
+    cameras = await client.get_cameras()
+    cam = next(
+        (
+            c for c in cameras
+            if c.get("id") == camera or c.get("_id") == camera or c.get("name") == camera
+        ),
+        None,
+    )
+    if cam is None:
+        return {"success": False, "message": f"Camera not found: {camera}"}
+    cam_id = cam.get("id") or cam.get("_id")
+
+    clip = await client.export_camera_clip(cam_id, int(start_ts), int(end_ts))
+
+    out = pathlib.Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(clip)
+
+    return {
+        "success": True,
+        "camera": cam.get("name") or camera,
+        "file": str(out),
+        "size_bytes": len(clip),
+        "start_ts": start_ts,
+        "end_ts": end_ts,
+    }

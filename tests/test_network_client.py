@@ -170,3 +170,86 @@ class TestFormatHelpers:
         assert is_wireless_client({"type": "WIRELESS"}) is True
         assert is_wireless_client({"type": "WIRED"}) is False
         assert is_wireless_client({}) is False
+
+
+def _local_ctx() -> AppContext:
+    settings = UniFiSettings(
+        _env_file=None,
+        mode="local",
+        controller_url="https://10.0.0.1",
+        username="admin",
+        password="pw",
+    )
+    from unifi_mcp.auth.local import UniFiLocalAuth
+
+    ctx = AppContext(client=httpx.AsyncClient(verify=False), settings=settings, cache={}, auth=None)
+    ctx.auth = UniFiLocalAuth(ctx.client, settings)
+    return ctx
+
+
+class TestWlanWrites:
+    @respx.mock
+    async def test_update_wlan(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.put("https://10.0.0.1/proxy/network/api/s/default/rest/wlanconf/wlan123").respond(
+            json={"meta": {"rc": "ok"}, "data": [{"_id": "wlan123", "enabled": False}]}
+        )
+        client = UniFiNetworkClient(ctx)
+        result = await client.update_wlan("wlan123", {"enabled": False})
+        assert result["enabled"] is False
+
+    @respx.mock
+    async def test_create_wlan(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.post("https://10.0.0.1/proxy/network/api/s/default/rest/wlanconf").respond(
+            json={"meta": {"rc": "ok"}, "data": [{"_id": "new1", "name": "NewSSID"}]}
+        )
+        client = UniFiNetworkClient(ctx)
+        result = await client.create_wlan({"name": "NewSSID", "security": "wpapsk"})
+        assert result["_id"] == "new1"
+
+    @respx.mock
+    async def test_delete_wlan(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.delete("https://10.0.0.1/proxy/network/api/s/default/rest/wlanconf/new1").respond(
+            json={"meta": {"rc": "ok"}}
+        )
+        client = UniFiNetworkClient(ctx)
+        await client.delete_wlan("new1")
+
+
+class TestFirewallPolicyWrites:
+    @respx.mock
+    async def test_create_firewall_policy(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.post("https://10.0.0.1/proxy/network/v2/api/site/default/firewall-policies").respond(
+            json={"_id": "pol1", "name": "Test Rule"}
+        )
+        client = UniFiNetworkClient(ctx)
+        result = await client.create_firewall_policy({"name": "Test Rule", "action": "ALLOW"})
+        assert result["_id"] == "pol1"
+
+    @respx.mock
+    async def test_update_firewall_policy(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.put("https://10.0.0.1/proxy/network/v2/api/site/default/firewall-policies/pol1").respond(
+            json={"_id": "pol1", "enabled": False}
+        )
+        client = UniFiNetworkClient(ctx)
+        result = await client.update_firewall_policy("pol1", {"enabled": False})
+        assert result["enabled"] is False
+
+    @respx.mock
+    async def test_delete_firewall_policy(self):
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        respx.delete("https://10.0.0.1/proxy/network/v2/api/site/default/firewall-policies/pol1").respond(
+            json={"meta": {"rc": "ok"}}
+        )
+        client = UniFiNetworkClient(ctx)
+        await client.delete_firewall_policy("pol1")

@@ -442,6 +442,31 @@ class UniFiProtectClient:
         response = await self._internal_request("GET", endpoint, **kwargs)
         return response.json()
 
+    async def export_camera_clip(
+        self,
+        camera_id: str,
+        start_ts: int,
+        end_ts: int,
+    ) -> bytes:
+        """Export a recording clip for a camera as MP4 bytes.
+
+        Requires session auth (username/password in device config).
+
+        Args:
+            camera_id: Camera ID
+            start_ts: Clip start time (epoch milliseconds)
+            end_ts: Clip end time (epoch milliseconds)
+
+        Returns:
+            Raw MP4 video bytes
+        """
+        response = await self._internal_request(
+            "GET",
+            "/video/export",
+            params={"camera": camera_id, "start": start_ts, "end": end_ts},
+        )
+        return response.content
+
     # =========================================================================
     # Events (requires session auth)
     # =========================================================================

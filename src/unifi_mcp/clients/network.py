@@ -797,6 +797,109 @@ class UniFiNetworkClient(UniFiHTTPClient):
         endpoint = f"/v2/api/site/{site_name}/firewall-policies"
         return await self.get(endpoint)
 
+    async def create_wlan(self, data: dict[str, Any], site: str | None = None) -> dict[str, Any]:
+        """Create a wireless network (SSID).
+
+        Args:
+            data: WLAN configuration (name, x_passphrase, security, etc.)
+            site: Site name
+
+        Returns:
+            Created WLAN configuration
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("wireless network creation")
+
+        endpoint = self._site_endpoint("rest/wlanconf", site)
+        response = await self.post(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def update_wlan(
+        self, wlan_id: str, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Update a wireless network (SSID).
+
+        Args:
+            wlan_id: WLAN ID
+            data: Fields to update
+            site: Site name
+
+        Returns:
+            Updated WLAN configuration
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("wireless network updates")
+
+        endpoint = self._site_endpoint(f"rest/wlanconf/{wlan_id}", site)
+        response = await self.put(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def delete_wlan(self, wlan_id: str, site: str | None = None) -> None:
+        """Delete a wireless network (SSID).
+
+        Args:
+            wlan_id: WLAN ID
+            site: Site name
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("wireless network deletion")
+
+        endpoint = self._site_endpoint(f"rest/wlanconf/{wlan_id}", site)
+        await self.delete(endpoint)
+
+    async def create_firewall_policy(
+        self, policy: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Create a zone-based firewall policy (UniFi Network 9+).
+
+        Args:
+            policy: Policy object matching the v2 firewall-policies schema
+            site: Site name
+
+        Returns:
+            Created policy
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("firewall policy creation")
+
+        site_name = site or self.site
+        endpoint = f"/v2/api/site/{site_name}/firewall-policies"
+        return await self.post(endpoint, json=policy)
+
+    async def update_firewall_policy(
+        self, policy_id: str, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Update a zone-based firewall policy.
+
+        Args:
+            policy_id: Policy ID
+            data: Fields to update
+            site: Site name
+
+        Returns:
+            Updated policy
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("firewall policy updates")
+
+        site_name = site or self.site
+        endpoint = f"/v2/api/site/{site_name}/firewall-policies/{policy_id}"
+        return await self.put(endpoint, json=data)
+
+    async def delete_firewall_policy(self, policy_id: str, site: str | None = None) -> None:
+        """Delete a zone-based firewall policy.
+
+        Args:
+            policy_id: Policy ID
+            site: Site name
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("firewall policy deletion")
+
+        site_name = site or self.site
+        endpoint = f"/v2/api/site/{site_name}/firewall-policies/{policy_id}"
+        await self.delete(endpoint)
+
     async def get_routing(self, site: str | None = None) -> list[dict[str, Any]]:
         """Get routing table.
 

@@ -231,6 +231,14 @@ Or in `opencode.json`:
 - `get_firewall_policies` - Get zone-based firewall policies (UniFi Network 9+)
 - `get_routing_table` - Get routing table
 
+### Configuration Management (writes)
+- `create_wlan` / `update_wlan` / `delete_wlan` - Manage wireless networks
+- `create_firewall_policy` / `set_firewall_policy_enabled` / `delete_firewall_policy` - Manage zone-based firewall policies
+- `export_camera_clip` - Export a camera recording clip as MP4 (Protect)
+- `get_all_sites_health` - Health overview across all sites
+
+Write tools that remove data or cause disruption are confirm-gated or flagged destructive via MCP annotations.
+
 ### Statistics & Monitoring
 - `get_network_health` - Overall network health
 - `get_recent_events` - Recent events

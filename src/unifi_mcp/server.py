@@ -205,6 +205,98 @@ async def get_firewall_policies(ctx: Context, site: str = "default", device: str
     return await site_tools.get_firewall_policies(ctx, site, device)
 
 
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def update_wlan(
+    ctx: Context,
+    wlan: str,
+    enabled: bool | None = None,
+    hide_ssid: bool | None = None,
+    passphrase: str | None = None,
+    wpa3_support: bool | None = None,
+    wpa3_transition: bool | None = None,
+    pmf_mode: str | None = None,
+    bss_transition: bool | None = None,
+    fast_roaming_enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Update a wireless network (SSID) by ID or name - only provided fields change."""
+    return await site_tools.update_wlan(
+        ctx, wlan, enabled, hide_ssid, passphrase, wpa3_support,
+        wpa3_transition, pmf_mode, bss_transition, fast_roaming_enabled, site, device,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_wlan(
+    ctx: Context,
+    name: str,
+    passphrase: str,
+    network_conf_id: str | None = None,
+    wpa3_transition: bool = True,
+    hide_ssid: bool = False,
+    is_guest: bool = False,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Create a wireless network (SSID) with WPA2/WPA3 transition security."""
+    return await site_tools.create_wlan(
+        ctx, name, passphrase, network_conf_id, wpa3_transition, hide_ssid, is_guest, site, device,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_wlan(
+    ctx: Context, wlan: str, confirm: bool = False, site: str = "default", device: str | None = None
+):
+    """Delete a wireless network (SSID). Requires confirm=true."""
+    return await site_tools.delete_wlan(ctx, wlan, confirm, site, device)
+
+
+@mcp.tool()
+async def create_firewall_policy(
+    ctx: Context,
+    name: str,
+    action: str,
+    src_zone_id: str,
+    dst_zone_id: str,
+    protocol: str = "all",
+    description: str | None = None,
+    client_macs: list[str] | None = None,
+    index: int | None = None,
+    enabled: bool = True,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Create a zone-based firewall policy (UniFi Network 9+)."""
+    return await site_tools.create_firewall_policy(
+        ctx, name, action, src_zone_id, dst_zone_id, protocol,
+        description, client_macs, index, enabled, site, device,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_firewall_policy_enabled(
+    ctx: Context, policy_id: str, enabled: bool, site: str = "default", device: str | None = None
+):
+    """Enable or disable a zone-based firewall policy."""
+    return await site_tools.set_firewall_policy_enabled(ctx, policy_id, enabled, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_firewall_policy(
+    ctx: Context, policy_id: str, confirm: bool = False, site: str = "default", device: str | None = None
+):
+    """Delete a zone-based firewall policy. Requires confirm=true."""
+    return await site_tools.delete_firewall_policy(ctx, policy_id, confirm, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_all_sites_health(ctx: Context, device: str | None = None):
+    """Get health overview across all sites."""
+    return await insight_tools.get_all_sites_health(ctx, device)
+
+
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_routing_table(ctx: Context, site: str = "default", device: str | None = None):
     """Get the current routing table."""
@@ -498,3 +590,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def export_camera_clip(
+    ctx: Context,
+    camera: str,
+    start_ts: int,
+    end_ts: int,
+    output_path: str,
+    device: str | None = None,
+):
+    """Export a camera recording clip (MP4) to a local file. Requires Protect credentials."""
+    return await protect_tools.export_camera_clip(ctx, camera, start_ts, end_ts, output_path, device)

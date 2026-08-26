@@ -799,3 +799,52 @@ async def troubleshoot_client(
     report["data_limitations"] = limitations
 
     return report
+
+
+async def get_all_sites_health(ctx: Context, device: str | None = None) -> dict[str, Any]:
+    """Get a health overview across all sites on the controller.
+
+    Args:
+        ctx: MCP context
+        device: Optional device name to target
+
+    Returns:
+        Per-site health summary with subsystem statuses.
+    """
+    client = _get_client(ctx, device)
+    try:
+        sites = await client.get_sites()
+    except Exception as e:
+        return {"sites": [], "error": f"Could not list sites: {e}"}
+
+    overview = []
+    for s in sites:
+        site_name = s.get("name") or s.get("internalReference") or "unknown"
+        entry: dict[str, Any] = {"site": site_name, "description": s.get("desc", "")}
+        try:
+            health = await client.get_site_health(site_name)
+            subsystems = {}
+            issues = []
+            for sub in health:
+                name = sub.get("subsystem", "unknown")
+                status = sub.get("status", "unknown")
+                subsystems[name] = {
+                    "status": status,
+                    "num_adopted": sub.get("num_adopted"),
+                    "num_sta": sub.get("num_sta"),
+                }
+                if status != "ok":
+                    issues.append({"subsystem": name, "status": status})
+            entry["subsystems"] = subsystems
+            entry["issues"] = issues
+            entry["overall_status"] = "healthy" if not issues else "issues_detected"
+        except Exception as e:
+            entry["overall_status"] = "unavailable"
+            entry["error"] = str(e)[:200]
+        overview.append(entry)
+
+    return {
+        "total_sites": len(overview),
+        "healthy": sum(1 for o in overview if o.get("overall_status") == "healthy"),
+        "sites": overview,
+    }
