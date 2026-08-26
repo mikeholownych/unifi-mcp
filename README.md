@@ -1,5 +1,7 @@
 # UniFi MCP Server
 
+mcp-name: io.github.mikeholownych/unifi-mcp
+
 [![CI](https://github.com/mikeholownych/unifi-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/mikeholownych/unifi-mcp/actions/workflows/ci.yml)
 
 An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities.

@@ -1,6 +1,6 @@
 [project]
-name = "unifi-mcp"
-version = "0.8.0"
+name = "mcp-unifi"
+version = "0.8.2"
 description = "MCP server for UniFi Network and Protect API integration"
 readme = "README.md"
 license = "MIT"
