@@ -45,6 +45,28 @@ When API keys are used (Integration API), a subset of controller features is onl
 
 > **Note on local accounts:** SSO/Ubiquiti-account admins protected by MFA cannot complete session login. Create a **local admin** on your console (*Restrict to Local Access Only*) for `UNIFI_MODE=local`.
 
+## Agent Skills
+
+Bundled skills (in [`skills/`](skills/)) teach agents proven workflows for this server — including
+controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3 transition):
+
+| Skill | Type | Purpose |
+|---|---|---|
+| `unifi-network-audit` | read-only | Full site audit: devices, clients, WiFi posture, firewall, structured report |
+| `unifi-troubleshoot-client` | read-only | Diagnose a misbehaving device: RF, roaming, blocking, IP layer |
+| `unifi-wifi-optimize` | write-gated | Channel plan, widths, WPA3 transition, band steering — approval-gated |
+| `unifi-grant-device-access` | write-gated | Give a device a reserved IP + scoped zone-firewall access |
+
+**Install** (per project): copy into `.claude/skills/`:
+
+```bash
+git clone https://github.com/mikeholownych/unifi-mcp.git
+mkdir -p .claude/skills && cp -r unifi-mcp/skills/* .claude/skills/
+```
+
+Skills reference MCP tools by their plain names (`get_firewall_policies`, …);
+your MCP client prefixes them automatically.
+
 ## Supported Hardware
 
 - UniFi Dream Machine (UDM, UDM-Pro, UDM-SE)
