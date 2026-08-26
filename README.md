@@ -48,7 +48,11 @@ When API keys are used (Integration API), a subset of controller features is onl
 ## Agent Skills
 
 Bundled skills (in [`skills/`](skills/)) teach agents proven workflows for this server — including
-controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3 transition):
+controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3 transition).
+
+**Full documentation**: See [`SKILLS.md`](SKILLS.md) for usage guide, expected results, troubleshooting, and how to request new functionality.
+
+### Quick reference
 
 | Skill | Type | Purpose |
 |---|---|---|
@@ -69,6 +73,17 @@ controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3
 | `unifi-backup-migration` | write-gated | What backups contain, migration rules of thumb, pre-migration snapshots |
 | `unifi-network-map` | doc-writer | Persistent labeled topology (zones/VLANs/deps) that sharpens every other skill |
 
+### How skills work
+
+Just describe your problem naturally — the agent matches your request to the right skill and follows its workflow:
+
+- **"My internet is down"** → `unifi-internet-down` diagnoses WAN, modem, gateway
+- **"Who's on my WiFi?"** → `unifi-whos-home` lists devices, flags unknowns
+- **"Audit my network"** → `unifi-network-audit` produces a full health report
+- **"Set up my new TV"** → `unifi-setup-new-device` guides WiFi pairing
+
+**Write-gated skills** (marked above) modify your network — they always ask approval before applying changes.
+
 Skills for non-technical users avoid jargon, translate every technical term,
 and require confirmation before disruptive actions.
 
@@ -78,6 +93,8 @@ and require confirmation before disruptive actions.
 git clone https://github.com/mikeholownych/unifi-mcp.git
 mkdir -p .claude/skills && cp -r unifi-mcp/skills/* .claude/skills/
 ```
+
+See [`SKILLS.md`](SKILLS.md) for full usage guide, expected results, troubleshooting, and how to request new functionality.
 
 Skills reference MCP tools by their plain names (`get_firewall_policies`, …);
 your MCP client prefixes them automatically.
@@ -375,6 +392,14 @@ uv run ruff format .
 docker build -t unifi-mcp .
 docker run -i --rm --env-file .env unifi-mcp
 ```
+
+## Requesting new functionality
+
+- **New skills**: Open an issue with `[Skill]` prefix — describe the problem, workflow, and expected output
+- **Modify skills**: Open an issue with `[Skill: skill-name]` prefix — what's missing or broken
+- **New tools**: Open an issue with `[Tool]` prefix — include the UniFi API endpoint and expected format
+
+See [`SKILLS.md`](SKILLS.md) for detailed contribution guidelines.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history and [CONTRIBUTING.md](CONTRIBUTING.md) to contribute.
 
