@@ -1,0 +1,58 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mikeholownych/unifi-mcp",
+  "description": "MCP server for Ubiquiti UniFi Network and Protect. 63 tools, 16 agent skills.",
+  "version": "0.8.0",
+  "homepage": "https://github.com/mikeholownych/unifi-mcp",
+  "repository": {
+    "url": "https://github.com/mikeholownych/unifi-mcp",
+    "source": "github",
+    "branch": "main"
+  },
+  "license": "MIT",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "unifi-mcp",
+      "version": "0.8.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "UNIFI_DEVICES",
+          "description": "JSON array of UniFi device configs (name, url, api_key, services, site)",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "UNIFI_MODE",
+          "description": "Auth mode: local (session), local_api_key (Integration API), or cloud",
+          "isRequired": false,
+          "format": "string",
+          "defaultValue": "local_api_key"
+        },
+        {
+          "name": "UNIFI_USERNAME",
+          "description": "Controller username for session auth (UNIFI_MODE=local)",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "UNIFI_PASSWORD",
+          "description": "Controller password for session auth (UNIFI_MODE=local)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "UNIFI_VERIFY_SSL",
+          "description": "Verify SSL certificates (false for self-signed)",
+          "isRequired": false,
+          "format": "string",
+          "defaultValue": "true"
+        }
+      ]
+    }
+  ]
+}
