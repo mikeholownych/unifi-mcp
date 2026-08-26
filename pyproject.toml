@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 authors = [{name = "Mike Holownych", email = "mike@holownych.com"}]
 keywords = ["mcp", "unifi", "ubiquiti", "network", "automation"]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "mcp>=1.9.0",
     "httpx>=0.28.0",
@@ -34,7 +34,7 @@ Repository = "https://github.com/mikeholownych/unifi-mcp"
 "Original Project" = "https://github.com/gbassaragh/Unifi-mcp"
 
 [tool.poetry.dependencies]
-python = "^3.14"
+python = ">=3.11"
 mcp = "^1.9.0"
 httpx = "^0.28.0"
 pydantic = "^2.0"

@@ -6,11 +6,12 @@ version = "25.1.0"
 description = "File support for asyncio."
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "aiofiles-25.1.0-py3-none-any.whl", hash = "sha256:abe311e527c862958650f9438e859c1fa7568a141b22abcd015e120e86a85695"},
     {file = "aiofiles-25.1.0.tar.gz", hash = "sha256:a8d728f0a29de45dc521f18f07297428d56992a742f0cd2701ba86e44d23d5b2"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "aiohappyeyeballs"
@@ -18,11 +19,12 @@ version = "2.6.1"
 description = "Happy Eyeballs for asyncio"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "aiohappyeyeballs-2.6.1-py3-none-any.whl", hash = "sha256:f349ba8f4b75cb25c99c5c2d84e997e485204d2902a9597802b0371f09331fb8"},
     {file = "aiohappyeyeballs-2.6.1.tar.gz", hash = "sha256:c3f9d0113123803ccadfdf3f0faa505bc78e6a72d1cc4806cbd719826e943558"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "aiohttp"
@@ -30,7 +32,7 @@ version = "3.13.3"
 description = "Async http client/server framework (asyncio)"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "aiohttp-3.13.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d5a372fd5afd301b3a89582817fdcdb6c34124787c70dbcc616f259013e7eef7"},
     {file = "aiohttp-3.13.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:147e422fd1223005c22b4fe080f5d93ced44460f5f9c105406b753612b587821"},
@@ -153,6 +155,7 @@ files = [
     {file = "aiohttp-3.13.3-cp39-cp39-win_amd64.whl", hash = "sha256:c6b8568a3bb5819a0ad087f16d40e5a3fb6099f39ea1d5625a3edc1e923fc538"},
     {file = "aiohttp-3.13.3.tar.gz", hash = "sha256:a949eee43d3782f2daae4f4a2819b2cb9b0c5d3b7f7a927067cc84dafdbb9f88"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 aiohappyeyeballs = ">=2.5.0"
@@ -172,11 +175,12 @@ version = "1.6"
 description = "Asynchronous shutil module."
 optional = true
 python-versions = ">=3.8"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "aioshutil-1.6-py3-none-any.whl", hash = "sha256:e0711de25ade421b70094b2a27c69bef6356127013744fec05f019f36732c1bd"},
     {file = "aioshutil-1.6.tar.gz", hash = "sha256:9eae342b9a4cacc2c2c5877877a2d2f7a2b66c62aa1ab57d7e95c8cfd4ede507"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "aiosignal"
@@ -184,14 +188,16 @@ version = "1.4.0"
 description = "aiosignal: a list of registered asynchronous callbacks"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "aiosignal-1.4.0-py3-none-any.whl", hash = "sha256:053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e"},
     {file = "aiosignal-1.4.0.tar.gz", hash = "sha256:f47eecd9468083c2029cc99945502cb7708b082c232f9aca65da147157b251c7"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 frozenlist = ">=1.1.0"
+typing-extensions = {version = ">=4.2", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "annotated-types"
@@ -219,6 +225,7 @@ files = [
 
 [package.dependencies]
 idna = ">=2.8"
+typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
 trio = ["trio (>=0.31.0) ; python_version < \"3.10\"", "trio (>=0.32.0) ; python_version >= \"3.10\""]
@@ -229,11 +236,12 @@ version = "5.0.1"
 description = "Timeout context manager for asyncio programs"
 optional = true
 python-versions = ">=3.8"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c"},
     {file = "async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "attrs"
@@ -380,7 +388,7 @@ files = [
     {file = "click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6"},
     {file = "click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a"},
 ]
-markers = {main = "sys_platform != \"emscripten\""}
+markers = {main = "sys_platform != \"emscripten\" or extra == \"protect\""}
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
@@ -396,7 +404,7 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
-markers = {main = "sys_platform != \"emscripten\" and platform_system == \"Windows\"", dev = "sys_platform == \"win32\"", protect = "platform_system == \"Windows\""}
+markers = {main = "(sys_platform != \"emscripten\" or extra == \"protect\") and platform_system == \"Windows\"", dev = "sys_platform == \"win32\"", protect = "platform_system == \"Windows\""}
 
 [[package]]
 name = "convertertools"
@@ -404,7 +412,7 @@ version = "1.1.0"
 description = "Tools for converting python data types"
 optional = true
 python-versions = ">=3.10"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "convertertools-1.1.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:cb6881bb503f9b42b7846ce3b90e55596e5452f70faa8fd35aeb3dd9fe49bc61"},
     {file = "convertertools-1.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7c42e1701fa72039fedaa49649a295be4c622053df86ce2c0e9671a99ed10930"},
@@ -459,6 +467,7 @@ files = [
     {file = "convertertools-1.1.0-cp314-cp314t-win_amd64.whl", hash = "sha256:bfdcb297219ee7ef99d9c20679ba9efdb1170e0d4fd90c8644b1fa5ea2f04db2"},
     {file = "convertertools-1.1.0.tar.gz", hash = "sha256:c23fc6848d3b1e74fbcc5dfa3a9729834e86114bf6d0fd9c9e35b9062ace93ca"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "cryptography"
@@ -543,11 +552,12 @@ version = "1.2.2"
 description = "Date parsing library designed to parse dates from HTML pages"
 optional = true
 python-versions = ">=3.8"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "dateparser-1.2.2-py3-none-any.whl", hash = "sha256:5a5d7211a09013499867547023a2a0c91d5a27d15dd4dbcea676ea9fe66f2482"},
     {file = "dateparser-1.2.2.tar.gz", hash = "sha256:986316f17cb8cdc23ea8ce563027c5ef12fc725b6fb1d137c14ca08777c5ecf7"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 python-dateutil = ">=2.7.0"
@@ -566,7 +576,7 @@ version = "1.8.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "frozenlist-1.8.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b37f6d31b3dcea7deb5e9696e529a6aa4a898adc33db82da12e4c60a7c4d2011"},
     {file = "frozenlist-1.8.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ef2b7b394f208233e471abc541cc6991f907ffd47dc72584acee3147899d6565"},
@@ -699,6 +709,7 @@ files = [
     {file = "frozenlist-1.8.0-py3-none-any.whl", hash = "sha256:0c18a16eab41e82c295618a77502e17b195883241c563b00f0aa5106fc4eaa0d"},
     {file = "frozenlist-1.8.0.tar.gz", hash = "sha256:3ede829ed8d842f6cd48fc7081d7a41001a56f1f38603f9d49bf3020d59a31ad"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "h11"
@@ -841,11 +852,12 @@ version = "4.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
 optional = true
 python-versions = ">=3.10"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "markdown_it_py-4.0.0-py3-none-any.whl", hash = "sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147"},
     {file = "markdown_it_py-4.0.0.tar.gz", hash = "sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 mdurl = ">=0.1,<1.0"
@@ -898,11 +910,12 @@ version = "0.1.2"
 description = "Markdown URL utilities"
 optional = true
 python-versions = ">=3.7"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "multidict"
@@ -910,7 +923,7 @@ version = "6.7.0"
 description = "multidict implementation"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "multidict-6.7.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9f474ad5acda359c8758c8accc22032c6abe6dc87a8be2440d097785e27a9349"},
     {file = "multidict-6.7.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:4b7a9db5a870f780220e931d0002bbfd88fb53aceb6293251e2c839415c1b20e"},
@@ -1059,6 +1072,7 @@ files = [
     {file = "multidict-6.7.0-py3-none-any.whl", hash = "sha256:394fc5c42a333c9ffc3e421a4c85e08580d990e08b99f6bf35b4132114c5dcb3"},
     {file = "multidict-6.7.0.tar.gz", hash = "sha256:c6e99d9a65ca282e578dfea819cfa9c0a62b2499d8677392e09feaf305e9e6f5"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "orjson"
@@ -1066,7 +1080,7 @@ version = "3.11.5"
 description = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "orjson-3.11.5-cp310-cp310-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl", hash = "sha256:df9eadb2a6386d5ea2bfd81309c505e125cfc9ba2b1b99a97e60985b0b3665d1"},
     {file = "orjson-3.11.5-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ccc70da619744467d8f1f49a8cadae5ec7bbe054e5232d95f92ed8737f8c5870"},
@@ -1156,6 +1170,7 @@ files = [
     {file = "orjson-3.11.5-cp39-cp39-win_amd64.whl", hash = "sha256:09b94b947ac08586af635ef922d69dc9bc63321527a3a04647f4986a73f4bd30"},
     {file = "orjson-3.11.5.tar.gz", hash = "sha256:82393ab47b4fe44ffd0a7659fa9cfaacc717eb617c93cde83795f14af5c2e9d5"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "packaging"
@@ -1163,11 +1178,12 @@ version = "25.0"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev", "protect"]
+groups = ["main", "dev", "protect"]
 files = [
     {file = "packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484"},
     {file = "packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "pillow"
@@ -1175,7 +1191,7 @@ version = "12.1.0"
 description = "Python Imaging Library (fork)"
 optional = true
 python-versions = ">=3.10"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "pillow-12.1.0-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:fb125d860738a09d363a88daa0f59c4533529a90e564785e20fe875b200b6dbd"},
     {file = "pillow-12.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:cad302dc10fac357d3467a74a9561c90609768a6f73a1923b0fd851b6486f8b0"},
@@ -1269,6 +1285,7 @@ files = [
     {file = "pillow-12.1.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:75af0b4c229ac519b155028fa1be632d812a519abba9b46b20e50c6caa184f19"},
     {file = "pillow-12.1.0.tar.gz", hash = "sha256:5c5ae0a06e9ea030ab786b0251b32c7e4ce10e58d983c0d5c56029455180b5b9"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.extras]
 docs = ["furo", "olefile", "sphinx (>=8.2)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxext-opengraph"]
@@ -1284,11 +1301,12 @@ version = "4.5.1"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = true
 python-versions = ">=3.10"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "platformdirs-4.5.1-py3-none-any.whl", hash = "sha256:d03afa3963c806a9bed9d5125c8f4cb2fdaf74a55ab60e5d59b3fde758104d31"},
     {file = "platformdirs-4.5.1.tar.gz", hash = "sha256:61d5cdcc6065745cdd94f0f878977f8de9437be93de97c1c12f853c9c0cdcbda"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.extras]
 docs = ["furo (>=2025.9.25)", "proselint (>=0.14)", "sphinx (>=8.2.3)", "sphinx-autodoc-typehints (>=3.2)"]
@@ -1317,7 +1335,7 @@ version = "0.4.1"
 description = "Accelerated property cache"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "propcache-0.4.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7c2d1fa3201efaf55d730400d945b5b3ab6e672e100ba0f9a409d950ab25d7db"},
     {file = "propcache-0.4.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1eb2994229cc8ce7fe9b3db88f5465f5fd8651672840b2e426b88cdb1a30aac8"},
@@ -1442,6 +1460,7 @@ files = [
     {file = "propcache-0.4.1-py3-none-any.whl", hash = "sha256:af2a6052aeb6cf17d3e46ee169099044fd8224cbaf75c76a2ef596e8163e2237"},
     {file = "propcache-0.4.1.tar.gz", hash = "sha256:f48107a8c637e80362555f37ecf49abe20370e557cc4ab374f04ec4423c97c3d"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "pycparser"
@@ -1642,11 +1661,12 @@ version = "2.19.2"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
 python-versions = ">=3.8"
-groups = ["dev", "protect"]
+groups = ["main", "dev", "protect"]
 files = [
     {file = "pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"},
     {file = "pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
@@ -1719,11 +1739,12 @@ version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
 optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
     {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 six = ">=1.5"
@@ -1761,11 +1782,12 @@ version = "2025.2"
 description = "World timezone definitions, modern and historical"
 optional = true
 python-versions = "*"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"},
     {file = "pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "pywin32"
@@ -1813,6 +1835,7 @@ files = [
 [package.dependencies]
 attrs = ">=22.2.0"
 rpds-py = ">=0.7.0"
+typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "regex"
@@ -1820,7 +1843,7 @@ version = "2025.11.3"
 description = "Alternative regular expression module, to replace re."
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "regex-2025.11.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2b441a4ae2c8049106e8b39973bfbddfb25a179dda2bdb99b0eeb60c40a6a3af"},
     {file = "regex-2025.11.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:2fa2eed3f76677777345d2f81ee89f5de2f5745910e805f7af7386a920fa7313"},
@@ -1938,6 +1961,7 @@ files = [
     {file = "regex-2025.11.3-cp39-cp39-win_arm64.whl", hash = "sha256:43b4fb020e779ca81c1b5255015fe2b82816c76ec982354534ad9ec09ad7c9e3"},
     {file = "regex-2025.11.3.tar.gz", hash = "sha256:1fedc720f9bb2494ce31a58a1631f9c82df6a09b49c19517ea5cc280b4541e01"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "respx"
@@ -1960,11 +1984,12 @@ version = "14.2.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = true
 python-versions = ">=3.8.0"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "rich-14.2.0-py3-none-any.whl", hash = "sha256:76bc51fe2e57d2b1be1f96c524b890b816e334ab4c1e45888799bfaab0021edd"},
     {file = "rich-14.2.0.tar.gz", hash = "sha256:73ff50c7c0c1c77c8243079283f4edb376f0f6442433aecb8ce7e6d0b92d1fe4"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 markdown-it-py = ">=2.2.0"
@@ -2132,11 +2157,12 @@ version = "1.5.4"
 description = "Tool to Detect Surrounding Shell"
 optional = true
 python-versions = ">=3.7"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"},
     {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "six"
@@ -2144,11 +2170,12 @@ version = "1.17.0"
 description = "Python 2 and 3 compatibility utilities"
 optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"},
     {file = "six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [[package]]
 name = "sse-starlette"
@@ -2186,6 +2213,7 @@ files = [
 
 [package.dependencies]
 anyio = ">=3.6.2,<5"
+typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""}
 
 [package.extras]
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
@@ -2212,11 +2240,12 @@ version = "0.21.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "typer-0.21.1-py3-none-any.whl", hash = "sha256:7985e89081c636b88d172c2ee0cfe33c253160994d47bdfdc302defd7d1f1d01"},
     {file = "typer-0.21.1.tar.gz", hash = "sha256:ea835607cd752343b6b2b7ce676893e5a0324082268b48f27aa058bdb7d2145d"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 click = ">=8.0.0"
@@ -2230,11 +2259,12 @@ version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "protect"]
+groups = ["main", "dev", "protect"]
 files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
+markers = {dev = "python_version < \"3.13\""}
 
 [[package]]
 name = "typing-inspection"
@@ -2257,12 +2287,12 @@ version = "2025.3"
 description = "Provider of IANA time zone data"
 optional = true
 python-versions = ">=2"
-groups = ["protect"]
-markers = "platform_system == \"Windows\""
+groups = ["main", "protect"]
 files = [
     {file = "tzdata-2025.3-py2.py3-none-any.whl", hash = "sha256:06a47e5700f3081aab02b2e513160914ff0694bce9947d6b76ebd6bf57cfc5d1"},
     {file = "tzdata-2025.3.tar.gz", hash = "sha256:de39c2ca5dc7b0344f2eba86f49d614019d29f060fc4ebc8a417896a620b56a7"},
 ]
+markers = {main = "extra == \"protect\" and platform_system == \"Windows\"", protect = "platform_system == \"Windows\""}
 
 [[package]]
 name = "tzlocal"
@@ -2270,11 +2300,12 @@ version = "5.3.1"
 description = "tzinfo object for the local timezone"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "tzlocal-5.3.1-py3-none-any.whl", hash = "sha256:eb1a66c3ef5847adf7a834f1be0800581b683b5608e74f86ecbcef8ab91bb85d"},
     {file = "tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 tzdata = {version = "*", markers = "platform_system == \"Windows\""}
@@ -2288,11 +2319,12 @@ version = "6.8.0"
 description = "Python API for Unifi Protect (Unofficial)"
 optional = true
 python-versions = ">=3.10"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "uiprotect-6.8.0-py3-none-any.whl", hash = "sha256:f7d4dca8b41880f84c02b3d535ab10d81c3aaa1a8cff14a424d005273055236b"},
     {file = "uiprotect-6.8.0.tar.gz", hash = "sha256:c4a7eb7b892c8a9a0f63051bf05a585bba04c8d5329027968f231e68fe82f216"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 aiofiles = ">=24"
@@ -2338,7 +2370,7 @@ version = "1.22.0"
 description = "Yet another URL library"
 optional = true
 python-versions = ">=3.9"
-groups = ["protect"]
+groups = ["main", "protect"]
 files = [
     {file = "yarl-1.22.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:c7bd6683587567e5a49ee6e336e0612bec8329be1b7d4c8af5687dcdeb67ee1e"},
     {file = "yarl-1.22.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5cdac20da754f3a723cceea5b3448e1a2074866406adeb4ef35b469d089adb8f"},
@@ -2471,13 +2503,17 @@ files = [
     {file = "yarl-1.22.0-py3-none-any.whl", hash = "sha256:1380560bdba02b6b6c90de54133c81c9f2a453dee9912fe58c1dcced1edb7cff"},
     {file = "yarl-1.22.0.tar.gz", hash = "sha256:bebf8557577d4401ba8bd9ff33906f1376c877aa78d1fe216ad01b4d6745af71"},
 ]
+markers = {main = "extra == \"protect\""}
 
 [package.dependencies]
 idna = ">=2.0"
 multidict = ">=4.0"
 propcache = ">=0.2.1"
 
+[extras]
+protect = ["uiprotect"]
+
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.14"
-content-hash = "fd77719b40f15319a011bdac3a2323af6c4fc696d373a69deab26b85de27f537"
+python-versions = ">=3.11"
+content-hash = "aa08585370ec3ea967f8fc6cf89605c295c1152f05be0cae8546c692e9257af1"
