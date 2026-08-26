@@ -581,7 +581,14 @@ class UniFiNetworkClient(UniFiHTTPClient):
 
         endpoint = self._site_endpoint("stat/event", site)
         params = {"_limit": min(limit, 3000)}
-        response = await self.get(endpoint, params=params)
+        try:
+            response = await self.get(endpoint, params=params)
+        except UniFiAPIError as e:
+            if e.status_code == 404:
+                # Endpoint removed on newer Network versions (10+)
+                logger.warning("stat/event not available on this controller version")
+                return []
+            raise
         return response.get("data", [])
 
     async def get_alarms(self, site: str | None = None) -> list[dict[str, Any]]:
@@ -597,7 +604,14 @@ class UniFiNetworkClient(UniFiHTTPClient):
             self._require_traditional_api("alarms")
 
         endpoint = self._site_endpoint("stat/alarm", site)
-        response = await self.get(endpoint)
+        try:
+            response = await self.get(endpoint)
+        except UniFiAPIError as e:
+            if e.status_code == 404:
+                # Endpoint removed on newer Network versions (10+)
+                logger.warning("stat/alarm not available on this controller version")
+                return []
+            raise
         return response.get("data", [])
 
     async def archive_alarms(self, site: str | None = None) -> dict[str, Any]:
@@ -762,6 +776,26 @@ class UniFiNetworkClient(UniFiHTTPClient):
         endpoint = self._site_endpoint("rest/firewallrule", site)
         response = await self.get(endpoint)
         return response.get("data", [])
+
+    async def get_firewall_policies(self, site: str | None = None) -> list[dict[str, Any]]:
+        """Get zone-based firewall policies (UniFi Network 9+).
+
+        Modern UniFi OS controllers use zone-based firewall policies instead
+        of legacy firewall rules. Zone IDs can be correlated with networks
+        via the UniFi UI; policies are evaluated by index order.
+
+        Args:
+            site: Site name
+
+        Returns:
+            List of zone-based firewall policy configurations
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("zone-based firewall policies")
+
+        site_name = site or self.site
+        endpoint = f"/v2/api/site/{site_name}/firewall-policies"
+        return await self.get(endpoint)
 
     async def get_routing(self, site: str | None = None) -> list[dict[str, Any]]:
         """Get routing table.

@@ -4,6 +4,7 @@ import logging
 import sys
 
 from mcp.server.fastmcp import Context, FastMCP
+from mcp.types import ToolAnnotations
 
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
@@ -50,43 +51,43 @@ mcp = FastMCP(
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def list_devices(ctx: Context, site: str = "default", device: str | None = None):
     """List all UniFi network devices (APs, switches, routers)."""
     return await device_tools.list_devices(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_device_details(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Get detailed information about a specific device."""
     return await device_tools.get_device_details(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def restart_device(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Restart a UniFi device."""
     return await device_tools.restart_device(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
 async def locate_device(ctx: Context, mac: str, enabled: bool = True, site: str = "default", device: str | None = None):
     """Enable/disable LED blinking to locate a device."""
     return await device_tools.locate_device(ctx, mac, enabled, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_device_stats(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Get performance statistics for a device."""
     return await device_tools.get_device_stats(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def upgrade_device(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Upgrade device firmware to the latest version."""
     return await device_tools.upgrade_device(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def provision_device(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Force re-provision a device with current configuration."""
     return await device_tools.provision_device(ctx, mac, site, device)
@@ -97,49 +98,49 @@ async def provision_device(ctx: Context, mac: str, site: str = "default", device
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def list_clients(ctx: Context, site: str = "default", device: str | None = None):
     """List all currently connected clients."""
     return await client_tools.list_clients(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def list_all_clients(ctx: Context, site: str = "default", device: str | None = None):
     """List all known clients (including offline)."""
     return await client_tools.list_all_clients(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_client_details(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Get detailed information about a specific client."""
     return await client_tools.get_client_details(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
 async def block_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Block a client from the network."""
     return await client_tools.block_client(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
 async def unblock_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Unblock a previously blocked client."""
     return await client_tools.unblock_client(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
 async def kick_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Disconnect a client (they can reconnect)."""
     return await client_tools.kick_client(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def forget_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Remove a client from the known clients list."""
     return await client_tools.forget_client(ctx, mac, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_client_traffic(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """Get traffic statistics for a specific client."""
     return await client_tools.get_client_traffic(ctx, mac, site, device)
@@ -150,55 +151,61 @@ async def get_client_traffic(ctx: Context, mac: str, site: str = "default", devi
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def list_sites(ctx: Context, device: str | None = None):
     """List all UniFi sites accessible to the current user."""
-    return await site_tools.list_sites(ctx, None, device)
+    return await site_tools.list_sites(ctx, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_site_health(ctx: Context, site: str = "default", device: str | None = None):
     """Get comprehensive health status for a site."""
     return await site_tools.get_site_health(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_site_settings(ctx: Context, site: str = "default", device: str | None = None):
     """Get site configuration settings."""
     return await site_tools.get_site_settings(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_sysinfo(ctx: Context, site: str = "default", device: str | None = None):
     """Get system information for the site controller."""
     return await site_tools.get_sysinfo(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_networks(ctx: Context, site: str = "default", device: str | None = None):
     """Get all network/VLAN configurations."""
     return await site_tools.get_networks(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_wlans(ctx: Context, site: str = "default", device: str | None = None):
     """Get all wireless network (SSID) configurations."""
     return await site_tools.get_wlans(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_port_profiles(ctx: Context, site: str = "default", device: str | None = None):
     """Get switch port profile configurations."""
     return await site_tools.get_port_profiles(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_firewall_rules(ctx: Context, site: str = "default", device: str | None = None):
     """Get firewall rule configurations."""
     return await site_tools.get_firewall_rules(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_firewall_policies(ctx: Context, site: str = "default", device: str | None = None):
+    """Get zone-based firewall policies (UniFi Network 9+)."""
+    return await site_tools.get_firewall_policies(ctx, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_routing_table(ctx: Context, site: str = "default", device: str | None = None):
     """Get the current routing table."""
     return await site_tools.get_routing_table(ctx, site, device)
@@ -209,49 +216,49 @@ async def get_routing_table(ctx: Context, site: str = "default", device: str | N
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_network_health(ctx: Context, site: str = "default", device: str | None = None):
     """Get overall network health summary."""
     return await stat_tools.get_network_health(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_recent_events(ctx: Context, limit: int = 50, site: str = "default", device: str | None = None):
     """Get recent network events."""
     return await stat_tools.get_recent_events(ctx, limit, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_alarms(ctx: Context, site: str = "default", device: str | None = None):
     """Get active alarms."""
     return await stat_tools.get_alarms(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
 async def archive_all_alarms(ctx: Context, site: str = "default", device: str | None = None):
     """Archive all active alarms."""
     return await stat_tools.archive_all_alarms(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
 async def run_speed_test(ctx: Context, site: str = "default", device: str | None = None):
     """Initiate a WAN speed test."""
     return await stat_tools.run_speed_test(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_speed_test_status(ctx: Context, site: str = "default", device: str | None = None):
     """Get speed test status and results."""
     return await stat_tools.get_speed_test_status(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_dpi_stats(ctx: Context, site: str = "default", device: str | None = None):
     """Get Deep Packet Inspection statistics for the site."""
     return await stat_tools.get_dpi_stats(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_traffic_summary(ctx: Context, site: str = "default", device: str | None = None):
     """Get traffic summary for the site."""
     return await stat_tools.get_traffic_summary(ctx, site, device)
@@ -262,7 +269,7 @@ async def get_traffic_summary(ctx: Context, site: str = "default", device: str |
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def analyze_network_issues(ctx: Context, site: str = "default", device: str | None = None):
     """
     Analyze the network for potential issues and return a structured report.
@@ -273,7 +280,7 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
     return await insight_tools.analyze_network_issues(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_optimization_recommendations(ctx: Context, site: str = "default", device: str | None = None):
     """
     Analyze network configuration and provide optimization recommendations.
@@ -284,7 +291,7 @@ async def get_optimization_recommendations(ctx: Context, site: str = "default", 
     return await insight_tools.get_optimization_recommendations(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_client_experience_report(ctx: Context, site: str = "default", device: str | None = None):
     """
     Generate a client experience report with connection quality metrics.
@@ -295,7 +302,7 @@ async def get_client_experience_report(ctx: Context, site: str = "default", devi
     return await insight_tools.get_client_experience_report(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_device_health_summary(ctx: Context, site: str = "default", device: str | None = None):
     """
     Summarize device health across all APs, switches, and routers.
@@ -306,7 +313,7 @@ async def get_device_health_summary(ctx: Context, site: str = "default", device:
     return await insight_tools.get_device_health_summary(ctx, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_traffic_analysis(ctx: Context, hours: int = 24, site: str = "default", device: str | None = None):
     """
     Analyze traffic patterns over the specified time period.
@@ -317,7 +324,7 @@ async def get_traffic_analysis(ctx: Context, hours: int = 24, site: str = "defau
     return await insight_tools.get_traffic_analysis(ctx, hours, site, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def troubleshoot_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
     """
     Deep-dive troubleshooting for a specific client.
@@ -333,19 +340,19 @@ async def troubleshoot_client(ctx: Context, mac: str, site: str = "default", dev
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def list_cameras(ctx: Context, device: str | None = None):
     """List all UniFi Protect cameras with status."""
     return await protect_tools.list_cameras(ctx, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_camera_details(ctx: Context, camera_id: str, device: str | None = None):
     """Get detailed information about a specific camera."""
     return await protect_tools.get_camera_details(ctx, camera_id, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_camera_snapshot(
     ctx: Context,
     camera_id: str,
@@ -361,13 +368,13 @@ async def get_camera_snapshot(
     return await protect_tools.get_camera_snapshot(ctx, camera_id, device, width, height)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_protect_system_info(ctx: Context, device: str | None = None):
     """Get UniFi Protect system information including camera and accessory counts."""
     return await protect_tools.get_protect_system_info(ctx, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_camera_health_summary(ctx: Context, device: str | None = None):
     """
     Get a health summary of all cameras.
@@ -377,13 +384,13 @@ async def get_camera_health_summary(ctx: Context, device: str | None = None):
     return await protect_tools.get_camera_health_summary(ctx, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_liveviews(ctx: Context, device: str | None = None):
     """Get all configured Protect liveviews."""
     return await protect_tools.get_liveviews(ctx, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_protect_accessories(ctx: Context, device: str | None = None):
     """Get all Protect accessories (lights, sensors, chimes, viewers)."""
     return await protect_tools.get_protect_accessories(ctx, device)
@@ -394,7 +401,7 @@ async def get_protect_accessories(ctx: Context, device: str | None = None):
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_motion_events(
     ctx: Context,
     hours: int = 24,
@@ -410,7 +417,7 @@ async def get_motion_events(
     return await protect_tools.get_motion_events(ctx, hours, limit, camera_id, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_smart_detections(
     ctx: Context,
     hours: int = 24,
@@ -426,7 +433,7 @@ async def get_smart_detections(
     return await protect_tools.get_smart_detections(ctx, hours, limit, detection_type, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_protect_event_summary(ctx: Context, hours: int = 24, device: str | None = None):
     """
     Get a summary of all Protect events for the time period.
@@ -437,7 +444,7 @@ async def get_protect_event_summary(ctx: Context, hours: int = 24, device: str |
     return await protect_tools.get_event_summary(ctx, hours, device)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_recent_protect_activity(ctx: Context, limit: int = 20, device: str | None = None):
     """
     Get recent activity across all cameras.
@@ -453,7 +460,7 @@ async def get_recent_protect_activity(ctx: Context, limit: int = 20, device: str
 # =============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def list_unifi_devices(ctx: Context):
     """
     List all configured UniFi devices.

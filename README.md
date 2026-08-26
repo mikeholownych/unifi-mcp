@@ -1,5 +1,7 @@
 # UniFi MCP Server
 
+[![CI](https://github.com/mikeholownych/unifi-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/mikeholownych/unifi-mcp/actions/workflows/ci.yml)
+
 An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities.
 
 > **Credits:** This project started as a fork of [gbassaragh/Unifi-mcp](https://github.com/gbassaragh/Unifi-mcp) and has since evolved into a fully independent project. Thanks to [@gbassaragh](https://github.com/gbassaragh) for the excellent starting point.
@@ -225,7 +227,8 @@ Or in `opencode.json`:
 - `get_networks` - Get network/VLAN configs
 - `get_wlans` - Get wireless network configs
 - `get_port_profiles` - Get switch port profiles
-- `get_firewall_rules` - Get firewall rules
+- `get_firewall_rules` - Get legacy firewall rules
+- `get_firewall_policies` - Get zone-based firewall policies (UniFi Network 9+)
 - `get_routing_table` - Get routing table
 
 ### Statistics & Monitoring
@@ -311,6 +314,15 @@ uv run pytest
 uv run ruff check .
 uv run ruff format .
 ```
+
+### Docker
+
+```bash
+docker build -t unifi-mcp .
+docker run -i --rm --env-file .env unifi-mcp
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and [CONTRIBUTING.md](CONTRIBUTING.md) to contribute.
 
 ## Security Notes
 

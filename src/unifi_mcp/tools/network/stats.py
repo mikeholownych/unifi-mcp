@@ -14,7 +14,7 @@ def _get_client(ctx: Context, device: str | None = None) -> UniFiNetworkClient:
     return UniFiNetworkClient(app_ctx, device_name=device)
 
 
-async def get_network_health(ctx: Context, site: str = "default") -> dict[str, Any]:
+async def get_network_health(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
     """Get overall network health summary.
 
     Provides a quick overview of network status including device counts,
@@ -27,7 +27,7 @@ async def get_network_health(ctx: Context, site: str = "default") -> dict[str, A
     Returns:
         Network health summary with device and client statistics.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
 
     # Get health data
     health_data = await client.get_site_health(site)
@@ -126,7 +126,7 @@ async def get_recent_events(
     return result
 
 
-async def get_alarms(ctx: Context, site: str = "default") -> list[dict[str, Any]]:
+async def get_alarms(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
     """Get active alarms.
 
     Args:
@@ -136,7 +136,7 @@ async def get_alarms(ctx: Context, site: str = "default") -> list[dict[str, Any]
     Returns:
         List of active alarms with severity, type, and details.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     alarms = await client.get_alarms(site)
 
     result = []
@@ -155,7 +155,7 @@ async def get_alarms(ctx: Context, site: str = "default") -> list[dict[str, Any]
     return result
 
 
-async def archive_all_alarms(ctx: Context, site: str = "default") -> dict[str, Any]:
+async def archive_all_alarms(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
     """Archive all active alarms.
 
     Args:
@@ -165,7 +165,7 @@ async def archive_all_alarms(ctx: Context, site: str = "default") -> dict[str, A
     Returns:
         Command result.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     result = await client.archive_alarms(site)
 
     return {
@@ -174,7 +174,7 @@ async def archive_all_alarms(ctx: Context, site: str = "default") -> dict[str, A
     }
 
 
-async def run_speed_test(ctx: Context, site: str = "default") -> dict[str, Any]:
+async def run_speed_test(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
     """Initiate a WAN speed test.
 
     Starts a speed test on the gateway device. Results can be retrieved
@@ -187,7 +187,7 @@ async def run_speed_test(ctx: Context, site: str = "default") -> dict[str, Any]:
     Returns:
         Speed test initiation result.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     result = await client.run_speed_test(site)
 
     return {
@@ -196,7 +196,7 @@ async def run_speed_test(ctx: Context, site: str = "default") -> dict[str, Any]:
     }
 
 
-async def get_speed_test_status(ctx: Context, site: str = "default") -> dict[str, Any]:
+async def get_speed_test_status(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
     """Get speed test status and results.
 
     Args:
@@ -206,7 +206,7 @@ async def get_speed_test_status(ctx: Context, site: str = "default") -> dict[str
     Returns:
         Speed test status and results including upload/download speeds.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     result = await client.get_speed_test_status(site)
 
     data = result.get("data", [{}])[0] if result.get("data") else {}
@@ -228,7 +228,7 @@ async def get_speed_test_status(ctx: Context, site: str = "default") -> dict[str
     }
 
 
-async def get_dpi_stats(ctx: Context, site: str = "default") -> dict[str, Any]:
+async def get_dpi_stats(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
     """Get Deep Packet Inspection statistics for the site.
 
     Shows traffic breakdown by application category and specific applications.
@@ -240,7 +240,7 @@ async def get_dpi_stats(ctx: Context, site: str = "default") -> dict[str, Any]:
     Returns:
         DPI statistics with application breakdown.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     dpi_data = await client.get_dpi_stats(site)
 
     # Organize by category
@@ -283,7 +283,7 @@ async def get_dpi_stats(ctx: Context, site: str = "default") -> dict[str, Any]:
     }
 
 
-async def get_traffic_summary(ctx: Context, site: str = "default") -> dict[str, Any]:
+async def get_traffic_summary(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
     """Get traffic summary for the site.
 
     Provides aggregate traffic statistics from all devices and clients.
@@ -295,7 +295,7 @@ async def get_traffic_summary(ctx: Context, site: str = "default") -> dict[str, 
     Returns:
         Traffic summary with total bytes and per-device breakdown.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
 
     # Get device traffic
     devices = await client.get_devices(site)

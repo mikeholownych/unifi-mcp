@@ -63,6 +63,10 @@ class UniFiHTTPClient:
         """
         self.ctx = ctx
         self.device = device
+        # Short-lived cache for read requests (GET). Keeps repeated tool
+        # calls within a single conversation turn fast without serving
+        # meaningfully stale data.
+        self._read_cache: TTLCache = TTLCache(maxsize=256, ttl=15)
 
     @property
     def _base_url(self) -> str:
@@ -135,6 +139,7 @@ class UniFiHTTPClient:
         self,
         method: str,
         endpoint: str,
+        _no_cache: bool = False,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Make an authenticated API request.
@@ -142,6 +147,7 @@ class UniFiHTTPClient:
         Args:
             method: HTTP method
             endpoint: API endpoint (will be appended to base URL)
+            _no_cache: Skip the read cache (used for cache-busting)
             **kwargs: Additional arguments (json, params, etc.)
 
         Returns:
@@ -151,6 +157,15 @@ class UniFiHTTPClient:
             UniFiAPIError: For API errors
         """
         url = f"{self._base_url}{endpoint}"
+
+        cacheable = method == "GET" and not _no_cache
+        cache_key: tuple[Any, ...] | None = None
+        if cacheable:
+            cache_key = (endpoint, tuple(sorted((k, str(v)) for k, v in kwargs.items())))
+            cached = self._read_cache.get(cache_key)
+            if cached is not None:
+                logger.debug("Cache hit for GET %s", endpoint)
+                return cached
 
         response = await self._make_request(method, url, **kwargs)
 
@@ -175,7 +190,10 @@ class UniFiHTTPClient:
         if response.status_code >= 400:
             await self._handle_error_response(response)
 
-        return self._parse_response(response)
+        parsed = self._parse_response(response)
+        if cacheable and cache_key is not None:
+            self._read_cache[cache_key] = parsed
+        return parsed
 
     async def get(self, endpoint: str, **kwargs: Any) -> dict[str, Any]:
         """Make a GET request."""

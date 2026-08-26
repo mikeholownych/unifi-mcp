@@ -285,6 +285,54 @@ async def get_firewall_rules(ctx: Context, site: str = "default", device: str | 
     return result
 
 
+async def get_firewall_policies(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
+    """Get zone-based firewall policies (UniFi Network 9+).
+
+    Modern UniFi OS controllers use zone-based policies instead of legacy
+    firewall rules. Policies are evaluated in index order; the auto-generated
+    "(Return)" companions for custom policies appear with predefined=True.
+
+    Args:
+        ctx: MCP context
+        site: Site name
+
+    Returns:
+        List of firewall policies with source/destination zones and targets.
+    """
+    client = _get_client(ctx, device)
+    policies = await client.get_firewall_policies(site)
+
+    def _side(side: dict[str, Any]) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "zone_id": side.get("zone_id"),
+            "matching_target": side.get("matching_target"),
+            "port_matching_type": side.get("port_matching_type"),
+        }
+        for extra in ("client_macs", "firewall_group_ids", "address_groups", "port_groups"):
+            if side.get(extra):
+                out[extra] = side[extra]
+        return out
+
+    return [
+        {
+            "name": p.get("name", ""),
+            "description": p.get("description") or None,
+            "index": p.get("index"),
+            "enabled": p.get("enabled", True),
+            "action": p.get("action", ""),
+            "protocol": p.get("protocol", "all"),
+            "ip_version": p.get("ip_version", ""),
+            "predefined": p.get("predefined", False),
+            "logging": p.get("logging", False),
+            "hits": p.get("hits"),
+            "schedule": (p.get("schedule") or {}).get("mode"),
+            "source": _side(p.get("source") or {}),
+            "destination": _side(p.get("destination") or {}),
+        }
+        for p in policies
+    ]
+
+
 async def get_routing_table(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
     """Get the current routing table.
 

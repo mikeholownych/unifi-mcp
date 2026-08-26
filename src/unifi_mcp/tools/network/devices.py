@@ -62,7 +62,7 @@ def _format_device_details(device: dict[str, Any]) -> dict[str, Any]:
     return base
 
 
-async def list_devices(ctx: Context, site: str = "default") -> list[dict[str, Any]]:
+async def list_devices(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
     """List all UniFi network devices (APs, switches, routers).
 
     Args:
@@ -73,7 +73,7 @@ async def list_devices(ctx: Context, site: str = "default") -> list[dict[str, An
         List of devices with summary information including name, MAC,
         model, type, IP, state, uptime, and firmware version.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     devices = await client.get_devices(site)
 
     return [_format_device_summary(d) for d in devices]
