@@ -59,6 +59,10 @@ controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3
 | `unifi-internet-down` | read-only triage | "Internet is dead!" — plain-English outage diagnosis, ISP escalation script |
 | `unifi-whos-home` | read-only | "Who's on my WiFi?" — friendly inventory, intruder checks with randomized-MAC awareness |
 | `unifi-setup-new-device` | write-gated | Get any new gadget online: pairing pitfalls (2.4GHz/WPA3), naming, IP reservation |
+| `unifi-dns-triage` | read-only | "Site won't load but ping works" — resolution vs connectivity split, forced-internal-DNS patterns |
+| `unifi-mdns-discovery` | read-only+ | AirPrint/Cast broken across VLANs — mDNS reflection, IGMP/IPTV cautions |
+| `unifi-port-forwarding` | write-gated | Self-hosted service exposure incl. hairpin NAT, CGNAT detection, zone-policy pairing |
+| `unifi-vpn` | write-gated | WireGuard/Teleport setup + failure ladder (handshake/MTU/zone-policies) |
 
 Skills for non-technical users avoid jargon, translate every technical term,
 and require confirmation before disruptive actions.
