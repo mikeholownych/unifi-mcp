@@ -5,6 +5,13 @@ argument-hint: [SSID name]
 disable-model-invocation: true
 ---
 
+## Step 0 — Version check (always first)
+
+Fetch `get_sysinfo` and note the Network application version. The controller
+facts in this skill were verified on **Network 10.x / UniFi OS 5.x**; on older
+versions expect differences (e.g., legacy `stat/alarm` exists, band steering
+uses an older flag). Adapt claims to the version you see.
+
 # UniFi WiFi Optimization
 
 Diagnose and fix wireless performance issues on a UniFi site: channel conflicts,
@@ -56,3 +63,11 @@ to the user for approval before it is applied.
 - One SSID at a time; never bulk-modify all WLANs in one pass.
 - If a client reports breakage right after a change, revert that specific field
   immediately (`update_wlan`) before investigating further.
+
+## Rollback
+## Snapshot before writing
+
+Before ANY change: dump current state with the relevant read tools
+(`get_wlans`, `get_firewall_policies`) and save the JSON to
+`./unifi-backups/<YYYYMMDD>-<scope>.json`. Reference that file for exact
+rollback values if anything misbehaves. Create the directory if needed.

@@ -4,6 +4,13 @@ description: Use when a specific device or client has network problems on UniFi 
 argument-hint: [device name, IP, or MAC]
 ---
 
+## Step 0 — Version check (always first)
+
+Fetch `get_sysinfo` and note the Network application version. The controller
+facts in this skill were verified on **Network 10.x / UniFi OS 5.x**; on older
+versions expect differences (e.g., legacy `stat/alarm` exists, band steering
+uses an older flag). Adapt claims to the version you see.
+
 # UniFi Client Troubleshooting
 
 Systematic diagnosis of a single misbehaving client: connectivity state, RF

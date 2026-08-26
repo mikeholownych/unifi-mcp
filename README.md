@@ -56,6 +56,12 @@ controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3
 | `unifi-troubleshoot-client` | read-only | Diagnose a misbehaving device: RF, roaming, blocking, IP layer |
 | `unifi-wifi-optimize` | write-gated | Channel plan, widths, WPA3 transition, band steering — approval-gated |
 | `unifi-grant-device-access` | write-gated | Give a device a reserved IP + scoped zone-firewall access |
+| `unifi-internet-down` | read-only triage | "Internet is dead!" — plain-English outage diagnosis, ISP escalation script |
+| `unifi-whos-home` | read-only | "Who's on my WiFi?" — friendly inventory, intruder checks with randomized-MAC awareness |
+| `unifi-setup-new-device` | write-gated | Get any new gadget online: pairing pitfalls (2.4GHz/WPA3), naming, IP reservation |
+
+Skills for non-technical users avoid jargon, translate every technical term,
+and require confirmation before disruptive actions.
 
 **Install** (per project): copy into `.claude/skills/`:
 

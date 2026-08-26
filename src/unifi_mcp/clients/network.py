@@ -560,6 +560,40 @@ class UniFiNetworkClient(UniFiHTTPClient):
         response = await self.post(endpoint, json=payload)
         return response
 
+    async def set_client_fixed_ip(
+        self,
+        client_id: str,
+        fixed_ip: str | None,
+        site: str | None = None,
+    ) -> dict[str, Any]:
+        """Set or clear a DHCP reservation (fixed IP) for a client.
+
+        Args:
+            client_id: Client record ID (from stat/alluser / rest/user)
+            fixed_ip: IP address to reserve; None clears the reservation
+            site: Site name
+
+        Returns:
+            Updated client record
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("DHCP reservations")
+
+        endpoint = self._site_endpoint(f"rest/user/{client_id}", site)
+        data: dict[str, Any] = (
+            {"use_fixedip": True, "fixed_ip": fixed_ip}
+            if fixed_ip
+            else {"use_fixedip": False}
+        )
+        response = await self.put(endpoint, json=data)
+        updated = (response.get("data") or [{}])[0]
+        if updated:
+            return updated
+        # Some controller versions return an empty array on no-op PUTs;
+        # fall back to reading the record back for verification.
+        record = await self.get(endpoint)
+        return (record.get("data") or [{}])[0]
+
     # =========================================================================
     # Statistics & Events
     # =========================================================================

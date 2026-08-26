@@ -146,6 +146,18 @@ async def get_client_traffic(ctx: Context, mac: str, site: str = "default", devi
     return await client_tools.get_client_traffic(ctx, mac, site, device)
 
 
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def reserve_client_ip(
+    ctx: Context,
+    client: str,
+    ip: str | None = None,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Reserve a device's current IP (or a specific one) via DHCP reservation."""
+    return await client_tools.reserve_client_ip(ctx, client, ip, site, device)
+
+
 # =============================================================================
 # Site Management Tools
 # =============================================================================

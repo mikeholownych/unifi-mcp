@@ -5,6 +5,13 @@ argument-hint: [device name or IP]
 disable-model-invocation: true
 ---
 
+## Step 0 — Version check (always first)
+
+Fetch `get_sysinfo` and note the Network application version. The controller
+facts in this skill were verified on **Network 10.x / UniFi OS 5.x**; on older
+versions expect differences (e.g., legacy `stat/alarm` exists, band steering
+uses an older flag). Adapt claims to the version you see.
+
 # UniFi Grant Device Access
 
 Guarantee a specific device (e.g., a desktop, server, or NAS) can always reach
@@ -64,3 +71,11 @@ scoped to that device's MACs.
 - Never delete or modify existing custom rules without explicit instruction.
 - Max ~10 new policies per run; batch larger requests into groups.
 - Report which zones remain unreachable for the device and why.
+
+## Rollback
+## Snapshot before writing
+
+Before ANY change: dump current state with the relevant read tools
+(`get_wlans`, `get_firewall_policies`) and save the JSON to
+`./unifi-backups/<YYYYMMDD>-<scope>.json`. Reference that file for exact
+rollback values if anything misbehaves. Create the directory if needed.

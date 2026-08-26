@@ -4,6 +4,13 @@ description: Use when someone asks to audit their UniFi network, check network h
 argument-hint: [site name]
 ---
 
+## Step 0 — Version check (always first)
+
+Fetch `get_sysinfo` and note the Network application version. The controller
+facts in this skill were verified on **Network 10.x / UniFi OS 5.x**; on older
+versions expect differences (e.g., legacy `stat/alarm` exists, band steering
+uses an older flag). Adapt claims to the version you see.
+
 # UniFi Network Audit
 
 Comprehensive read-only audit of a UniFi site: device health, client experience,

@@ -300,3 +300,71 @@ async def get_client_traffic(
         },
         "dpi_applications": dpi_stats,
     }
+
+
+async def reserve_client_ip(
+    ctx: Context,
+    client: str,
+    ip: str | None = None,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Reserve a device's current IP (or assign a specific one) via DHCP reservation.
+
+    The device keeps getting the same address forever. If ip is omitted, the
+    device's current IP is reserved.
+
+    Args:
+        ctx: MCP context
+        client: Client name, MAC, or IP
+        ip: Specific IP to reserve; defaults to the client's current IP
+        site: Site name
+        device: Optional device name to target
+
+    Returns:
+        Reservation status
+    """
+    import ipaddress
+
+    cl = _get_client(ctx, device)
+    all_clients = await cl.get_all_clients(site)
+
+    target = None
+    needle = client.lower()
+    for c in all_clients:
+        mac = (c.get("mac") or "").lower()
+        if needle in (mac, (c.get("name") or "").lower(), (c.get("hostname") or "").lower()):
+            target = c
+            break
+        if c.get("ip") and c["ip"] == client:
+            target = c
+            break
+    if target is None:
+        # Fall back to live station list (has IPs for DHCP clients)
+        sta = await cl.get_clients(site)
+        for c in sta:
+            if needle == (c.get("mac") or "").lower() or c.get("ip") == client:
+                target = {**c}
+                break
+    if target is None:
+        return {"success": False, "message": f"Client not found: {client}"}
+
+    cid = target.get("_id")
+    mac = target.get("mac", "")
+    name = target.get("name") or target.get("hostname") or mac
+    current_ip = target.get("ip") or target.get("fixed_ip")
+    reserve_ip = ip or current_ip
+    if not reserve_ip:
+        return {"success": False, "message": f"{name} has no current IP; pass an explicit ip parameter."}
+    try:
+        ipaddress.ip_address(reserve_ip)
+    except ValueError:
+        return {"success": False, "message": f"Invalid IP: {reserve_ip}"}
+
+    updated = await cl.set_client_fixed_ip(cid, reserve_ip, site)
+    return {
+        "success": bool(updated),
+        "client": name,
+        "mac": mac,
+        "reserved_ip": updated.get("fixed_ip") if updated else None,
+    }

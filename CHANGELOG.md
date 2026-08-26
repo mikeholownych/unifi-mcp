@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-08-26
+
+### Added
+- `reserve_client_ip` tool - DHCP reservations by client name/MAC/IP
+  (closes a gap where skills referenced an operation no tool performed).
+- Seven bundled agent skills (audit, troubleshoot-client, wifi-optimize,
+  grant-device-access, internet-down, whos-home, setup-new-device) encoding
+  live-verified controller knowledge; write skills approval-gated.
+- Skills include pre-change snapshot discipline and controller-version checks.
+
+### Fixed
+- `set_client_fixed_ip` verifies via read-back when controllers return an
+  empty data array on no-op PUTs.
+
 ## [0.4.0] - 2026-08-26
 
 ### Added
