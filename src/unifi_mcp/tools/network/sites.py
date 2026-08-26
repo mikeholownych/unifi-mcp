@@ -220,6 +220,10 @@ async def get_wlans(ctx: Context, site: str = "default", device: str | None = No
             "mac_filter_policy": wlan.get("mac_filter_policy"),
             "schedule_enabled": wlan.get("schedule_enabled", False),
             "band_steering": wlan.get("band_steering", "off"),
+            "wpa3_support": wlan.get("wpa3_support"),
+            "wpa3_transition": wlan.get("wpa3_transition"),
+            "pmf_mode": wlan.get("pmf_mode"),
+            "bss_transition": wlan.get("bss_transition"),
         })
 
     return result
