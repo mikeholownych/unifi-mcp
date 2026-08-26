@@ -27,6 +27,12 @@ scoped to that device's MACs.
 
 - Zone firewall policies are per src-zone→dst-zone pairs; there is no "any zone"
   target. One rule per pair is required.
+- **Deriving the source zone**: the controller does not expose zone names or a
+  networks→zones mapping. Find it by locating an existing custom policy scoped
+  to known devices on the same network (`source.client_macs` of rules like
+  "Allow <user> to X ALL") and copying its `source.zone_id`. Do not guess by
+  elimination — gateway-like zones allow-all everywhere and look similar to
+  home zones in policy dumps.
 - The controller auto-creates "(Return)" companion policies for custom rules.
 - Some zone pairs are **rejected at creation** ("traffic not allowed") — typically
   ISP-managed IPTV and WAN pairs. Surface the verbatim error and skip that pair;
