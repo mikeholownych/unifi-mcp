@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-08-26
+
+### Added
+- **Multi-site orchestration tools**: `get_global_inventory`, `get_global_health`,
+  `get_global_client_summary` — aggregate data across all configured controllers.
+- **Benchmark harness** (`scripts/benchmark_skills.py`): 8 test scenarios with
+  rubric scoring (correctness, safety, depth, communication). Generates JSON reports.
+- `conftest.py` with shared `mock_ctx` fixture for unit tests.
+
 ## [0.7.0] - 2026-08-26
 
 ### Added

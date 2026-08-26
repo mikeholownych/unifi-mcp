@@ -11,6 +11,7 @@ from unifi_mcp.config import settings
 from unifi_mcp.tools.network import clients as client_tools
 from unifi_mcp.tools.network import devices as device_tools
 from unifi_mcp.tools.network import insights as insight_tools
+from unifi_mcp.tools.network import multisite as multisite_tools
 from unifi_mcp.tools.network import sites as site_tools
 from unifi_mcp.tools.network import stats as stat_tools
 from unifi_mcp.tools.protect import cameras as protect_tools
@@ -36,9 +37,11 @@ mcp = FastMCP(
     - Network statistics and monitoring
     - AI-powered network analysis and troubleshooting
     - UniFi Protect camera management and snapshots
+    - Multi-site orchestration (global inventory, health, client summary)
 
     Supports multiple UniFi devices. Use list_unifi_devices to see configured devices.
     Use the 'device' parameter to target specific devices when you have multiple.
+    Use get_global_health / get_global_inventory for cross-device aggregation.
 
     Use the insight tools (analyze_network_issues, get_optimization_recommendations, etc.)
     for comprehensive network analysis and recommendations.
@@ -617,6 +620,44 @@ async def list_unifi_devices(ctx: Context):
         "network_devices": [d.name for d in settings.get_network_devices()],
         "protect_devices": [d.name for d in settings.get_protect_devices()],
     }
+
+
+# ---------------------------------------------------------------------------
+# Multi-site orchestration tools
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_global_inventory(ctx: Context) -> dict:
+    """
+    Get a unified inventory of all devices across all configured controllers.
+
+    Aggregates list_devices from every network-enabled UniFi device.
+    Use this to see the full picture across gateways, sites, or locations.
+    """
+    return await multisite_tools.get_global_inventory(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_global_health(ctx: Context) -> dict:
+    """
+    Get health summary across all configured controllers.
+
+    Collects site health from every network-enabled device and produces
+    a unified health report with per-device breakdowns.
+    """
+    return await multisite_tools.get_global_health(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_global_client_summary(ctx: Context) -> dict:
+    """
+    Get a summary of all connected clients across all controllers.
+
+    Aggregates client counts, top talkers, and blocked clients
+    across the entire infrastructure.
+    """
+    return await multisite_tools.get_global_client_summary(ctx)
 
 
 def main():

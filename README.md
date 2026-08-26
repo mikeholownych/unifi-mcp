@@ -10,7 +10,7 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 
 - **Fixed local session authentication routing** — in `UNIFI_MODE=local`, requests now correctly use the traditional controller API (`/proxy/network`) with cookie + CSRF session auth. Upstream always routed through the Integration API regardless of mode.
 - **Mode-aware base URL resolution** — `api_base_url` now respects the configured auth mode instead of unconditionally returning the Integration API endpoint.
-- **Expanded test suite** — 51 passing tests covering config, network client behavior, server tool registration, and Protect integrations.
+- **Expanded test suite** — 57 passing tests covering config, network client behavior, server tool registration, and Protect integrations.
 
 ## Features
 
@@ -295,6 +295,12 @@ Write tools that remove data or cause disruption are confirm-gated or flagged de
 - `get_client_experience_report` - Client quality metrics
 - `get_device_health_summary` - Device health overview
 - `get_traffic_analysis` - Traffic pattern analysis
+- `get_all_sites_health` - Health overview across all sites
+
+### Multi-Site Orchestration
+- `get_global_inventory` - Unified device inventory across all controllers
+- `get_global_health` - Aggregated health report across all controllers
+- `get_global_client_summary` - Client counts, top talkers, blocked clients across all controllers
 - `troubleshoot_client` - Deep-dive client troubleshooting
 
 ### UniFi Protect

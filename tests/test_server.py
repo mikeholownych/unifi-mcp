@@ -9,7 +9,7 @@ from unifi_mcp.server import mcp
 class TestToolRegistration:
     async def test_all_tools_registered(self):
         tools = await mcp.list_tools()
-        assert len(tools) >= 45
+        assert len(tools) >= 48
 
     async def test_every_tool_has_description(self):
         tools = await mcp.list_tools()
@@ -19,7 +19,8 @@ class TestToolRegistration:
     async def test_network_tools_support_device_targeting(self):
         tools = {t.name: t for t in await mcp.list_tools()}
         for name, tool in tools.items():
-            if name in ("list_unifi_devices",):
+            if name in ("list_unifi_devices", "get_global_inventory",
+                        "get_global_health", "get_global_client_summary"):
                 continue
             if name.startswith(
                 (
