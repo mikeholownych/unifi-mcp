@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-08-26
+
+### Added
+- Five more skills: `unifi-firmware-campaign`, `unifi-mesh-backhaul`,
+  `unifi-ids-ips-triage`, `unifi-backup-migration`, and `unifi-network-map`
+  (persistent labeled topology artifact that other skills reference).
+- Sixteen bundled skills total.
+
 ## [0.5.0] - 2026-08-26
 
 ### Added

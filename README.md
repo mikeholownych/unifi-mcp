@@ -63,6 +63,11 @@ controller-specific gotchas (Network 10 removed endpoints, zone-pair rules, WPA3
 | `unifi-mdns-discovery` | read-only+ | AirPrint/Cast broken across VLANs — mDNS reflection, IGMP/IPTV cautions |
 | `unifi-port-forwarding` | write-gated | Self-hosted service exposure incl. hairpin NAT, CGNAT detection, zone-policy pairing |
 | `unifi-vpn` | write-gated | WireGuard/Teleport setup + failure ladder (handshake/MTU/zone-policies) |
+| `unifi-firmware-campaign` | write-gated | Staged firmware updates: snapshot, canary, verify, stuck-device ladder |
+| `unifi-mesh-backhaul` | read-only | Slow far-room WiFi: wireless-uplink/hop diagnosis, wired-backhaul guidance |
+| `unifi-ids-ips-triage` | read-only+ | Threat alerts: false-positive vs real, suppression, IPS throughput cost |
+| `unifi-backup-migration` | write-gated | What backups contain, migration rules of thumb, pre-migration snapshots |
+| `unifi-network-map` | doc-writer | Persistent labeled topology (zones/VLANs/deps) that sharpens every other skill |
 
 Skills for non-technical users avoid jargon, translate every technical term,
 and require confirmation before disruptive actions.
