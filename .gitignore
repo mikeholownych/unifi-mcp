@@ -1,0 +1,79 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- Virtual environments ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- Environment & secrets ---
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets.json
+
+# --- Testing ---
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# --- Linters / type checkers ---
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+dmypy.json
+
+# --- IDEs ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Agent / tooling artifacts ---
+.claude/
+.opencode/
+CLAUDE.md
+*.log
+logs/
+
+# --- Build artifacts ---
+poetry.lock.bak
+uv.lock.bak

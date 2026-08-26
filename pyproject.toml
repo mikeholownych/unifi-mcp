@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "unifi-mcp"
+version = "0.2.0"
+description = "MCP server for UniFi Network and Protect API integration"
+readme = "README.md"
+license = "MIT"
+authors = ["Mike Holownych <mike@holownych.com>"]
+keywords = ["mcp", "unifi", "ubiquiti", "network", "automation"]
+packages = [{include = "unifi_mcp", from = "src"}]
+
+[tool.poetry.urls]
+Repository = "https://github.com/mikeholownych/unifi-mcp"
+"Original Project" = "https://github.com/gbassaragh/Unifi-mcp"
+
+[tool.poetry.dependencies]
+python = "^3.14"
+mcp = "^1.9.0"
+httpx = "^0.28.0"
+pydantic = "^2.0"
+pydantic-settings = "^2.0"
+tenacity = "^8.0.0"
+cachetools = "^5.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.24.0"
+respx = "^0.21.0"
+ruff = "^0.8.0"
+
+[tool.poetry.group.protect.dependencies]
+uiprotect = {version = "^6.0.0", optional = true}
+
+[tool.poetry.scripts]
+unifi-mcp = "unifi_mcp.server:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
