@@ -1,0 +1,9 @@
+{
+  "name": "unifi-mcp",
+  "description": "MCP server for Ubiquiti UniFi Network and Protect with 63 tools for device management, client monitoring, VLAN/firewall configuration, WiFi optimization, camera snapshots, and multi-site orchestration.",
+  "repository": "https://github.com/mikeholownych/unifi-mcp",
+  "homepage": "https://github.com/mikeholownych/unifi-mcp",
+  "license": "MIT",
+  "category": "networking",
+  "tags": ["unifi", "ubiquiti", "network", "firewall", "wifi", "iot", "monitoring"]
+}

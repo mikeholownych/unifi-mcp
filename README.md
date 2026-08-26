@@ -3,6 +3,7 @@
 mcp-name: io.github.mikeholownych/unifi-mcp
 
 [![CI](https://github.com/mikeholownych/unifi-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/mikeholownych/unifi-mcp/actions/workflows/ci.yml)
+[![unifi-mcp MCP server](https://glama.ai/mcp/servers/mikeholownych/unifi-mcp/badges/score.svg)](https://glama.ai/mcp/servers/mikeholownych/unifi-mcp)
 
 An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities.
 
