@@ -2516,4 +2516,4 @@ protect = ["uiprotect"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "aa08585370ec3ea967f8fc6cf89605c295c1152f05be0cae8546c692e9257af1"
+content-hash = "b2c14ca920dcdd96e4ccf38ac05196edd1d2e4d5e67e954919f6a9451166d239"

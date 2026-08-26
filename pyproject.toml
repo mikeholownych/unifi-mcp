@@ -1,6 +1,6 @@
 [project]
 name = "mcp-unifi"
-version = "0.8.2"
+version = "0.8.3"
 description = "MCP server for UniFi Network and Protect API integration"
 readme = "README.md"
 license = "MIT"
@@ -35,7 +35,7 @@ Repository = "https://github.com/mikeholownych/unifi-mcp"
 
 [tool.poetry.dependencies]
 python = ">=3.11"
-mcp = "^1.9.0"
+mcp = ">=1.9.0,<2"
 httpx = "^0.28.0"
 pydantic = "^2.0"
 pydantic-settings = "^2.0"
