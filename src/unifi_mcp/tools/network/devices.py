@@ -80,7 +80,7 @@ async def list_devices(ctx: Context, site: str = "default", device: str | None =
 
 
 async def get_device_details(
-    ctx: Context, mac: str, site: str = "default"
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
 ) -> dict[str, Any]:
     """Get detailed information about a specific device.
 
@@ -93,7 +93,7 @@ async def get_device_details(
         Detailed device information including ports, radios, uplink,
         system stats, temperatures, and traffic statistics.
     """
-    client = _get_client(ctx)
+    client = _get_client(ctx, device)
     device = await client.get_device(mac, site)
 
     return _format_device_details(device)
