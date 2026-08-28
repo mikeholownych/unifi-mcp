@@ -377,6 +377,8 @@ class TestRuntimeLifespan:
         cleanup_events = []
         http_client = AsyncMock()
         http_client.aclose.side_effect = lambda: cleanup_events.append("http")
+        webhook_client = AsyncMock()
+        webhook_client.aclose.side_effect = lambda: cleanup_events.append("webhook")
 
         async def fail_runtime_close():
             cleanup_events.append("runtime")
@@ -388,7 +390,10 @@ class TestRuntimeLifespan:
 
         with (
             patch("unifi_mcp.clients.base.settings", settings),
-            patch("unifi_mcp.clients.base.httpx.AsyncClient", return_value=http_client),
+            patch(
+                "unifi_mcp.clients.base.httpx.AsyncClient",
+                side_effect=[http_client, webhook_client],
+            ),
             patch.object(RuntimeStore, "open", new_callable=AsyncMock),
             patch.object(
                 RuntimeStore, "close", new_callable=AsyncMock, side_effect=fail_runtime_close
@@ -401,4 +406,4 @@ class TestRuntimeLifespan:
                 pass
 
         assert raised.value is runtime_error
-        assert cleanup_events == ["runtime", "logout", "http"]
+        assert cleanup_events == ["webhook", "runtime", "logout", "http"]

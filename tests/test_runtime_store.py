@@ -160,7 +160,10 @@ async def test_open_rejects_database_from_newer_schema_version(tmp_path):
 
     store = RuntimeStore(database_path)
 
-    with pytest.raises(UniFiConfigError, match=r"schema version 2.*supports version 1"):
+    with pytest.raises(
+        UniFiConfigError,
+        match=rf"schema version {SCHEMA_VERSION + 1}.*supports version {SCHEMA_VERSION}",
+    ):
         await store.open()
 
     assert store.connected is False

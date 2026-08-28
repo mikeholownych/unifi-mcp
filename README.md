@@ -14,7 +14,7 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 
 - **Fixed local session authentication routing** — in `UNIFI_MODE=local`, requests now correctly use the traditional controller API (`/proxy/network`) with cookie + CSRF session auth. Upstream always routed through the Integration API regardless of mode.
 - **Mode-aware base URL resolution** — `api_base_url` now respects the configured auth mode instead of unconditionally returning the Integration API endpoint.
-- **Expanded test suite** — 100+ passing tests covering configuration, MCP compatibility, runtime persistence, network client behavior, server tool registration, and Protect integrations.
+- **Expanded test suite** — 250+ passing tests covering configuration, MCP compatibility, runtime persistence, network client behavior, server tool registration, and Protect integrations.
 
 ## Features
 
@@ -36,6 +36,13 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 - Target specific devices by name — **all** network and Protect tools accept an optional `device` parameter
 - Per-device API keys: each configured device authenticates with its own key
 - Mix of Network and Protect services across devices
+
+### Events and Safe Automation
+- Normalize and durably deduplicate Network and Protect events in optional SQLite storage
+- Poll each configured source independently and report unsupported capabilities explicitly
+- Run only three built-in interval jobs: `poll_events`, `retry_webhook_deliveries`, and `prune_runtime_data`
+- Deliver filtered, signed HTTPS webhooks with bounded retries and dead-letter state
+- Keep persistence, background automation, and private webhook destinations disabled by default
 
 ### Authentication Modes
 
@@ -158,6 +165,34 @@ UNIFI_RUNTIME_DATABASE=/var/lib/unifi-mcp/runtime.db
 ```
 
 `UNIFI_DATA_DIR` and `UNIFI_RUNTIME_DATABASE` must resolve to absolute paths. `UNIFI_RUNTIME_DATABASE` overrides the database derived from `UNIFI_DATA_DIR`.
+
+### Events, Schedules, and Webhooks
+
+Runtime persistence enables event storage and management tools, but does not start background work. Enable the scheduler separately:
+
+```bash
+UNIFI_RUNTIME_ENABLED=true
+UNIFI_AUTOMATION_ENABLED=true
+```
+
+Event ingestion is capability-based polling, not a claim of universal UniFi push support:
+
+- Network event polling requires traditional local session auth with `UNIFI_MODE=local`.
+- Protect event polling requires a configured local `username` and `password` for each Protect device.
+- Integration API and cloud Network configurations are reported as unsupported for event polling.
+- Polling uses overlap plus durable source-key deduplication so timestamp boundaries do not create duplicate records.
+
+Schedules can invoke only `poll_events`, `retry_webhook_deliveries`, or `prune_runtime_data`. Schedule and webhook mutations require `confirm=true`; arbitrary MCP tool names, commands, imports, and expressions are rejected.
+
+Webhook destinations use HTTPS, do not follow redirects, and are resolved and checked before every attempt. Loopback, private, link-local, multicast, and reserved addresses are rejected unless `UNIFI_WEBHOOK_ALLOW_PRIVATE=true`. The dedicated webhook client retains certificate verification even when a UniFi controller uses a self-signed certificate.
+
+Signing secrets never enter SQLite or MCP arguments. Set a secret in the server environment, then pass only its variable name as `secret_env_name`:
+
+```bash
+WEBHOOK_SECRET_AUTOMATION='replace-with-a-random-secret'
+```
+
+Useful tools include `get_event_polling_status`, `poll_events_now`, `list_runtime_events`, `create_interval_schedule`, `run_schedule_now`, `list_job_runs`, `create_webhook_destination`, `test_webhook_destination`, and `list_webhook_deliveries`. Retryable jobs and webhook failures use bounded exponential backoff; exhausted deliveries enter `dead_letter` state.
 
 ### Multi-Device Configuration (Recommended)
 

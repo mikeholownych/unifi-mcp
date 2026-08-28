@@ -1,7 +1,8 @@
 """SQLite-backed runtime persistence lifecycle."""
 
 import asyncio
-from contextlib import suppress
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,7 +10,107 @@ import aiosqlite
 
 from unifi_mcp.exceptions import UniFiConfigError
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+
+
+async def _apply_v2(connection: aiosqlite.Connection) -> None:
+    statements = (
+        """
+        CREATE TABLE events (
+            id TEXT PRIMARY KEY,
+            source TEXT NOT NULL,
+            source_key TEXT NOT NULL,
+            device_name TEXT NOT NULL DEFAULT '',
+            site TEXT NOT NULL DEFAULT '',
+            category TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            occurred_at TEXT NOT NULL,
+            observed_at TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            subject_type TEXT,
+            subject_id TEXT,
+            details_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            UNIQUE (source, device_name, site, source_key)
+        )
+        """,
+        """
+        CREATE TABLE event_cursors (
+            source TEXT NOT NULL,
+            device_name TEXT NOT NULL DEFAULT '',
+            site TEXT NOT NULL DEFAULT '',
+            cursor_json TEXT NOT NULL,
+            watermark_at TEXT,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (source, device_name, site)
+        )
+        """,
+        """
+        CREATE TABLE schedules (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            job_name TEXT NOT NULL,
+            interval_seconds INTEGER NOT NULL CHECK (interval_seconds >= 10),
+            arguments_json TEXT NOT NULL DEFAULT '{}',
+            enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+            running INTEGER NOT NULL DEFAULT 0 CHECK (running IN (0, 1)),
+            next_run_at TEXT NOT NULL,
+            last_run_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE job_runs (
+            id TEXT PRIMARY KEY,
+            schedule_id TEXT REFERENCES schedules(id) ON DELETE SET NULL,
+            job_name TEXT NOT NULL,
+            status TEXT NOT NULL,
+            result_json TEXT,
+            error_json TEXT,
+            attempt INTEGER NOT NULL DEFAULT 1 CHECK (attempt >= 1),
+            started_at TEXT NOT NULL,
+            finished_at TEXT
+        )
+        """,
+        """
+        CREATE TABLE webhook_destinations (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            url TEXT NOT NULL,
+            secret_env_name TEXT,
+            categories_json TEXT NOT NULL DEFAULT '[]',
+            enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE webhook_deliveries (
+            id TEXT PRIMARY KEY,
+            event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+            destination_id TEXT NOT NULL REFERENCES webhook_destinations(id) ON DELETE CASCADE,
+            status TEXT NOT NULL,
+            attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+            next_attempt_at TEXT NOT NULL,
+            http_status INTEGER,
+            error_code TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE (event_id, destination_id)
+        )
+        """,
+        "CREATE INDEX events_occurred_at_idx ON events (occurred_at DESC)",
+        "CREATE INDEX events_category_occurred_at_idx ON events (category, occurred_at DESC)",
+        "CREATE INDEX schedules_due_idx ON schedules (enabled, running, next_run_at)",
+        "CREATE INDEX job_runs_finished_at_idx ON job_runs (finished_at)",
+        """
+        CREATE INDEX webhook_deliveries_due_idx
+        ON webhook_deliveries (status, next_attempt_at)
+        """,
+    )
+    for statement in statements:
+        await connection.execute(statement)
 
 
 async def _initialize_connection(connection: aiosqlite.Connection) -> None:
@@ -56,6 +157,13 @@ async def _migrate(connection: aiosqlite.Connection) -> None:
             (1, datetime.now(timezone.utc).isoformat()),  # noqa: UP017
         )
 
+    if current_version < 2:
+        await _apply_v2(connection)
+        await connection.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+            (2, datetime.now(timezone.utc).isoformat()),  # noqa: UP017
+        )
+
     await connection.commit()
 
 
@@ -100,6 +208,23 @@ class RuntimeStore:
 
             await connection.close()
             self._connection = None
+
+    @asynccontextmanager
+    async def transaction(self) -> AsyncIterator[aiosqlite.Connection]:
+        """Yield the open connection inside a serialized write transaction."""
+        async with self._lock:
+            connection = self._connection
+            if connection is None:
+                raise UniFiConfigError("Runtime store is closed; call open() before transaction()")
+
+            await connection.execute("BEGIN IMMEDIATE")
+            try:
+                yield connection
+            except BaseException:
+                await connection.rollback()
+                raise
+            else:
+                await connection.commit()
 
     async def health(self) -> dict[str, bool | int | str]:
         """Return database-derived health details for an open store.

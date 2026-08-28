@@ -212,6 +212,59 @@
     "annotations": null
   },
   {
+    "name": "create_interval_schedule",
+    "description": "Create an allowlisted recurring job. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "job_name": {
+          "title": "Job Name",
+          "type": "string"
+        },
+        "interval_seconds": {
+          "title": "Interval Seconds",
+          "type": "integer"
+        },
+        "arguments": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arguments"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "job_name",
+        "interval_seconds"
+      ],
+      "title": "create_interval_scheduleArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "create_network",
     "description": "Create a new network/VLAN (corporate by default).",
     "inputSchema": {
@@ -392,6 +445,68 @@
         "fwd_port"
       ],
       "title": "create_port_forwardArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_webhook_destination",
+    "description": "Create a filtered outbound webhook. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "secret_env_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secret Env Name"
+        },
+        "categories": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categories"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "url"
+      ],
+      "title": "create_webhook_destinationArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -607,6 +722,66 @@
         "rule_id"
       ],
       "title": "delete_port_forwardArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_schedule",
+    "description": "Delete a non-running schedule. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "title": "Schedule Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schedule_id"
+      ],
+      "title": "delete_scheduleArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_webhook_destination",
+    "description": "Delete a webhook destination and queued deliveries. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "destination_id"
+      ],
+      "title": "delete_webhook_destinationArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -1256,6 +1431,23 @@
         }
       },
       "title": "get_dpi_statsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_event_polling_status",
+    "description": "List event source capabilities and background polling state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_event_polling_statusArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -2475,6 +2667,69 @@
     }
   },
   {
+    "name": "list_job_runs",
+    "description": "List redacted background job run outcomes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "list_job_runsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_runtime_events",
+    "description": "List normalized events retained by the optional runtime store.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "list_runtime_eventsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_schedules",
+    "description": "List allowlisted interval schedules.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_schedulesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "list_sites",
     "description": "List all UniFi sites accessible to the current user.",
     "inputSchema": {
@@ -2522,6 +2777,46 @@
     }
   },
   {
+    "name": "list_webhook_deliveries",
+    "description": "List redacted webhook delivery and dead-letter state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "list_webhook_deliveriesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_webhook_destinations",
+    "description": "List webhook destinations without secret values.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_webhook_destinationsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "locate_device",
     "description": "Enable/disable LED blinking to locate a device.",
     "inputSchema": {
@@ -2558,6 +2853,48 @@
         "mac"
       ],
       "title": "locate_deviceArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "poll_events_now",
+    "description": "Poll supported event sources now and durably deduplicate results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "device_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Name"
+        }
+      },
+      "title": "poll_events_nowArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -2696,6 +3033,36 @@
         "mac"
       ],
       "title": "restart_deviceArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "run_schedule_now",
+    "description": "Run one allowlisted schedule immediately. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "title": "Schedule Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schedule_id"
+      ],
+      "title": "run_schedule_nowArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -2897,6 +3264,106 @@
       "readOnlyHint": null,
       "destructiveHint": null,
       "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_schedule_enabled",
+    "description": "Enable or pause a schedule. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "title": "Schedule Id",
+          "type": "string"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schedule_id",
+        "enabled"
+      ],
+      "title": "set_schedule_enabledArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_webhook_destination_enabled",
+    "description": "Enable or pause a webhook destination. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "destination_id",
+        "enabled"
+      ],
+      "title": "set_webhook_destination_enabledArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "test_webhook_destination",
+    "description": "Send a synthetic payload to a webhook destination. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "destination_id"
+      ],
+      "title": "test_webhook_destinationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
       "openWorldHint": null
     }
   },

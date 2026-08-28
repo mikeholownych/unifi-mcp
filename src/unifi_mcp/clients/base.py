@@ -1,8 +1,9 @@
 """Base HTTP client and lifespan management for UniFi MCP Server."""
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator, Mapping, MutableMapping
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -43,6 +44,7 @@ class AppContext:
     cache: MutableMapping[tuple[Any, ...], Any]
     auth: UniFiLocalAuth | UniFiCloudAuth | None = field(default=None)
     runtime: RuntimeStore | None = field(default=None)
+    runtime_services: Any | None = field(default=None)
     cache_generation: int = 0
 
 
@@ -366,6 +368,9 @@ async def create_app_lifespan(
     # Determine authentication mode
     auth: UniFiLocalAuth | UniFiCloudAuth | None = None
     runtime: RuntimeStore | None = None
+    runtime_services: Any | None = None
+    runtime_webhook_client: httpx.AsyncClient | None = None
+    scheduler_task: asyncio.Task[None] | None = None
     primary_exception: BaseException | None = None
 
     try:
@@ -407,6 +412,24 @@ async def create_app_lifespan(
             await auth.login()
             logger.info("Successfully authenticated with UniFi controller")
 
+        if runtime is not None:
+            from unifi_mcp.runtime.services import build_runtime_services
+
+            runtime_webhook_client = httpx.AsyncClient(
+                timeout=settings.webhook_timeout_seconds,
+                follow_redirects=False,
+            )
+            runtime_services = await build_runtime_services(ctx, runtime_webhook_client)
+            ctx.runtime_services = runtime_services
+            if settings.automation_enabled:
+                scheduler_task = asyncio.create_task(
+                    runtime_services.scheduler.serve(
+                        tick_seconds=settings.automation_tick_seconds,
+                        max_jobs=settings.automation_max_concurrent_jobs,
+                    ),
+                    name="unifi-runtime-scheduler",
+                )
+
         yield ctx
 
     except BaseException as exc:
@@ -416,6 +439,18 @@ async def create_app_lifespan(
         logger.info("Shutting down UniFi MCP Server")
 
         cleanup_steps = []
+        if scheduler_task is not None:
+
+            async def stop_scheduler() -> None:
+                scheduler_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await scheduler_task
+
+            cleanup_steps.append(("automation scheduler", stop_scheduler))
+        if runtime_services is not None:
+            cleanup_steps.append(("runtime services", runtime_services.close))
+        elif runtime_webhook_client is not None:
+            cleanup_steps.append(("runtime webhook client", runtime_webhook_client.aclose))
         if runtime is not None:
             cleanup_steps.append(("runtime store", runtime.close))
         if isinstance(auth, UniFiLocalAuth):

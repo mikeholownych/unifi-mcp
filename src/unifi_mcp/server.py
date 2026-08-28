@@ -2,12 +2,14 @@
 
 import logging
 import sys
+from typing import Any
 
 from mcp.server.mcpserver import Context, MCPServer
 from mcp.types import ToolAnnotations
 
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
+from unifi_mcp.tools import runtime as runtime_tools
 from unifi_mcp.tools import system as system_tools
 from unifi_mcp.tools.network import clients as client_tools
 from unifi_mcp.tools.network import devices as device_tools
@@ -61,6 +63,120 @@ mcp = MCPServer(
 async def get_server_health(ctx: Context) -> system_tools.ServerHealth:
     """Get redaction-safe UniFi MCP runtime health and service counts."""
     return await system_tools.build_server_health(ctx.request_context.lifespan_context)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_runtime_events(ctx: Context, limit: int = 100):
+    """List normalized events retained by the optional runtime store."""
+    return await runtime_tools.list_runtime_events(ctx, limit)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_event_polling_status(ctx: Context):
+    """List event source capabilities and background polling state."""
+    return await runtime_tools.get_event_polling_status(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def poll_events_now(ctx: Context, source: str | None = None, device_name: str | None = None):
+    """Poll supported event sources now and durably deduplicate results."""
+    return await runtime_tools.poll_events_now(ctx, source, device_name)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_schedules(ctx: Context):
+    """List allowlisted interval schedules."""
+    return await runtime_tools.list_schedules(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_interval_schedule(
+    ctx: Context,
+    name: str,
+    job_name: str,
+    interval_seconds: int,
+    arguments: dict[str, Any] | None = None,
+    confirm: bool = False,
+):
+    """Create an allowlisted recurring job. Requires confirm=true."""
+    return await runtime_tools.create_interval_schedule(
+        ctx, name, job_name, interval_seconds, arguments, confirm
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_schedule_enabled(
+    ctx: Context, schedule_id: str, enabled: bool, confirm: bool = False
+):
+    """Enable or pause a schedule. Requires confirm=true."""
+    return await runtime_tools.set_schedule_enabled(ctx, schedule_id, enabled, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_schedule(ctx: Context, schedule_id: str, confirm: bool = False):
+    """Delete a non-running schedule. Requires confirm=true."""
+    return await runtime_tools.delete_schedule(ctx, schedule_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def run_schedule_now(ctx: Context, schedule_id: str, confirm: bool = False):
+    """Run one allowlisted schedule immediately. Requires confirm=true."""
+    return await runtime_tools.run_schedule_now(ctx, schedule_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_job_runs(ctx: Context, limit: int = 100):
+    """List redacted background job run outcomes."""
+    return await runtime_tools.list_job_runs(ctx, limit)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_webhook_destinations(ctx: Context):
+    """List webhook destinations without secret values."""
+    return await runtime_tools.list_webhook_destinations(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_webhook_destination(
+    ctx: Context,
+    name: str,
+    url: str,
+    secret_env_name: str | None = None,
+    categories: list[str] | None = None,
+    confirm: bool = False,
+):
+    """Create a filtered outbound webhook. Requires confirm=true."""
+    return await runtime_tools.create_webhook_destination(
+        ctx, name, url, secret_env_name, categories, confirm
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_webhook_destination_enabled(
+    ctx: Context, destination_id: str, enabled: bool, confirm: bool = False
+):
+    """Enable or pause a webhook destination. Requires confirm=true."""
+    return await runtime_tools.set_webhook_destination_enabled(
+        ctx, destination_id, enabled, confirm
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_webhook_destination(ctx: Context, destination_id: str, confirm: bool = False):
+    """Delete a webhook destination and queued deliveries. Requires confirm=true."""
+    return await runtime_tools.delete_webhook_destination(ctx, destination_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def test_webhook_destination(ctx: Context, destination_id: str, confirm: bool = False):
+    """Send a synthetic payload to a webhook destination. Requires confirm=true."""
+    return await runtime_tools.test_webhook_destination(ctx, destination_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_webhook_deliveries(ctx: Context, limit: int = 100):
+    """List redacted webhook delivery and dead-letter state."""
+    return await runtime_tools.list_webhook_deliveries(ctx, limit)
 
 
 # =============================================================================

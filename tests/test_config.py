@@ -143,6 +143,18 @@ class TestRuntimeConfig:
         assert settings.runtime_database_path == tmp_path / "runtime.db"
         assert not settings.runtime_database_path.exists()
 
+    def test_automation_defaults_to_disabled_and_bounded(self, tmp_path, monkeypatch):
+        clear_unifi_environment(monkeypatch)
+
+        settings = UniFiSettings(_env_file=None, data_dir=tmp_path)
+
+        assert settings.automation_enabled is False
+        assert settings.automation_tick_seconds == 5.0
+        assert settings.automation_max_concurrent_jobs == 2
+
+        with pytest.raises(ValueError):
+            UniFiSettings(_env_file=None, data_dir=tmp_path, automation_tick_seconds=0.05)
+
     def test_runtime_database_override_is_used_when_enabled(self, tmp_path, monkeypatch):
         clear_unifi_environment(monkeypatch)
         database_path = tmp_path / "custom" / "state.sqlite3"

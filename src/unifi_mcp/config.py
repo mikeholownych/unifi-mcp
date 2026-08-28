@@ -160,6 +160,22 @@ class UniFiSettings(BaseSettings):
     data_dir: Path = Field(default_factory=_default_data_dir)
     runtime_database: Path | None = Field(default=None)
 
+    # Optional background automation
+    automation_enabled: bool = Field(default=False)
+    automation_tick_seconds: float = Field(default=5.0, ge=0.1, le=300)
+    automation_max_concurrent_jobs: int = Field(default=2, ge=1, le=16)
+    automation_job_timeout_seconds: float = Field(default=300.0, ge=1, le=3600)
+    automation_stale_run_seconds: float = Field(default=900.0, ge=10, le=86_400)
+    automation_job_max_attempts: int = Field(default=3, ge=1, le=10)
+    automation_retry_initial_delay_seconds: float = Field(default=1.0, ge=0, le=60)
+    event_poll_jitter_seconds: float = Field(default=1.0, ge=0, le=60)
+    event_retention_days: int = Field(default=30, ge=1, le=3650)
+    job_retention_days: int = Field(default=30, ge=1, le=3650)
+    webhook_delivery_retention_days: int = Field(default=30, ge=1, le=3650)
+    webhook_allow_private: bool = Field(default=False)
+    webhook_timeout_seconds: float = Field(default=10.0, ge=1, le=120)
+    webhook_max_attempts: int = Field(default=5, ge=1, le=20)
+
     # Default device name for legacy config
     default_device_name: str = Field(
         default="default",
