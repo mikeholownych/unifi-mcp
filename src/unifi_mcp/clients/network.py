@@ -4,7 +4,12 @@ import logging
 from typing import Any
 
 from unifi_mcp.clients.base import AppContext, UniFiHTTPClient
-from unifi_mcp.exceptions import UniFiAPIError, UniFiNotFoundError
+from unifi_mcp.exceptions import (
+    UniFiAPIError,
+    UniFiConnectionError,
+    UniFiDeliveryUnknownError,
+    UniFiNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +76,9 @@ class UniFiNetworkClient(UniFiHTTPClient):
                     f"UniFi device '{device_name}' not found. Configured devices: {available}"
                 )
             if not device.has_network:
-                raise ValueError(f"Device '{device_name}' does not have the network service enabled")
+                raise ValueError(
+                    f"Device '{device_name}' does not have the network service enabled"
+                )
         else:
             net_devices = ctx.settings.get_network_devices()
             device = net_devices[0] if net_devices else None
@@ -213,14 +220,16 @@ class UniFiNetworkClient(UniFiHTTPClient):
             online = sum(1 for d in devices if is_device_online(d))
             offline = len(devices) - online
             status = "ok" if offline == 0 else "degraded"
-            return [{
-                "subsystem": "network",
-                "status": status,
-                "devices_online": online,
-                "devices_offline": offline,
-                "num_adopted": len(devices),
-                "note": "Limited health data available via Integration API",
-            }]
+            return [
+                {
+                    "subsystem": "network",
+                    "status": status,
+                    "devices_online": online,
+                    "devices_offline": offline,
+                    "num_adopted": len(devices),
+                    "note": "Limited health data available via Integration API",
+                }
+            ]
 
         endpoint = self._site_endpoint("stat/health", site)
         response = await self.get(endpoint)
@@ -261,11 +270,14 @@ class UniFiNetworkClient(UniFiHTTPClient):
     # Device Management
     # =========================================================================
 
-    async def get_devices(self, site: str | None = None) -> list[dict[str, Any]]:
+    async def get_devices(
+        self, site: str | None = None, *, fresh: bool = False
+    ) -> list[dict[str, Any]]:
         """Get all devices (APs, switches, routers, etc.).
 
         Args:
             site: Site name
+            fresh: Bypass the read cache
 
         Returns:
             List of device information dictionaries
@@ -273,17 +285,17 @@ class UniFiNetworkClient(UniFiHTTPClient):
         if self.is_integration_api:
             # Integration API uses site-specific endpoint
             endpoint = await self._integration_site_endpoint("devices", site)
-            response = await self.get(endpoint)
+            response = await self.get(endpoint, _no_cache=fresh)
             return self._extract_list_data(response)
 
         if self.is_cloud:
             # Cloud API endpoint
-            response = await self.get("/v1/devices")
+            response = await self.get("/v1/devices", _no_cache=fresh)
             return self._extract_list_data(response)
 
         # Traditional local API
         endpoint = self._site_endpoint("stat/device", site)
-        response = await self.get(endpoint)
+        response = await self.get(endpoint, _no_cache=fresh)
         return response.get("data", [])
 
     async def get_devices_basic(self, site: str | None = None) -> list[dict[str, Any]]:
@@ -312,12 +324,15 @@ class UniFiNetworkClient(UniFiHTTPClient):
         response = await self.get(endpoint)
         return response.get("data", [])
 
-    async def get_device(self, mac: str, site: str | None = None) -> dict[str, Any]:
+    async def get_device(
+        self, mac: str, site: str | None = None, *, fresh: bool = False
+    ) -> dict[str, Any]:
         """Get details for a specific device.
 
         Args:
             mac: Device MAC address
             site: Site name
+            fresh: Bypass the read cache
 
         Returns:
             Device information dictionary
@@ -325,7 +340,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
         Raises:
             UniFiNotFoundError: If device not found
         """
-        devices = await self.get_devices(site)
+        devices = await self.get_devices(site, fresh=fresh)
 
         mac_normalized = mac.lower().replace(":", "").replace("-", "")
 
@@ -409,15 +424,127 @@ class UniFiNetworkClient(UniFiHTTPClient):
         response = await self.post(endpoint, json=payload)
         return response
 
+    async def update_device_ports(
+        self, mac: str, ports: list[dict[str, Any]], site: str | None = None
+    ) -> dict[str, Any]:
+        """Update one or more switch ports on a device.
+
+        Each entry in ``ports`` must include ``port_idx`` plus at least one
+        writable field. Requested changes are merged into the device's complete
+        ``port_overrides`` collection; operational ``port_table`` fields are
+        used only to validate that each requested index exists.
+
+        Args:
+            mac: Device MAC address
+            ports: List of port objects with port_idx and changed fields
+            site: Site name
+
+        Returns:
+            Updated device record
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("switch port configuration")
+
+        writable_fields = {
+            "port_idx",
+            "name",
+            "native_networkconf_id",
+            "poe_mode",
+            "forward",
+            "enabled",
+            "setting_preference",
+        }
+        if any(set(change) - writable_fields for change in ports):
+            raise UniFiAPIError("Port update contains fields outside the writable allowlist")
+
+        device = await self.get_device(mac, site, fresh=True)
+        device_id = device.get("_id") or device.get("id")
+        if not device_id:
+            raise UniFiAPIError("Device has no stable ID; refusing port update")
+
+        current_ports = device.get("port_table")
+        if not isinstance(current_ports, list) or not current_ports:
+            raise UniFiAPIError("Device has no current port table; refusing port update")
+        valid_indexes = {port.get("port_idx") for port in current_ports}
+
+        current_overrides = device.get("port_overrides", [])
+        if not isinstance(current_overrides, list):
+            raise UniFiAPIError("Device port overrides are not a writable collection")
+        override_indexes = [
+            override.get("port_idx")
+            for override in current_overrides
+            if override.get("port_idx") is not None
+        ]
+        if len(override_indexes) != len(set(override_indexes)):
+            raise UniFiAPIError("Existing port overrides contain duplicate port_idx values")
+        requested_indexes = [change.get("port_idx") for change in ports]
+        if len(requested_indexes) != len(set(requested_indexes)):
+            raise UniFiAPIError("Requested port changes contain duplicate port_idx values")
+        updated_overrides = [dict(override) for override in current_overrides]
+        override_positions = {
+            override.get("port_idx"): position
+            for position, override in enumerate(updated_overrides)
+            if override.get("port_idx") is not None
+        }
+        valid_changes = 0
+        for change in ports:
+            port_idx = change.get("port_idx")
+            if port_idx not in valid_indexes:
+                raise UniFiAPIError(f"Requested port index {port_idx!r} does not exist")
+            writable_change = {key: value for key, value in change.items() if key != "port_idx"}
+            if not writable_change:
+                continue
+            valid_changes += 1
+            if port_idx in override_positions:
+                updated_overrides[override_positions[port_idx]].update(writable_change)
+            else:
+                override_positions[port_idx] = len(updated_overrides)
+                updated_overrides.append({"port_idx": port_idx, **writable_change})
+
+        if not valid_changes:
+            raise UniFiAPIError("No valid port changes to update")
+
+        endpoint = self._site_endpoint(f"rest/device/{device_id}", site)
+        try:
+            response = await self.put(endpoint, json={"port_overrides": updated_overrides})
+        except UniFiConnectionError:
+            raise UniFiDeliveryUnknownError(
+                "Switch port update delivery could not be determined"
+            ) from None
+        return response
+
+    async def get_device_port_table(
+        self, mac: str, site: str | None = None, *, fresh: bool = False
+    ) -> list[dict[str, Any]]:
+        """Get the raw port_table for a device.
+
+        Returns the unmodified port_table entries (port_idx, name, media,
+        forward, native_networkconf_id, excluded_networkconf_ids, poe fields,
+        speed, up, etc.) for a switch or gateway.
+
+        Args:
+            mac: Device MAC address
+            site: Site name
+            fresh: Bypass the read cache
+
+        Returns:
+            List of port entries
+        """
+        device = await self.get_device(mac, site, fresh=fresh)
+        return device.get("port_table", [])
+
     # =========================================================================
     # Client Management
     # =========================================================================
 
-    async def get_clients(self, site: str | None = None) -> list[dict[str, Any]]:
+    async def get_clients(
+        self, site: str | None = None, *, fresh: bool = False
+    ) -> list[dict[str, Any]]:
         """Get all connected clients.
 
         Args:
             site: Site name
+            fresh: Bypass the read cache
 
         Returns:
             List of connected client information
@@ -425,24 +552,27 @@ class UniFiNetworkClient(UniFiHTTPClient):
         if self.is_integration_api:
             # Integration API uses site-specific endpoint
             endpoint = await self._integration_site_endpoint("clients", site)
-            response = await self.get(endpoint)
+            response = await self.get(endpoint, _no_cache=fresh)
             return self._extract_list_data(response)
 
         if self.is_cloud:
             # Cloud API endpoint
-            response = await self.get("/v1/clients")
+            response = await self.get("/v1/clients", _no_cache=fresh)
             return self._extract_list_data(response)
 
         # Traditional local API
         endpoint = self._site_endpoint("stat/sta", site)
-        response = await self.get(endpoint)
+        response = await self.get(endpoint, _no_cache=fresh)
         return response.get("data", [])
 
-    async def get_all_clients(self, site: str | None = None) -> list[dict[str, Any]]:
+    async def get_all_clients(
+        self, site: str | None = None, *, fresh: bool = False
+    ) -> list[dict[str, Any]]:
         """Get all known clients (including offline).
 
         Args:
             site: Site name
+            fresh: Bypass the read cache
 
         Returns:
             List of all known clients
@@ -450,7 +580,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
         if self.is_integration_api or self.is_cloud:
             self._require_traditional_api("known (offline) clients list")
         endpoint = self._site_endpoint("stat/alluser", site)
-        response = await self.get(endpoint)
+        response = await self.get(endpoint, _no_cache=fresh)
         return response.get("data", [])
 
     async def get_client(self, mac: str, site: str | None = None) -> dict[str, Any]:
@@ -472,9 +602,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
         mac_normalized = mac.lower().replace(":", "").replace("-", "")
 
         for client in clients:
-            client_mac = (
-                client.get("mac", "").lower().replace(":", "").replace("-", "")
-            )
+            client_mac = client.get("mac", "").lower().replace(":", "").replace("-", "")
             if client_mac == mac_normalized:
                 return client
 
@@ -484,9 +612,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
         except UniFiAPIError:
             all_clients = []
         for client in all_clients:
-            client_mac = (
-                client.get("mac", "").lower().replace(":", "").replace("-", "")
-            )
+            client_mac = client.get("mac", "").lower().replace(":", "").replace("-", "")
             if client_mac == mac_normalized:
                 return client
 
@@ -581,9 +707,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
 
         endpoint = self._site_endpoint(f"rest/user/{client_id}", site)
         data: dict[str, Any] = (
-            {"use_fixedip": True, "fixed_ip": fixed_ip}
-            if fixed_ip
-            else {"use_fixedip": False}
+            {"use_fixedip": True, "fixed_ip": fixed_ip} if fixed_ip else {"use_fixedip": False}
         )
         response = await self.put(endpoint, json=data)
         updated = (response.get("data") or [{}])[0]
@@ -598,9 +722,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
     # Statistics & Events
     # =========================================================================
 
-    async def get_events(
-        self, limit: int = 100, site: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def get_events(self, limit: int = 100, site: str | None = None) -> list[dict[str, Any]]:
         """Get recent events.
 
         Args:
@@ -681,9 +803,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
         response = await self.post(endpoint, json=payload)
         return response.get("data", [])
 
-    async def get_client_dpi_stats(
-        self, mac: str, site: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def get_client_dpi_stats(self, mac: str, site: str | None = None) -> list[dict[str, Any]]:
         """Get DPI statistics for a specific client.
 
         Args:
@@ -741,11 +861,14 @@ class UniFiNetworkClient(UniFiHTTPClient):
     # Network Configuration
     # =========================================================================
 
-    async def get_networks(self, site: str | None = None) -> list[dict[str, Any]]:
+    async def get_networks(
+        self, site: str | None = None, *, fresh: bool = False
+    ) -> list[dict[str, Any]]:
         """Get network/VLAN configurations.
 
         Args:
             site: Site name
+            fresh: Bypass the read cache
 
         Returns:
             List of network configuration dictionaries
@@ -753,21 +876,24 @@ class UniFiNetworkClient(UniFiHTTPClient):
         if self.is_integration_api:
             # Integration API uses site-specific endpoint
             endpoint = await self._integration_site_endpoint("networks", site)
-            response = await self.get(endpoint)
+            response = await self.get(endpoint, _no_cache=fresh)
             return self._extract_list_data(response)
 
         if self.is_cloud:
             self._require_traditional_api("network configurations")
 
         endpoint = self._site_endpoint("rest/networkconf", site)
-        response = await self.get(endpoint)
+        response = await self.get(endpoint, _no_cache=fresh)
         return response.get("data", [])
 
-    async def get_wlans(self, site: str | None = None) -> list[dict[str, Any]]:
+    async def get_wlans(
+        self, site: str | None = None, *, fresh: bool = False
+    ) -> list[dict[str, Any]]:
         """Get wireless network configurations.
 
         Args:
             site: Site name
+            fresh: Bypass the read cache
 
         Returns:
             List of WLAN configuration dictionaries
@@ -776,8 +902,58 @@ class UniFiNetworkClient(UniFiHTTPClient):
             self._require_traditional_api("wireless network (SSID) configurations")
 
         endpoint = self._site_endpoint("rest/wlanconf", site)
-        response = await self.get(endpoint)
+        response = await self.get(endpoint, _no_cache=fresh)
         return response.get("data", [])
+
+    async def create_network(self, data: dict[str, Any], site: str | None = None) -> dict[str, Any]:
+        """Create a network/VLAN configuration.
+
+        Args:
+            data: Network configuration (name, purpose, vlan_enabled, vlan, ip_subnet, etc.)
+            site: Site name
+
+        Returns:
+            Created network configuration
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("network (VLAN) creation")
+
+        endpoint = self._site_endpoint("rest/networkconf", site)
+        response = await self.post(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def update_network(
+        self, network_id: str, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Update a network/VLAN configuration.
+
+        Args:
+            network_id: Network ID
+            data: Fields to update
+            site: Site name
+
+        Returns:
+            Updated network configuration
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("network (VLAN) updates")
+
+        endpoint = self._site_endpoint(f"rest/networkconf/{network_id}", site)
+        response = await self.put(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def delete_network(self, network_id: str, site: str | None = None) -> None:
+        """Delete a network/VLAN configuration.
+
+        Args:
+            network_id: Network ID
+            site: Site name
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("network (VLAN) deletion")
+
+        endpoint = self._site_endpoint(f"rest/networkconf/{network_id}", site)
+        await self.delete(endpoint)
 
     async def get_port_profiles(self, site: str | None = None) -> list[dict[str, Any]]:
         """Get switch port profiles.
@@ -992,9 +1168,7 @@ class UniFiNetworkClient(UniFiHTTPClient):
         response = await self.post(endpoint, json=data)
         return (response.get("data") or [{}])[0]
 
-    async def delete_port_forward(
-        self, rule_id: str, site: str | None = None
-    ) -> None:
+    async def delete_port_forward(self, rule_id: str, site: str | None = None) -> None:
         """Delete a port forwarding rule.
 
         Args:

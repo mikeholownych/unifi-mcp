@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
 
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.network import UniFiNetworkClient
@@ -48,47 +48,53 @@ def _format_client_details(client: dict[str, Any]) -> dict[str, Any]:
     # Add extended information
     is_wired = client.get("is_wired", False)
 
-    base.update({
-        "oui": client.get("oui", ""),
-        "hostname": client.get("hostname", ""),
-        "fingerprint": {
-            "os_name": client.get("os_name"),
-            "dev_cat": client.get("dev_cat"),
-            "dev_family": client.get("dev_family"),
-            "dev_vendor": client.get("dev_vendor"),
-        },
-        "blocked": client.get("blocked", False),
-        "noted": client.get("noted", False),
-        "note": client.get("note"),
-        "fixed_ip": client.get("use_fixedip", False),
-        "fixed_ip_address": client.get("fixed_ip") if client.get("use_fixedip") else None,
-        "satisfaction": client.get("satisfaction"),
-        "traffic": {
-            "tx_bytes": client.get("tx_bytes", 0),
-            "rx_bytes": client.get("rx_bytes", 0),
-            "tx_packets": client.get("tx_packets", 0),
-            "rx_packets": client.get("rx_packets", 0),
-            "tx_retries": client.get("tx_retries", 0),
-        },
-    })
+    base.update(
+        {
+            "oui": client.get("oui", ""),
+            "hostname": client.get("hostname", ""),
+            "fingerprint": {
+                "os_name": client.get("os_name"),
+                "dev_cat": client.get("dev_cat"),
+                "dev_family": client.get("dev_family"),
+                "dev_vendor": client.get("dev_vendor"),
+            },
+            "blocked": client.get("blocked", False),
+            "noted": client.get("noted", False),
+            "note": client.get("note"),
+            "fixed_ip": client.get("use_fixedip", False),
+            "fixed_ip_address": client.get("fixed_ip") if client.get("use_fixedip") else None,
+            "satisfaction": client.get("satisfaction"),
+            "traffic": {
+                "tx_bytes": client.get("tx_bytes", 0),
+                "rx_bytes": client.get("rx_bytes", 0),
+                "tx_packets": client.get("tx_packets", 0),
+                "rx_packets": client.get("rx_packets", 0),
+                "tx_retries": client.get("tx_retries", 0),
+            },
+        }
+    )
 
     # Wireless-specific details
     if not is_wired:
-        base.update({
-            "channel": client.get("channel"),
-            "radio": client.get("radio"),
-            "radio_proto": client.get("radio_proto"),
-            "tx_rate": client.get("tx_rate"),
-            "rx_rate": client.get("rx_rate"),
-            "noise": client.get("noise"),
-            "ccq": client.get("ccq"),
-            "roam_count": client.get("roam_count", 0),
-        })
+        base.update(
+            {
+                "channel": client.get("channel"),
+                "radio": client.get("radio"),
+                "radio_proto": client.get("radio_proto"),
+                "tx_rate": client.get("tx_rate"),
+                "rx_rate": client.get("rx_rate"),
+                "noise": client.get("noise"),
+                "ccq": client.get("ccq"),
+                "roam_count": client.get("roam_count", 0),
+            }
+        )
 
     return base
 
 
-async def list_clients(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
+async def list_clients(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> list[dict[str, Any]]:
     """List all currently connected clients.
 
     Args:
@@ -105,7 +111,9 @@ async def list_clients(ctx: Context, site: str = "default", device: str | None =
     return [_format_client_summary(c) for c in clients]
 
 
-async def list_all_clients(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
+async def list_all_clients(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> list[dict[str, Any]]:
     """List all known clients (including offline).
 
     Args:
@@ -327,7 +335,7 @@ async def reserve_client_ip(
     import ipaddress
 
     cl = _get_client(ctx, device)
-    all_clients = await cl.get_all_clients(site)
+    all_clients = await cl.get_all_clients(site, fresh=True)
 
     target = None
     needle = client.lower()
@@ -341,7 +349,7 @@ async def reserve_client_ip(
             break
     if target is None:
         # Fall back to live station list (has IPs for DHCP clients)
-        sta = await cl.get_clients(site)
+        sta = await cl.get_clients(site, fresh=True)
         for c in sta:
             if needle == (c.get("mac") or "").lower() or c.get("ip") == client:
                 target = {**c}
@@ -355,7 +363,10 @@ async def reserve_client_ip(
     current_ip = target.get("ip") or target.get("fixed_ip")
     reserve_ip = ip or current_ip
     if not reserve_ip:
-        return {"success": False, "message": f"{name} has no current IP; pass an explicit ip parameter."}
+        return {
+            "success": False,
+            "message": f"{name} has no current IP; pass an explicit ip parameter.",
+        }
     try:
         ipaddress.ip_address(reserve_ip)
     except ValueError:

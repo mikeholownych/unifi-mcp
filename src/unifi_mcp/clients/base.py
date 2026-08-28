@@ -1,14 +1,14 @@
 """Base HTTP client and lifespan management for UniFi MCP Server."""
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping, MutableMapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
 from cachetools import TTLCache
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -25,6 +25,7 @@ from unifi_mcp.exceptions import (
     UniFiConnectionError,
     UniFiRateLimitError,
 )
+from unifi_mcp.runtime import RuntimeStore
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +40,10 @@ class AppContext:
 
     client: httpx.AsyncClient
     settings: UniFiSettings
-    cache: TTLCache
+    cache: MutableMapping[tuple[Any, ...], Any]
     auth: UniFiLocalAuth | UniFiCloudAuth | None = field(default=None)
+    runtime: RuntimeStore | None = field(default=None)
+    cache_generation: int = 0
 
 
 class UniFiHTTPClient:
@@ -63,10 +66,26 @@ class UniFiHTTPClient:
         """
         self.ctx = ctx
         self.device = device
-        # Short-lived cache for read requests (GET). Keeps repeated tool
-        # calls within a single conversation turn fast without serving
-        # meaningfully stale data.
-        self._read_cache: TTLCache = TTLCache(maxsize=256, ttl=15)
+
+    @staticmethod
+    def _normalize_cache_value(value: Any) -> Any:
+        """Convert request arguments into stable, hashable cache-key values."""
+        if isinstance(value, Mapping):
+            return tuple(
+                sorted(
+                    (str(key), UniFiHTTPClient._normalize_cache_value(item))
+                    for key, item in value.items()
+                )
+            )
+        if isinstance(value, (list, tuple)):
+            return tuple(UniFiHTTPClient._normalize_cache_value(item) for item in value)
+        if isinstance(value, set):
+            return tuple(sorted(UniFiHTTPClient._normalize_cache_value(item) for item in value))
+        try:
+            hash(value)
+        except TypeError:
+            return repr(value)
+        return value
 
     @property
     def _base_url(self) -> str:
@@ -158,41 +177,76 @@ class UniFiHTTPClient:
         """
         url = f"{self._base_url}{endpoint}"
 
-        cacheable = method == "GET" and not _no_cache
+        method = method.upper()
+        cacheable = method == "GET"
+        invalidating = not cacheable or _no_cache
         cache_key: tuple[Any, ...] | None = None
+        request_generation: int | None = None
+        fresh_finalized = False
         if cacheable:
-            cache_key = (endpoint, tuple(sorted((k, str(v)) for k, v in kwargs.items())))
-            cached = self._read_cache.get(cache_key)
-            if cached is not None:
-                logger.debug("Cache hit for GET %s", endpoint)
-                return cached
-
-        response = await self._make_request(method, url, **kwargs)
-
-        # Handle 401 - try to refresh session once (session-auth mode only)
-        if response.status_code == 401 and isinstance(self.ctx.auth, UniFiLocalAuth):
-            logger.info("Session expired, refreshing authentication")
-            try:
-                await self.ctx.auth.refresh_session()
-                response = await self._make_request(method, url, **kwargs)
-            except UniFiAuthError:
-                raise UniFiAuthError("Session expired and refresh failed") from None
-
-        # Handle rate limiting
-        if response.status_code == 429:
-            retry_after = int(response.headers.get("Retry-After", 60))
-            raise UniFiRateLimitError(
-                f"Rate limited, retry after {retry_after}s",
-                retry_after=retry_after,
+            device_identity = (
+                self.device.name
+                if self.device is not None
+                else self.ctx.settings.default_device_name
             )
+            cache_key = (
+                self._base_url,
+                device_identity,
+                endpoint,
+                self._normalize_cache_value(kwargs),
+            )
+            if not _no_cache and cache_key in self.ctx.cache:
+                logger.debug("Cache hit for GET %s", endpoint)
+                return self.ctx.cache[cache_key]
 
-        # Handle other errors
-        if response.status_code >= 400:
-            await self._handle_error_response(response)
+        if invalidating:
+            self.ctx.cache_generation += 1
+            self.ctx.cache.clear()
+        request_generation = self.ctx.cache_generation
 
-        parsed = self._parse_response(response)
-        if cacheable and cache_key is not None:
-            self._read_cache[cache_key] = parsed
+        try:
+            response = await self._make_request(method, url, **kwargs)
+
+            # Handle 401 - try to refresh session once (session-auth mode only)
+            if response.status_code == 401 and isinstance(self.ctx.auth, UniFiLocalAuth):
+                logger.info("Session expired, refreshing authentication")
+                try:
+                    await self.ctx.auth.refresh_session()
+                    response = await self._make_request(method, url, **kwargs)
+                except UniFiAuthError:
+                    raise UniFiAuthError("Session expired and refresh failed") from None
+
+            # Handle rate limiting
+            if response.status_code == 429:
+                retry_after = int(response.headers.get("Retry-After", 60))
+                raise UniFiRateLimitError(
+                    f"Rate limited, retry after {retry_after}s",
+                    retry_after=retry_after,
+                )
+
+            # Handle other errors
+            if response.status_code >= 400:
+                await self._handle_error_response(response)
+
+            parsed = self._parse_response(response)
+        finally:
+            if not cacheable:
+                self.ctx.cache_generation += 1
+                self.ctx.cache.clear()
+            elif _no_cache and self.ctx.cache_generation == request_generation:
+                self.ctx.cache_generation += 1
+                self.ctx.cache.clear()
+                fresh_finalized = True
+
+        if (
+            cacheable
+            and cache_key is not None
+            and (
+                (_no_cache and fresh_finalized)
+                or (not _no_cache and self.ctx.cache_generation == request_generation)
+            )
+        ):
+            self.ctx.cache[cache_key] = parsed
         return parsed
 
     async def get(self, endpoint: str, **kwargs: Any) -> dict[str, Any]:
@@ -276,7 +330,7 @@ class UniFiHTTPClient:
 
 @asynccontextmanager
 async def create_app_lifespan(
-    server: FastMCP,
+    server: MCPServer,
 ) -> AsyncIterator[AppContext]:
     """Create and manage application lifecycle.
 
@@ -289,7 +343,7 @@ async def create_app_lifespan(
     - Legacy ``mode=local`` uses session-based username/password auth.
 
     Args:
-        server: FastMCP server instance
+        server: MCPServer instance
 
     Yields:
         AppContext with initialized resources
@@ -311,8 +365,14 @@ async def create_app_lifespan(
 
     # Determine authentication mode
     auth: UniFiLocalAuth | UniFiCloudAuth | None = None
+    runtime: RuntimeStore | None = None
+    primary_exception: BaseException | None = None
 
     try:
+        if settings.runtime_enabled:
+            runtime = RuntimeStore(settings.runtime_database_path)
+            await runtime.open()
+
         if settings.mode == "local":
             # Explicit legacy session mode
             if not settings.controller_url:
@@ -339,6 +399,7 @@ async def create_app_lifespan(
             settings=settings,
             cache=cache,
             auth=auth,
+            runtime=runtime,
         )
 
         # Authenticate on startup (local session mode only)
@@ -348,12 +409,48 @@ async def create_app_lifespan(
 
         yield ctx
 
+    except BaseException as exc:
+        primary_exception = exc
+        raise
     finally:
-        # Cleanup
         logger.info("Shutting down UniFi MCP Server")
 
+        cleanup_steps = []
+        if runtime is not None:
+            cleanup_steps.append(("runtime store", runtime.close))
         if isinstance(auth, UniFiLocalAuth):
-            await auth.logout()
+            cleanup_steps.append(("authentication session", auth.logout))
+        cleanup_steps.append(("HTTP client", client.aclose))
 
-        await client.aclose()
+        first_cleanup_error: BaseException | None = None
+        for resource, cleanup in cleanup_steps:
+            try:
+                await cleanup()
+            except BaseException as cleanup_error:
+                if primary_exception is not None:
+                    logger.error(
+                        "Failed to clean up %s while handling %s",
+                        resource,
+                        type(primary_exception).__name__,
+                        exc_info=(
+                            type(cleanup_error),
+                            cleanup_error,
+                            cleanup_error.__traceback__,
+                        ),
+                    )
+                elif first_cleanup_error is None:
+                    first_cleanup_error = cleanup_error
+                else:
+                    logger.error(
+                        "Additional failure cleaning up %s",
+                        resource,
+                        exc_info=(
+                            type(cleanup_error),
+                            cleanup_error,
+                            cleanup_error.__traceback__,
+                        ),
+                    )
+
+        if primary_exception is None and first_cleanup_error is not None:
+            raise first_cleanup_error
         logger.info("Cleanup complete")

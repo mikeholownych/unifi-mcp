@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
 
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.protect import UniFiProtectClient
@@ -208,11 +208,13 @@ async def get_camera_health_summary(
             connected.append(cam_info)
         else:
             disconnected.append(cam_info)
-            issues.append({
-                "camera": cam.get("name"),
-                "issue": f"Camera is {cam.get('state', 'UNKNOWN')}",
-                "severity": "critical",
-            })
+            issues.append(
+                {
+                    "camera": cam.get("name"),
+                    "issue": f"Camera is {cam.get('state', 'UNKNOWN')}",
+                    "severity": "critical",
+                }
+            )
 
     return {
         "summary": {
@@ -228,7 +230,9 @@ async def get_camera_health_summary(
             "Check network connectivity for disconnected cameras",
             "Verify PoE power supply for wired cameras",
             "Check camera logs in Protect for more details",
-        ] if disconnected else [],
+        ]
+        if disconnected
+        else [],
     }
 
 
@@ -334,17 +338,20 @@ async def get_motion_events(
 
         if event_time:
             from datetime import datetime
+
             dt = datetime.fromtimestamp(event_time / 1000)
             time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             time_str = "Unknown"
 
-        formatted.append({
-            "camera": camera_names.get(cam_id, cam_id),
-            "time": time_str,
-            "type": event.get("type"),
-            "score": event.get("score"),
-        })
+        formatted.append(
+            {
+                "camera": camera_names.get(cam_id, cam_id),
+                "time": time_str,
+                "type": event.get("type"),
+                "score": event.get("score"),
+            }
+        )
 
     return {
         "period_hours": hours,
@@ -395,17 +402,20 @@ async def get_smart_detections(
 
         if event_time:
             from datetime import datetime
+
             dt = datetime.fromtimestamp(event_time / 1000)
             time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             time_str = "Unknown"
 
-        formatted.append({
-            "camera": camera_names.get(cam_id, cam_id),
-            "time": time_str,
-            "detections": event.get("smartDetectTypes", []),
-            "score": event.get("score"),
-        })
+        formatted.append(
+            {
+                "camera": camera_names.get(cam_id, cam_id),
+                "time": time_str,
+                "detections": event.get("smartDetectTypes", []),
+                "score": event.get("score"),
+            }
+        )
 
     return {
         "period_hours": hours,
@@ -496,7 +506,8 @@ async def export_camera_clip(
     cameras = await client.get_cameras()
     cam = next(
         (
-            c for c in cameras
+            c
+            for c in cameras
             if c.get("id") == camera or c.get("_id") == camera or c.get("name") == camera
         ),
         None,

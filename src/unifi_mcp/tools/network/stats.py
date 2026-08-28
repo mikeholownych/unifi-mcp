@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
 
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.network import UniFiNetworkClient, is_device_online, is_wireless_client
@@ -14,7 +14,9 @@ def _get_client(ctx: Context, device: str | None = None) -> UniFiNetworkClient:
     return UniFiNetworkClient(app_ctx, device_name=device)
 
 
-async def get_network_health(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def get_network_health(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Get overall network health summary.
 
     Provides a quick overview of network status including device counts,
@@ -74,10 +76,12 @@ async def get_network_health(ctx: Context, site: str = "default", device: str | 
     issues = []
     for subsystem in health_data:
         if subsystem.get("status") != "ok":
-            issues.append({
-                "subsystem": subsystem.get("subsystem"),
-                "status": subsystem.get("status"),
-            })
+            issues.append(
+                {
+                    "subsystem": subsystem.get("subsystem"),
+                    "status": subsystem.get("status"),
+                }
+            )
 
     return {
         "site": site,
@@ -107,26 +111,30 @@ async def get_recent_events(
 
     result = []
     for event in events:
-        result.append({
-            "time": event.get("time", 0),
-            "datetime": event.get("datetime", ""),
-            "key": event.get("key", ""),
-            "msg": event.get("msg", ""),
-            "subsystem": event.get("subsystem", ""),
-            "site_id": event.get("site_id", ""),
-            "user": event.get("user"),
-            "ap": event.get("ap"),
-            "ap_name": event.get("ap_name"),
-            "client": event.get("client"),
-            "hostname": event.get("hostname"),
-            "ssid": event.get("ssid"),
-            "channel": event.get("channel"),
-        })
+        result.append(
+            {
+                "time": event.get("time", 0),
+                "datetime": event.get("datetime", ""),
+                "key": event.get("key", ""),
+                "msg": event.get("msg", ""),
+                "subsystem": event.get("subsystem", ""),
+                "site_id": event.get("site_id", ""),
+                "user": event.get("user"),
+                "ap": event.get("ap"),
+                "ap_name": event.get("ap_name"),
+                "client": event.get("client"),
+                "hostname": event.get("hostname"),
+                "ssid": event.get("ssid"),
+                "channel": event.get("channel"),
+            }
+        )
 
     return result
 
 
-async def get_alarms(ctx: Context, site: str = "default", device: str | None = None) -> list[dict[str, Any]]:
+async def get_alarms(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> list[dict[str, Any]]:
     """Get active alarms.
 
     Args:
@@ -141,21 +149,25 @@ async def get_alarms(ctx: Context, site: str = "default", device: str | None = N
 
     result = []
     for alarm in alarms:
-        result.append({
-            "time": alarm.get("time", 0),
-            "datetime": alarm.get("datetime", ""),
-            "key": alarm.get("key", ""),
-            "msg": alarm.get("msg", ""),
-            "subsystem": alarm.get("subsystem", ""),
-            "archived": alarm.get("archived", False),
-            "device_mac": alarm.get("ap") or alarm.get("gw") or alarm.get("sw"),
-            "device_name": alarm.get("ap_name") or alarm.get("gw_name") or alarm.get("sw_name"),
-        })
+        result.append(
+            {
+                "time": alarm.get("time", 0),
+                "datetime": alarm.get("datetime", ""),
+                "key": alarm.get("key", ""),
+                "msg": alarm.get("msg", ""),
+                "subsystem": alarm.get("subsystem", ""),
+                "archived": alarm.get("archived", False),
+                "device_mac": alarm.get("ap") or alarm.get("gw") or alarm.get("sw"),
+                "device_name": alarm.get("ap_name") or alarm.get("gw_name") or alarm.get("sw_name"),
+            }
+        )
 
     return result
 
 
-async def archive_all_alarms(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def archive_all_alarms(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Archive all active alarms.
 
     Args:
@@ -174,7 +186,9 @@ async def archive_all_alarms(ctx: Context, site: str = "default", device: str | 
     }
 
 
-async def run_speed_test(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def run_speed_test(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Initiate a WAN speed test.
 
     Starts a speed test on the gateway device. Results can be retrieved
@@ -196,7 +210,9 @@ async def run_speed_test(ctx: Context, site: str = "default", device: str | None
     }
 
 
-async def get_speed_test_status(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def get_speed_test_status(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Get speed test status and results.
 
     Args:
@@ -228,7 +244,9 @@ async def get_speed_test_status(ctx: Context, site: str = "default", device: str
     }
 
 
-async def get_dpi_stats(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def get_dpi_stats(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Get Deep Packet Inspection statistics for the site.
 
     Shows traffic breakdown by application category and specific applications.
@@ -262,19 +280,17 @@ async def get_dpi_stats(ctx: Context, site: str = "default", device: str | None 
         categories[cat_name]["rx_bytes"] += item.get("rx_bytes", 0)
         categories[cat_name]["apps"].append(app_name)
 
-        applications.append({
-            "category": cat_name,
-            "application": app_name,
-            "tx_bytes": item.get("tx_bytes", 0),
-            "rx_bytes": item.get("rx_bytes", 0),
-        })
+        applications.append(
+            {
+                "category": cat_name,
+                "application": app_name,
+                "tx_bytes": item.get("tx_bytes", 0),
+                "rx_bytes": item.get("rx_bytes", 0),
+            }
+        )
 
     # Sort by total bytes
-    sorted_apps = sorted(
-        applications,
-        key=lambda x: x["tx_bytes"] + x["rx_bytes"],
-        reverse=True
-    )
+    sorted_apps = sorted(applications, key=lambda x: x["tx_bytes"] + x["rx_bytes"], reverse=True)
 
     return {
         "site": site,
@@ -283,7 +299,9 @@ async def get_dpi_stats(ctx: Context, site: str = "default", device: str | None 
     }
 
 
-async def get_traffic_summary(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def get_traffic_summary(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Get traffic summary for the site.
 
     Provides aggregate traffic statistics from all devices and clients.
@@ -311,14 +329,16 @@ async def get_traffic_summary(ctx: Context, site: str = "default", device: str |
         total_rx += rx
 
         if tx > 0 or rx > 0:
-            device_traffic.append({
-                "name": device.get("name", "Unknown"),
-                "mac": device.get("mac", ""),
-                "type": device.get("type", ""),
-                "tx_bytes": tx,
-                "rx_bytes": rx,
-                "clients": device.get("num_sta", 0),
-            })
+            device_traffic.append(
+                {
+                    "name": device.get("name", "Unknown"),
+                    "mac": device.get("mac", ""),
+                    "type": device.get("type", ""),
+                    "tx_bytes": tx,
+                    "rx_bytes": rx,
+                    "clients": device.get("num_sta", 0),
+                }
+            )
 
     # Sort by total traffic
     device_traffic.sort(key=lambda x: x["tx_bytes"] + x["rx_bytes"], reverse=True)

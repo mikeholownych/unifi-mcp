@@ -41,13 +41,21 @@ class UniFiConnectionError(UniFiError):
     pass
 
 
+class UniFiDeliveryUnknownError(UniFiConnectionError):
+    """A mutation was dispatched but its controller outcome is unknown."""
+
+    pass
+
+
 class UniFiAPIError(UniFiError):
     """API returned an error response.
 
     Raised when the API returns an error status code or error message.
     """
 
-    def __init__(self, message: str, status_code: int | None = None, response_data: dict | None = None):
+    def __init__(
+        self, message: str, status_code: int | None = None, response_data: dict | None = None
+    ):
         super().__init__(message)
         self.status_code = status_code
         self.response_data = response_data or {}

@@ -3,6 +3,7 @@
 
 Run: python scripts/validate_skills.py
 """
+
 import re
 from pathlib import Path
 
@@ -88,12 +89,63 @@ def load_descriptions() -> dict[str, str]:
     return descriptions
 
 
-STOP_WORDS = {"the", "is", "a", "an", "and", "or", "but", "in", "on", "at", "to",
-              "for", "of", "with", "by", "from", "my", "me", "i", "it", "its",
-              "this", "that", "not", "no", "do", "does", "can", "will", "has",
-              "have", "was", "were", "are", "be", "been", "being", "their",
-              "they", "them", "than", "then", "so", "if", "when", "how", "what",
-              "who", "which", "where", "why", "all", "any", "some", "other"}
+STOP_WORDS = {
+    "the",
+    "is",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "my",
+    "me",
+    "i",
+    "it",
+    "its",
+    "this",
+    "that",
+    "not",
+    "no",
+    "do",
+    "does",
+    "can",
+    "will",
+    "has",
+    "have",
+    "was",
+    "were",
+    "are",
+    "be",
+    "been",
+    "being",
+    "their",
+    "they",
+    "them",
+    "than",
+    "then",
+    "so",
+    "if",
+    "when",
+    "how",
+    "what",
+    "who",
+    "which",
+    "where",
+    "why",
+    "all",
+    "any",
+    "some",
+    "other",
+}
 
 
 def match_phrase_to_skill(phrase: str, descriptions: dict[str, str]) -> str | None:
@@ -140,7 +192,7 @@ def main():
         else:
             passed += 1
 
-    print(f"\n{passed}/{passed+failed} trigger phrases matched correctly")
+    print(f"\n{passed}/{passed + failed} trigger phrases matched correctly")
     if failed:
         print(f"{failed} failures — review skill descriptions for coverage")
     else:

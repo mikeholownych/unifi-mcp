@@ -6,7 +6,7 @@ mcp-name: io.github.mikeholownych/unifi-mcp
 [![unifi-mcp MCP server](https://glama.ai/mcp/servers/mikeholownych/unifi-mcp/badges/score.svg)](https://glama.ai/mcp/servers/mikeholownych/unifi-mcp)
 [![Smithery](https://img.shields.io/badge/Smithery-mike--holownych%2Funifi--mcp-purple)](https://smithery.ai/server/mike-holownych/unifi-mcp)
 
-An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities.
+An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities. It uses the native MCP SDK 2 `MCPServer` API (not FastMCP 3) and communicates over stdio by default.
 
 > **Credits:** This project started as a fork of [gbassaragh/Unifi-mcp](https://github.com/gbassaragh/Unifi-mcp) and has since evolved into a fully independent project. Thanks to [@gbassaragh](https://github.com/gbassaragh) for the excellent starting point.
 
@@ -14,7 +14,7 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 
 - **Fixed local session authentication routing** — in `UNIFI_MODE=local`, requests now correctly use the traditional controller API (`/proxy/network`) with cookie + CSRF session auth. Upstream always routed through the Integration API regardless of mode.
 - **Mode-aware base URL resolution** — `api_base_url` now respects the configured auth mode instead of unconditionally returning the Integration API endpoint.
-- **Expanded test suite** — 57 passing tests covering config, network client behavior, server tool registration, and Protect integrations.
+- **Expanded test suite** — 100+ passing tests covering configuration, MCP compatibility, runtime persistence, network client behavior, server tool registration, and Protect integrations.
 
 ## Features
 
@@ -133,6 +133,31 @@ pip install -e .
 ## Configuration
 
 Create a `.env` file in the project root (or set environment variables). See [.env.example](.env.example) for all options.
+
+`UNIFI_CACHE_TTL` controls the shared GET cache lifetime across client instances (default: 30
+seconds). Mutation verification defaults to five fresh reads with exponential delays of 0.5, 1,
+2, and 2 seconds. Tune this with `UNIFI_MUTATION_VERIFY_ATTEMPTS`,
+`UNIFI_MUTATION_VERIFY_INITIAL_DELAY`, and `UNIFI_MUTATION_VERIFY_MAX_DELAY` when a controller
+converges more slowly or quickly.
+
+### Optional Runtime Persistence
+
+SQLite-backed runtime persistence is disabled by default. Enable it only when persistent runtime state is needed:
+
+```bash
+UNIFI_RUNTIME_ENABLED=true
+```
+
+By default, the database is `runtime.db` under `UNIFI_DATA_DIR`. If `UNIFI_DATA_DIR` is not set, the server follows the XDG data convention: `$XDG_DATA_HOME/unifi-mcp` when `XDG_DATA_HOME` is an absolute path, otherwise `~/.local/share/unifi-mcp`. The resulting default database is therefore `$XDG_DATA_HOME/unifi-mcp/runtime.db` or `~/.local/share/unifi-mcp/runtime.db`.
+
+Set an explicit data directory or database path when needed:
+
+```bash
+UNIFI_DATA_DIR=/var/lib/unifi-mcp
+UNIFI_RUNTIME_DATABASE=/var/lib/unifi-mcp/runtime.db
+```
+
+`UNIFI_DATA_DIR` and `UNIFI_RUNTIME_DATABASE` must resolve to absolute paths. `UNIFI_RUNTIME_DATABASE` overrides the database derived from `UNIFI_DATA_DIR`.
 
 ### Multi-Device Configuration (Recommended)
 
@@ -256,6 +281,9 @@ Or in `opencode.json`:
 
 ## Available Tools
 
+### Server Health
+- `get_server_health` - Report the server version, stdio transport, configured service counts, and optional persistence status. The response deliberately omits credentials, controller addresses, device names, and database paths.
+
 ### Multi-Device Management
 - `list_unifi_devices` - List all configured UniFi devices and their services
 
@@ -267,6 +295,8 @@ Or in `opencode.json`:
 - `get_device_stats` - Get performance statistics
 - `upgrade_device` - Upgrade firmware
 - `provision_device` - Force re-provision
+- `get_device_ports` - List switch/gateway port configuration and link state
+- `set_device_port` - Configure one port; requires `confirm=true` and verifies controller read-back
 
 ### Client Management
 - `list_clients` - List connected clients
@@ -293,6 +323,7 @@ Or in `opencode.json`:
 - `create_port_forward` / `delete_port_forward` - Manage port forwards
 
 ### Configuration Management (writes)
+- `create_network` / `update_network` / `delete_network` - Manage networks and VLANs; each requires `confirm=true` and verifies controller read-back
 - `create_wlan` / `update_wlan` / `delete_wlan` - Manage wireless networks
 - `create_firewall_policy` / `set_firewall_policy_enabled` / `delete_firewall_policy` - Manage zone-based firewall policies
 - `export_camera_clip` - Export a camera recording clip as MP4 (Protect)
@@ -397,6 +428,19 @@ docker build -t unifi-mcp .
 docker run -i --rm --env-file .env unifi-mcp
 ```
 
+To enable optional runtime persistence, mount a named volume at the image's writable `/data` directory:
+
+```bash
+docker run -i --rm \
+  --env-file .env \
+  --env UNIFI_RUNTIME_ENABLED=true \
+  --env UNIFI_DATA_DIR=/data \
+  --volume unifi-mcp-data:/data \
+  unifi-mcp
+```
+
+`--rm` removes the stopped container, but the `unifi-mcp-data` named volume remains and preserves `/data/runtime.db` for subsequent runs.
+
 ## Requesting new functionality
 
 - **New skills**: Open an issue with `[Skill]` prefix — describe the problem, workflow, and expected output
@@ -411,8 +455,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release history and [CONTRIBUTING.md](CONTR
 
 - Credentials are passed via environment variables — never commit `.env`
 - SSL verification is disabled by default for self-signed certificates
-- The server only exposes read operations and safe management commands
-- Destructive operations (delete site, factory reset) are not exposed
+- The server exposes both read and write tools
+- Disruptive or destructive tools are annotated and/or explicitly confirm-gated where implemented; MCP clients decide how to present or honor annotations
+- Especially dangerous operations such as factory reset remain unexposed
 - API keys should be kept secure and rotated periodically
 
 ## License

@@ -2,10 +2,11 @@
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,31 @@ _ENV_FILES = (
     ".env",
     str(Path(__file__).resolve().parents[2] / ".env"),
 )
+
+
+def _default_data_dir() -> Path:
+    xdg_data_home = os.environ.get("XDG_DATA_HOME")
+    if xdg_data_home:
+        try:
+            xdg_path = Path(xdg_data_home).expanduser()
+        except RuntimeError:
+            xdg_path = Path(xdg_data_home)
+        if xdg_path.is_absolute():
+            return xdg_path / "unifi-mcp"
+    return Path.home() / ".local" / "share" / "unifi-mcp"
+
+
+def _validate_absolute_path(value: object, field_name: str) -> Path:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        raise ValueError(f"{field_name} must be a non-empty absolute path")
+
+    try:
+        path = Path(value).expanduser()  # type: ignore[arg-type]
+    except (RuntimeError, TypeError) as exc:
+        raise ValueError(f"{field_name} must be a valid absolute path") from exc
+    if not path.is_absolute():
+        raise ValueError(f"{field_name} must be an absolute path; got {value!r}")
+    return path
 
 
 class UniFiDevice(BaseModel):
@@ -125,6 +151,14 @@ class UniFiSettings(BaseSettings):
     request_timeout: float = Field(default=30.0)
     max_connections: int = Field(default=10)
     cache_ttl: int = Field(default=30)
+    mutation_verify_attempts: int = Field(default=5, ge=1, le=10)
+    mutation_verify_initial_delay: float = Field(default=0.5, ge=0, le=60)
+    mutation_verify_max_delay: float = Field(default=2.0, ge=0, le=60)
+
+    # Optional runtime persistence
+    runtime_enabled: bool = Field(default=False)
+    data_dir: Path = Field(default_factory=_default_data_dir)
+    runtime_database: Path | None = Field(default=None)
 
     # Default device name for legacy config
     default_device_name: str = Field(
@@ -133,6 +167,25 @@ class UniFiSettings(BaseSettings):
     )
 
     _devices: list[UniFiDevice] | None = None
+
+    @property
+    def runtime_database_path(self) -> Path:
+        """Return the configured runtime database path."""
+        return self.runtime_database or self.data_dir / "runtime.db"
+
+    @field_validator("data_dir", mode="before")
+    @classmethod
+    def validate_data_dir(cls, value: object) -> Path:
+        """Expand and validate the runtime data directory."""
+        return _validate_absolute_path(value, "data_dir")
+
+    @field_validator("runtime_database", mode="before")
+    @classmethod
+    def validate_runtime_database(cls, value: object) -> Path | None:
+        """Expand and validate an optional runtime database override."""
+        if value is None:
+            return None
+        return _validate_absolute_path(value, "runtime_database")
 
     @field_validator("devices_json", mode="before")
     @classmethod
@@ -149,6 +202,16 @@ class UniFiSettings(BaseSettings):
         if isinstance(v, list):
             return json.dumps(v)
         return v
+
+    @model_validator(mode="after")
+    def validate_mutation_verify_delays(self) -> "UniFiSettings":
+        """Ensure exponential verification delays can only increase."""
+        if self.mutation_verify_max_delay < self.mutation_verify_initial_delay:
+            raise ValueError(
+                "mutation_verify_max_delay must be greater than or equal to "
+                "mutation_verify_initial_delay"
+            )
+        return self
 
     @property
     def devices(self) -> list[UniFiDevice]:

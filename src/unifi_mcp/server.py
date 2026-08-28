@@ -3,11 +3,12 @@
 import logging
 import sys
 
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.mcpserver import Context, MCPServer
 from mcp.types import ToolAnnotations
 
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
+from unifi_mcp.tools import system as system_tools
 from unifi_mcp.tools.network import clients as client_tools
 from unifi_mcp.tools.network import devices as device_tools
 from unifi_mcp.tools.network import insights as insight_tools
@@ -15,6 +16,7 @@ from unifi_mcp.tools.network import multisite as multisite_tools
 from unifi_mcp.tools.network import sites as site_tools
 from unifi_mcp.tools.network import stats as stat_tools
 from unifi_mcp.tools.protect import cameras as protect_tools
+from unifi_mcp.version import get_version
 
 # Configure logging
 logging.basicConfig(
@@ -25,8 +27,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Create the MCP server with lifespan management
-mcp = FastMCP(
+mcp = MCPServer(
     name="UniFi MCP Server",
+    version=get_version(),
     instructions="""
     Manage and analyze UniFi network and Protect infrastructure.
 
@@ -50,6 +53,17 @@ mcp = FastMCP(
 )
 
 # =============================================================================
+# System Tools
+# =============================================================================
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_server_health(ctx: Context) -> system_tools.ServerHealth:
+    """Get redaction-safe UniFi MCP runtime health and service counts."""
+    return await system_tools.build_server_health(ctx.request_context.lifespan_context)
+
+
+# =============================================================================
 # Device Management Tools
 # =============================================================================
 
@@ -61,7 +75,9 @@ async def list_devices(ctx: Context, site: str = "default", device: str | None =
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_device_details(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_device_details(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get detailed information about a specific device."""
     return await device_tools.get_device_details(ctx, mac, site, device)
 
@@ -73,13 +89,17 @@ async def restart_device(ctx: Context, mac: str, site: str = "default", device: 
 
 
 @mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
-async def locate_device(ctx: Context, mac: str, enabled: bool = True, site: str = "default", device: str | None = None):
+async def locate_device(
+    ctx: Context, mac: str, enabled: bool = True, site: str = "default", device: str | None = None
+):
     """Enable/disable LED blinking to locate a device."""
     return await device_tools.locate_device(ctx, mac, enabled, site, device)
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_device_stats(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_device_stats(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get performance statistics for a device."""
     return await device_tools.get_device_stats(ctx, mac, site, device)
 
@@ -91,9 +111,49 @@ async def upgrade_device(ctx: Context, mac: str, site: str = "default", device: 
 
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
-async def provision_device(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def provision_device(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Force re-provision a device with current configuration."""
     return await device_tools.provision_device(ctx, mac, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_device_ports(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
+    """List the switch/gateway ports on a device (index, name, link, speed, VLAN)."""
+    return await device_tools.get_device_ports(ctx, mac, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def set_device_port(
+    ctx: Context,
+    mac: str,
+    port_idx: int,
+    name: str | None = None,
+    native_network: str | None = None,
+    poe_mode: str | None = None,
+    forward: str | None = None,
+    enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Configure a single switch port: native VLAN, PoE mode, name, or enable state."""
+    return await device_tools.set_device_port(
+        ctx,
+        mac,
+        port_idx,
+        name,
+        native_network,
+        poe_mode,
+        forward,
+        enabled,
+        site,
+        device,
+        confirm,
+    )
 
 
 # =============================================================================
@@ -114,7 +174,9 @@ async def list_all_clients(ctx: Context, site: str = "default", device: str | No
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_client_details(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_client_details(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get detailed information about a specific client."""
     return await client_tools.get_client_details(ctx, mac, site, device)
 
@@ -144,7 +206,9 @@ async def forget_client(ctx: Context, mac: str, site: str = "default", device: s
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_client_traffic(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_client_traffic(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get traffic statistics for a specific client."""
     return await client_tools.get_client_traffic(ctx, mac, site, device)
 
@@ -196,6 +260,84 @@ async def get_networks(ctx: Context, site: str = "default", device: str | None =
     return await site_tools.get_networks(ctx, site, device)
 
 
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_network(
+    ctx: Context,
+    name: str,
+    subnet: str | None = None,
+    vlan: int | None = None,
+    purpose: str = "corporate",
+    domain_name: str | None = None,
+    dhcp_start: str | None = None,
+    dhcp_stop: str | None = None,
+    dhcp_lease_time: int | None = None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Create a new network/VLAN (corporate by default)."""
+    return await site_tools.create_network(
+        ctx,
+        name,
+        subnet,
+        vlan,
+        purpose,
+        domain_name,
+        dhcp_start,
+        dhcp_stop,
+        dhcp_lease_time,
+        site,
+        device,
+        confirm,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def update_network(
+    ctx: Context,
+    name: str,
+    name_new: str | None = None,
+    subnet: str | None = None,
+    vlan: int | None = None,
+    domain_name: str | None = None,
+    dhcp_start: str | None = None,
+    dhcp_stop: str | None = None,
+    dhcp_lease_time: int | None = None,
+    enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Update a network/VLAN by name or ID - only provided fields change."""
+    return await site_tools.update_network(
+        ctx,
+        name,
+        name_new,
+        subnet,
+        vlan,
+        domain_name,
+        dhcp_start,
+        dhcp_stop,
+        dhcp_lease_time,
+        enabled,
+        site,
+        device,
+        confirm,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_network(
+    ctx: Context,
+    name: str,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Delete a network/VLAN by name or ID. Requires confirm=true."""
+    return await site_tools.delete_network(ctx, name, site, device, confirm)
+
+
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_wlans(ctx: Context, site: str = "default", device: str | None = None):
     """Get all wireless network (SSID) configurations."""
@@ -237,8 +379,18 @@ async def update_wlan(
 ):
     """Update a wireless network (SSID) by ID or name - only provided fields change."""
     return await site_tools.update_wlan(
-        ctx, wlan, enabled, hide_ssid, passphrase, wpa3_support,
-        wpa3_transition, pmf_mode, bss_transition, fast_roaming_enabled, site, device,
+        ctx,
+        wlan,
+        enabled,
+        hide_ssid,
+        passphrase,
+        wpa3_support,
+        wpa3_transition,
+        pmf_mode,
+        bss_transition,
+        fast_roaming_enabled,
+        site,
+        device,
     )
 
 
@@ -256,7 +408,15 @@ async def create_wlan(
 ):
     """Create a wireless network (SSID) with WPA2/WPA3 transition security."""
     return await site_tools.create_wlan(
-        ctx, name, passphrase, network_conf_id, wpa3_transition, hide_ssid, is_guest, site, device,
+        ctx,
+        name,
+        passphrase,
+        network_conf_id,
+        wpa3_transition,
+        hide_ssid,
+        is_guest,
+        site,
+        device,
     )
 
 
@@ -285,8 +445,18 @@ async def create_firewall_policy(
 ):
     """Create a zone-based firewall policy (UniFi Network 9+)."""
     return await site_tools.create_firewall_policy(
-        ctx, name, action, src_zone_id, dst_zone_id, protocol,
-        description, client_macs, index, enabled, site, device,
+        ctx,
+        name,
+        action,
+        src_zone_id,
+        dst_zone_id,
+        protocol,
+        description,
+        client_macs,
+        index,
+        enabled,
+        site,
+        device,
     )
 
 
@@ -300,7 +470,11 @@ async def set_firewall_policy_enabled(
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def delete_firewall_policy(
-    ctx: Context, policy_id: str, confirm: bool = False, site: str = "default", device: str | None = None
+    ctx: Context,
+    policy_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
 ):
     """Delete a zone-based firewall policy. Requires confirm=true."""
     return await site_tools.delete_firewall_policy(ctx, policy_id, confirm, site, device)
@@ -325,12 +499,18 @@ async def create_port_forward(
     device: str | None = None,
 ):
     """Create a port forwarding rule on the gateway."""
-    return await site_tools.create_port_forward(ctx, name, dst_port, fwd_ip, fwd_port, proto, enabled, site, device)
+    return await site_tools.create_port_forward(
+        ctx, name, dst_port, fwd_ip, fwd_port, proto, enabled, site, device
+    )
 
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def delete_port_forward(
-    ctx: Context, rule_id: str, confirm: bool = False, site: str = "default", device: str | None = None
+    ctx: Context,
+    rule_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
 ):
     """Delete a port forwarding rule. Requires confirm=true."""
     return await site_tools.delete_port_forward(ctx, rule_id, confirm, site, device)
@@ -360,7 +540,9 @@ async def get_network_health(ctx: Context, site: str = "default", device: str | 
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_recent_events(ctx: Context, limit: int = 50, site: str = "default", device: str | None = None):
+async def get_recent_events(
+    ctx: Context, limit: int = 50, site: str = "default", device: str | None = None
+):
     """Get recent network events."""
     return await stat_tools.get_recent_events(ctx, limit, site, device)
 
@@ -418,7 +600,9 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_optimization_recommendations(ctx: Context, site: str = "default", device: str | None = None):
+async def get_optimization_recommendations(
+    ctx: Context, site: str = "default", device: str | None = None
+):
     """
     Analyze network configuration and provide optimization recommendations.
 
@@ -429,7 +613,9 @@ async def get_optimization_recommendations(ctx: Context, site: str = "default", 
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_client_experience_report(ctx: Context, site: str = "default", device: str | None = None):
+async def get_client_experience_report(
+    ctx: Context, site: str = "default", device: str | None = None
+):
     """
     Generate a client experience report with connection quality metrics.
 
@@ -451,7 +637,9 @@ async def get_device_health_summary(ctx: Context, site: str = "default", device:
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_traffic_analysis(ctx: Context, hours: int = 24, site: str = "default", device: str | None = None):
+async def get_traffic_analysis(
+    ctx: Context, hours: int = 24, site: str = "default", device: str | None = None
+):
     """
     Analyze traffic patterns over the specified time period.
 
@@ -462,7 +650,9 @@ async def get_traffic_analysis(ctx: Context, hours: int = 24, site: str = "defau
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def troubleshoot_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def troubleshoot_client(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """
     Deep-dive troubleshooting for a specific client.
 
@@ -671,10 +861,6 @@ def main():
     mcp.run()
 
 
-if __name__ == "__main__":
-    main()
-
-
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def export_camera_clip(
     ctx: Context,
@@ -685,4 +871,10 @@ async def export_camera_clip(
     device: str | None = None,
 ):
     """Export a camera recording clip (MP4) to a local file. Requires Protect credentials."""
-    return await protect_tools.export_camera_clip(ctx, camera, start_ts, end_ts, output_path, device)
+    return await protect_tools.export_camera_clip(
+        ctx, camera, start_ts, end_ts, output_path, device
+    )
+
+
+if __name__ == "__main__":
+    main()

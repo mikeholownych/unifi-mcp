@@ -5,7 +5,7 @@ Aggregate operations across all configured UniFi devices/controllers.
 
 from typing import Any
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
 
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.network import UniFiNetworkClient
@@ -80,11 +80,13 @@ async def get_global_health(ctx: Context) -> dict[str, Any]:
                     "switch": sub.get("num_sw"),
                     "gateway": sub.get("num_gateway"),
                 }
-            device_health.append({
-                "device": device_name,
-                "site": site,
-                "subsystems": subsystems,
-            })
+            device_health.append(
+                {
+                    "device": device_name,
+                    "site": site,
+                    "subsystems": subsystems,
+                }
+            )
         except Exception as e:
             errors.append({"device": device_name, "error": str(e)})
 

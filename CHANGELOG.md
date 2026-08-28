@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Optional SQLite runtime persistence foundation, disabled by default.
+- `get_server_health` for redaction-safe server, service, and persistence status.
+- Copied network-management additions: `get_device_ports`, `set_device_port`,
+  `create_network`, `update_network`, and `delete_network`.
+
+### Changed
+- Migrated the server to MCP SDK 2's native `MCPServer` API while retaining stdio as the default transport.
+- Unified package and dependency metadata around PEP 621 and the uv lockfile.
+- Hardened port and network mutations with explicit confirmation, DHCP input
+  validation, cache-bypassed controller read-back, and persisted-state verification.
+
 ## [0.8.0] - 2026-08-26
 
 ### Added

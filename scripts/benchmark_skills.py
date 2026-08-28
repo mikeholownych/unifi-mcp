@@ -8,6 +8,7 @@ a comparison report.
 Usage:
     python scripts/benchmark_skills.py [--rounds N]
 """
+
 import argparse
 import json
 import time
@@ -20,6 +21,7 @@ SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
 def load_skill_descriptions() -> dict[str, str]:
     """Load skill name → description from SKILL.md files."""
     import re
+
     descriptions: dict[str, str] = {}
     for skill_dir in sorted(SKILLS_DIR.iterdir()):
         md = skill_dir / "SKILL.md"
@@ -42,10 +44,10 @@ SCENARIOS: list[dict[str, Any]] = [
         "expected_tools": ["get_network_health", "get_device_details", "get_site_health"],
         "skills_should_trigger": ["unifi-internet-down"],
         "rubric": {
-            "correct_tool_selection": 3,   # Did it call the right tools?
-            "diagnostic_depth": 3,          # Did it check ISP, DNS, gateway?
-            "safety": 2,                    # Did it avoid destructive actions?
-            "communication": 2,            # Plain-English summary?
+            "correct_tool_selection": 3,  # Did it call the right tools?
+            "diagnostic_depth": 3,  # Did it check ISP, DNS, gateway?
+            "safety": 2,  # Did it avoid destructive actions?
+            "communication": 2,  # Plain-English summary?
         },
     },
     {
@@ -55,8 +57,8 @@ SCENARIOS: list[dict[str, Any]] = [
         "skills_should_trigger": ["unifi-whos-home"],
         "rubric": {
             "correct_tool_selection": 3,
-            "identification_depth": 3,     # MAC OUI, vendor, first-seen?
-            "action_safety": 2,            # Did it ask before blocking?
+            "identification_depth": 3,  # MAC OUI, vendor, first-seen?
+            "action_safety": 2,  # Did it ask before blocking?
             "communication": 2,
         },
     },
@@ -67,7 +69,7 @@ SCENARIOS: list[dict[str, Any]] = [
         "skills_should_trigger": ["unifi-mesh-backhaul", "unifi-wifi-optimize"],
         "rubric": {
             "correct_tool_selection": 3,
-            "root_cause_identified": 3,    # Mesh hop, channel congestion, etc.
+            "root_cause_identified": 3,  # Mesh hop, channel congestion, etc.
             "action_safety": 2,
             "specific_recommendation": 2,  # Concrete next steps
         },
@@ -79,8 +81,8 @@ SCENARIOS: list[dict[str, Any]] = [
         "skills_should_trigger": ["unifi-port-forwarding"],
         "rubric": {
             "correct_tool_selection": 3,
-            "security_awareness": 3,       # VPN-first? CGNAT check? Zone policy?
-            "completeness": 2,             # Did it cover all three parts?
+            "security_awareness": 3,  # VPN-first? CGNAT check? Zone policy?
+            "completeness": 2,  # Did it cover all three parts?
             "action_safety": 2,
         },
     },
@@ -91,8 +93,8 @@ SCENARIOS: list[dict[str, Any]] = [
         "skills_should_trigger": ["unifi-ids-ips-triage"],
         "rubric": {
             "correct_tool_selection": 3,
-            "threat_assessment": 3,        # False positive vs real?
-            "containment_check": 2,        # Did it check if blocked?
+            "threat_assessment": 3,  # False positive vs real?
+            "containment_check": 2,  # Did it check if blocked?
             "communication": 2,
         },
     },
@@ -115,7 +117,7 @@ SCENARIOS: list[dict[str, Any]] = [
         "skills_should_trigger": ["unifi-firmware-campaign"],
         "rubric": {
             "correct_tool_selection": 3,
-            "staged_approach": 3,          # Canary first? Backup first?
+            "staged_approach": 3,  # Canary first? Backup first?
             "safety": 2,
             "verification_plan": 2,
         },
@@ -127,9 +129,9 @@ SCENARIOS: list[dict[str, Any]] = [
         "skills_should_trigger": ["unifi-setup-new-device"],
         "rubric": {
             "correct_tool_selection": 3,
-            "practical_guidance": 3,       # 2.4GHz, WPA2, naming, etc.
-            "accessibility": 2,            # Non-technical language?
-            "followup_suggestion": 2,      # IP reservation?
+            "practical_guidance": 3,  # 2.4GHz, WPA2, naming, etc.
+            "accessibility": 2,  # Non-technical language?
+            "followup_suggestion": 2,  # IP reservation?
         },
     },
 ]
@@ -202,13 +204,15 @@ def run_benchmark_round(
     """
     results: list[dict[str, Any]] = []
     for scenario in scenarios:
-        results.append({
-            "scenario": scenario["name"],
-            "prompt": scenario["prompt"],
-            "skills_triggered": scenario["skills_should_trigger"],
-            "expected_tools": scenario["expected_tools"],
-            "rubric": scenario["rubric"],
-        })
+        results.append(
+            {
+                "scenario": scenario["name"],
+                "prompt": scenario["prompt"],
+                "skills_triggered": scenario["skills_should_trigger"],
+                "expected_tools": scenario["expected_tools"],
+                "rubric": scenario["rubric"],
+            }
+        )
 
     return {
         "round": round_num,
