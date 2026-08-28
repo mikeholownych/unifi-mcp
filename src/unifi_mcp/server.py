@@ -9,8 +9,10 @@ from mcp.types import ToolAnnotations
 
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
+from unifi_mcp.tools import client_organization as organization_tools
 from unifi_mcp.tools import exports as export_tools
 from unifi_mcp.tools import observability as observability_tools
+from unifi_mcp.tools import qos as qos_tools
 from unifi_mcp.tools import runtime as runtime_tools
 from unifi_mcp.tools import system as system_tools
 from unifi_mcp.tools.network import clients as client_tools
@@ -125,6 +127,116 @@ async def list_observation_scopes(ctx: Context):
 async def get_observation_retention_status(ctx: Context):
     """Get aggregate observation count and retained time range."""
     return await observability_tools.get_observation_retention_status(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_client_organization(
+    ctx: Context, identity: str, site: str = "default", device: str | None = None
+):
+    """Get durable local tags and group membership for one known client."""
+    return await organization_tools.get_client_organization(ctx, identity, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_client_tags(
+    ctx: Context,
+    identity: str,
+    tags: list[str],
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Replace local client tags by stable identity. Requires confirm=true."""
+    return await organization_tools.set_client_tags(ctx, identity, tags, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_client_group(
+    ctx: Context,
+    name: str,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Create a controller-independent local client group. Requires confirm=true."""
+    return await organization_tools.create_client_group(ctx, name, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_client_group(
+    ctx: Context,
+    name: str,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Delete a local group and its memberships. Requires confirm=true."""
+    return await organization_tools.delete_client_group(ctx, name, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def assign_client_group(
+    ctx: Context,
+    identity: str,
+    group: str | None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Assign or unassign one local client group. Requires confirm=true."""
+    return await organization_tools.assign_client_group(ctx, identity, group, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_client_groups(ctx: Context, site: str = "default", device: str | None = None):
+    """List local client groups and deterministic member counts."""
+    return await organization_tools.list_client_groups(ctx, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_clients_by_organization(
+    ctx: Context,
+    tag: str | None = None,
+    group: str | None = None,
+    site: str = "default",
+    device: str | None = None,
+):
+    """List stable client identities for exactly one local tag or group."""
+    return await organization_tools.list_clients_by_organization(ctx, tag, group, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_client_qos_capabilities(ctx: Context, device: str | None = None):
+    """Describe validated controller QoS mutation capabilities."""
+    return await qos_tools.get_client_qos_capabilities(ctx, device)
+
+
+@mcp.tool()
+async def plan_client_qos_policy(
+    ctx: Context,
+    selector_type: str,
+    selector_value: str,
+    download_kbps: int,
+    upload_kbps: int,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Persist a deterministic QoS target preview without controller mutation."""
+    return await qos_tools.plan_client_qos_policy(
+        ctx,
+        selector_type,
+        selector_value,
+        download_kbps,
+        upload_kbps,
+        site,
+        device,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def apply_client_qos_policy(ctx: Context, plan_token: str, confirm: bool = False):
+    """Apply a validated QoS preview when a supported adapter exists. Requires confirmation."""
+    return await qos_tools.apply_client_qos_policy(ctx, plan_token, confirm)
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))

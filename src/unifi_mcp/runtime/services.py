@@ -20,9 +20,11 @@ from unifi_mcp.observability.collectors import (
     ProtectObservationSource,
 )
 from unifi_mcp.observability.prometheus import MetricsSnapshot, MetricsState
+from unifi_mcp.runtime.client_organization import ClientOrganizationRepository
 from unifi_mcp.runtime.events import EventRepository
 from unifi_mcp.runtime.jobs import JobDefinition, JobRegistry
 from unifi_mcp.runtime.observations import ObservationRepository
+from unifi_mcp.runtime.qos import QoSPlanRepository
 from unifi_mcp.runtime.scheduler import Scheduler
 from unifi_mcp.runtime.store import RuntimeStore
 from unifi_mcp.runtime.webhooks import WebhookService
@@ -79,6 +81,8 @@ class RuntimeServices:
     observation_repository: ObservationRepository
     observation_collector: ObservationCollector
     metrics_state: MetricsState
+    client_organization: ClientOrganizationRepository
+    qos_plans: QoSPlanRepository
     configured_controller_count: int
 
     async def close(self) -> None:
@@ -199,6 +203,8 @@ async def build_runtime_services(
             ProtectObservationSource(UniFiProtectClient(ctx.client, device), controller=device.name)
         )
     observation_repository = ObservationRepository(ctx.runtime)
+    client_organization = ClientOrganizationRepository(ctx.runtime)
+    qos_plans = QoSPlanRepository(ctx.runtime)
     observation_collector = ObservationCollector(observation_sources)
     configured_controller_count = max(1, len(ctx.settings.get_device_names()))
     metrics_state = MetricsState(
@@ -313,6 +319,8 @@ async def build_runtime_services(
         observation_repository=observation_repository,
         observation_collector=observation_collector,
         metrics_state=metrics_state,
+        client_organization=client_organization,
+        qos_plans=qos_plans,
         configured_controller_count=configured_controller_count,
     )
     return services

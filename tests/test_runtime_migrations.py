@@ -41,9 +41,9 @@ async def test_v1_database_upgrades_to_latest_without_losing_metadata(tmp_path):
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
         }
 
-    assert SCHEMA_VERSION == 3
-    assert health["schema_version"] == 3
-    assert versions == [1, 2, 3]
+    assert SCHEMA_VERSION == 4
+    assert health["schema_version"] == 4
+    assert versions == [1, 2, 3, 4]
     assert metadata == ("phase-1",)
     assert {
         "events",
@@ -53,4 +53,9 @@ async def test_v1_database_upgrades_to_latest_without_losing_metadata(tmp_path):
         "webhook_destinations",
         "webhook_deliveries",
         "observations",
+        "client_tags",
+        "client_groups",
+        "client_group_memberships",
+        "client_qos_plans",
+        "client_qos_targets",
     } <= tables

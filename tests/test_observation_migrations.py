@@ -5,7 +5,7 @@ import sqlite3
 from unifi_mcp.runtime import SCHEMA_VERSION, RuntimeStore
 
 
-async def test_v2_database_upgrades_to_v3_observation_schema(tmp_path):
+async def test_v2_database_upgrades_to_latest_with_observation_schema(tmp_path):
     database_path = tmp_path / "runtime.db"
     with sqlite3.connect(database_path) as connection:
         connection.execute(
@@ -29,7 +29,7 @@ async def test_v2_database_upgrades_to_v3_observation_schema(tmp_path):
         columns = {row[1] for row in connection.execute("PRAGMA table_info(observations)")}
         versions = [row[0] for row in connection.execute("SELECT version FROM schema_migrations")]
 
-    assert SCHEMA_VERSION == 3
-    assert health["schema_version"] == 3
-    assert versions == [1, 2, 3]
+    assert SCHEMA_VERSION == 4
+    assert health["schema_version"] == 4
+    assert versions == [1, 2, 3, 4]
     assert {"source", "controller", "site", "kind", "observed_at", "metrics_json"} <= columns

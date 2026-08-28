@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collection, and retention pruning.
 - Optional label-free Prometheus metrics with loopback defaults and authenticated
   remote binding; the base install remains dependency-free from Prometheus.
+- Durable local client tags and single-group membership keyed by scoped one-way
+  identities, with ambiguity-safe client resolution and confirmation-gated writes.
+- Deterministic, expiring QoS policy previews with resumable target ledgers and
+  explicit unsupported-capability guidance that performs no controller mutation.
 - Copied network-management additions: `get_device_ports`, `set_device_port`,
   `create_network`, `update_network`, and `delete_network`.
 

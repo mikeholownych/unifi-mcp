@@ -35,6 +35,36 @@
     }
   },
   {
+    "name": "apply_client_qos_policy",
+    "description": "Apply a validated QoS preview when a supported adapter exists. Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "plan_token": {
+          "title": "Plan Token",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "plan_token"
+      ],
+      "title": "apply_client_qos_policyArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "archive_all_alarms",
     "description": "Archive all active alarms.",
     "inputSchema": {
@@ -59,6 +89,65 @@
         }
       },
       "title": "archive_all_alarmsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "assign_client_group",
+    "description": "Assign or unassign one local client group. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "title": "Identity",
+          "type": "string"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Group"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "identity",
+        "group"
+      ],
+      "title": "assign_client_groupArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -125,6 +214,53 @@
       "readOnlyHint": null,
       "destructiveHint": null,
       "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_client_group",
+    "description": "Create a controller-independent local client group. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "create_client_groupArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
       "openWorldHint": null
     }
   },
@@ -598,6 +734,53 @@
         "passphrase"
       ],
       "title": "create_wlanArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_client_group",
+    "description": "Delete a local group and its memberships. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "delete_client_groupArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -1275,6 +1458,78 @@
         }
       },
       "title": "get_client_experience_reportArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_organization",
+    "description": "Get durable local tags and group membership for one known client.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "title": "Identity",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "identity"
+      ],
+      "title": "get_client_organizationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_qos_capabilities",
+    "description": "Describe validated controller QoS mutation capabilities.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_client_qos_capabilitiesArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -2713,6 +2968,41 @@
     }
   },
   {
+    "name": "list_client_groups",
+    "description": "List local client groups and deterministic member counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_client_groupsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "list_clients",
     "description": "List all currently connected clients.",
     "inputSchema": {
@@ -2737,6 +3027,65 @@
         }
       },
       "title": "list_clientsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_clients_by_organization",
+    "description": "List stable client identities for exactly one local tag or group.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_clients_by_organizationArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -2995,6 +3344,57 @@
       "idempotentHint": true,
       "openWorldHint": null
     }
+  },
+  {
+    "name": "plan_client_qos_policy",
+    "description": "Persist a deterministic QoS target preview without controller mutation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector_type": {
+          "title": "Selector Type",
+          "type": "string"
+        },
+        "selector_value": {
+          "title": "Selector Value",
+          "type": "string"
+        },
+        "download_kbps": {
+          "title": "Download Kbps",
+          "type": "integer"
+        },
+        "upload_kbps": {
+          "title": "Upload Kbps",
+          "type": "integer"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "selector_type",
+        "selector_value",
+        "download_kbps",
+        "upload_kbps"
+      ],
+      "title": "plan_client_qos_policyArguments"
+    },
+    "outputSchema": null,
+    "annotations": null
   },
   {
     "name": "poll_events_now",
@@ -3312,6 +3712,61 @@
         }
       },
       "title": "run_speed_testArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_client_tags",
+    "description": "Replace local client tags by stable identity. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "title": "Identity",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "identity",
+        "tags"
+      ],
+      "title": "set_client_tagsArguments"
     },
     "outputSchema": null,
     "annotations": {

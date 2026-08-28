@@ -10,7 +10,7 @@ import aiosqlite
 
 from unifi_mcp.exceptions import UniFiConfigError
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 async def _apply_v2(connection: aiosqlite.Connection) -> None:
@@ -139,6 +139,86 @@ async def _apply_v3(connection: aiosqlite.Connection) -> None:
         await connection.execute(statement)
 
 
+async def _apply_v4(connection: aiosqlite.Connection) -> None:
+    statements = (
+        """
+        CREATE TABLE client_tags (
+            controller TEXT NOT NULL,
+            site TEXT NOT NULL DEFAULT '',
+            client_key TEXT NOT NULL,
+            tag TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (controller, site, client_key, tag)
+        )
+        """,
+        """
+        CREATE TABLE client_groups (
+            id TEXT PRIMARY KEY,
+            controller TEXT NOT NULL,
+            site TEXT NOT NULL DEFAULT '',
+            name TEXT NOT NULL COLLATE NOCASE,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE (controller, site, name),
+            UNIQUE (controller, site, id)
+        )
+        """,
+        """
+        CREATE TABLE client_group_memberships (
+            controller TEXT NOT NULL,
+            site TEXT NOT NULL DEFAULT '',
+            client_key TEXT NOT NULL,
+            group_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (controller, site, client_key),
+            FOREIGN KEY (controller, site, group_id)
+                REFERENCES client_groups(controller, site, id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX client_tags_lookup_idx ON client_tags (controller, site, tag, client_key)",
+        """
+        CREATE INDEX client_group_memberships_lookup_idx
+        ON client_group_memberships (controller, site, group_id, client_key)
+        """,
+        """
+        CREATE TABLE client_qos_plans (
+            token TEXT PRIMARY KEY,
+            controller TEXT NOT NULL,
+            site TEXT NOT NULL DEFAULT '',
+            selector_type TEXT NOT NULL CHECK (selector_type IN ('client', 'tag', 'group')),
+            selector_value TEXT NOT NULL,
+            download_kbps INTEGER NOT NULL CHECK (download_kbps > 0),
+            upload_kbps INTEGER NOT NULL CHECK (upload_kbps > 0),
+            targets_hash TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('planned', 'applying', 'complete', 'partial')),
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE client_qos_targets (
+            plan_token TEXT NOT NULL REFERENCES client_qos_plans(token) ON DELETE CASCADE,
+            client_key TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending'
+                CHECK (status IN ('pending', 'applied', 'failed')),
+            previous_json TEXT,
+            applied_json TEXT,
+            error_code TEXT,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (plan_token, client_key),
+            UNIQUE (plan_token, position)
+        )
+        """,
+        """
+        CREATE INDEX client_qos_plans_scope_idx
+        ON client_qos_plans (controller, site, created_at DESC)
+        """,
+    )
+    for statement in statements:
+        await connection.execute(statement)
+
+
 async def _initialize_connection(connection: aiosqlite.Connection) -> None:
     await connection.execute("PRAGMA journal_mode=WAL")
     await connection.execute("PRAGMA foreign_keys=ON")
@@ -195,6 +275,13 @@ async def _migrate(connection: aiosqlite.Connection) -> None:
         await connection.execute(
             "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
             (3, datetime.now(timezone.utc).isoformat()),  # noqa: UP017
+        )
+
+    if current_version < 4:
+        await _apply_v4(connection)
+        await connection.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+            (4, datetime.now(timezone.utc).isoformat()),  # noqa: UP017
         )
 
     await connection.commit()

@@ -222,6 +222,14 @@ UNIFI_PROMETHEUS_HOST=127.0.0.1
 
 Metrics use fixed names without controller, site, client, MAC, IP, or SSID labels. Binding beyond loopback additionally requires `UNIFI_PROMETHEUS_ALLOW_REMOTE=true` and `UNIFI_PROMETHEUS_BEARER_TOKEN_ENV` naming an environment variable that contains the bearer token. The token value is read at request time and is never persisted.
 
+### Client Organization and QoS Previews
+
+With runtime persistence enabled, clients can have multiple local tags and at most one local group. Membership is keyed by a controller/site-scoped SHA-256 value derived from the stable client MAC; raw MACs and mutable client names are not stored. Exact names and hostnames can be used as transient lookup hints, but ambiguous matches are rejected and the exact MAC must be supplied. Tags and groups survive client renames and do not change controller configuration.
+
+Organization mutations require `confirm=true`. Use `set_client_tags`, `create_client_group`, `assign_client_group`, `list_client_groups`, and `list_clients_by_organization` to manage or query local metadata.
+
+`plan_client_qos_policy` persists a one-hour deterministic target snapshot selected by one client, tag, or group. The target ledger contains only scoped one-way client keys and supports future resumable per-target apply state. This release has no validated controller QoS adapter: `get_client_qos_capabilities` reports that limitation, and `apply_client_qos_policy` returns without making a controller mutation. Local tags never imply a QoS policy.
+
 ### Multi-Device Configuration (Recommended)
 
 Configure multiple UniFi devices with different services:
@@ -370,6 +378,12 @@ Or in `opencode.json`:
 - `forget_client` - Remove from known clients
 - `get_client_traffic` - Get traffic statistics
 - `reserve_client_ip` - Reserve IP via DHCP reservation
+- `get_client_organization` / `set_client_tags` - Read or replace durable local tags
+- `create_client_group` / `delete_client_group` - Manage local-only groups
+- `assign_client_group` / `list_client_groups` - Manage and inspect single-group membership
+- `list_clients_by_organization` - Resolve deterministic tag or group target sets
+- `get_client_qos_capabilities` - Report validated controller QoS support
+- `plan_client_qos_policy` / `apply_client_qos_policy` - Preview QoS targets and apply only when a validated adapter exists
 
 ### Site Management
 - `list_sites` - List all sites
