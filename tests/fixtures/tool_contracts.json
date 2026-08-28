@@ -892,6 +892,71 @@
     }
   },
   {
+    "name": "export_network_report",
+    "description": "Export an HTML or CSV report from the portable snapshot model. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "format": {
+          "title": "Format",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "filename",
+        "format"
+      ],
+      "title": "export_network_reportArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "export_portable_snapshot",
+    "description": "Export a deterministic secret-free JSON snapshot. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "filename"
+      ],
+      "title": "export_portable_snapshotArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "forget_client",
     "description": "Remove a client from the known clients list.",
     "inputSchema": {
@@ -2299,6 +2364,23 @@
         }
       },
       "title": "get_smart_detectionsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_snapshot_capabilities",
+    "description": "Describe portable snapshot/report capabilities and native backup limitations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_snapshot_capabilitiesArguments"
     },
     "outputSchema": null,
     "annotations": {
@@ -3770,6 +3852,31 @@
       "title": null,
       "readOnlyHint": null,
       "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "verify_snapshot",
+    "description": "Verify the schema and checksum of a confined snapshot export.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        }
+      },
+      "required": [
+        "filename"
+      ],
+      "title": "verify_snapshotArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
       "idempotentHint": null,
       "openWorldHint": null
     }

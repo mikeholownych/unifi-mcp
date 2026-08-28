@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filtered HTTPS event webhooks with environment-referenced HMAC secrets, SSRF checks,
   bounded retries, and dead-letter state.
 - Runtime event, polling, schedule, job-run, destination, and delivery management tools.
+- Deterministic portable JSON snapshots with secret exclusion, source limitations,
+  atomic private-file export, and SHA-256 verification.
+- Snapshot-backed standalone HTML and formula-safe CSV reports.
 - Copied network-management additions: `get_device_ports`, `set_device_port`,
   `create_network`, `update_network`, and `delete_network`.
 

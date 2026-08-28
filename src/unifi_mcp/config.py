@@ -159,6 +159,7 @@ class UniFiSettings(BaseSettings):
     runtime_enabled: bool = Field(default=False)
     data_dir: Path = Field(default_factory=_default_data_dir)
     runtime_database: Path | None = Field(default=None)
+    export_dir: Path | None = Field(default=None)
 
     # Optional background automation
     automation_enabled: bool = Field(default=False)
@@ -189,6 +190,11 @@ class UniFiSettings(BaseSettings):
         """Return the configured runtime database path."""
         return self.runtime_database or self.data_dir / "runtime.db"
 
+    @property
+    def export_directory(self) -> Path:
+        """Return the confined snapshot and report export directory."""
+        return self.export_dir or self.data_dir / "exports"
+
     @field_validator("data_dir", mode="before")
     @classmethod
     def validate_data_dir(cls, value: object) -> Path:
@@ -202,6 +208,14 @@ class UniFiSettings(BaseSettings):
         if value is None:
             return None
         return _validate_absolute_path(value, "runtime_database")
+
+    @field_validator("export_dir", mode="before")
+    @classmethod
+    def validate_export_dir(cls, value: object) -> Path | None:
+        """Expand and validate an optional export directory override."""
+        if value is None:
+            return None
+        return _validate_absolute_path(value, "export_dir")
 
     @field_validator("devices_json", mode="before")
     @classmethod

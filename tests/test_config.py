@@ -168,6 +168,17 @@ class TestRuntimeConfig:
         assert settings.runtime_enabled is True
         assert settings.runtime_database_path == database_path
 
+    def test_export_directory_defaults_beneath_data_dir_and_requires_absolute_override(
+        self, tmp_path, monkeypatch
+    ):
+        clear_unifi_environment(monkeypatch)
+
+        settings = UniFiSettings(_env_file=None, data_dir=tmp_path)
+
+        assert settings.export_directory == tmp_path / "exports"
+        with pytest.raises(ValueError, match="export_dir must be an absolute path"):
+            UniFiSettings(_env_file=None, data_dir=tmp_path, export_dir="relative/exports")
+
     def test_runtime_paths_are_paths_without_creating_directories(self, tmp_path, monkeypatch):
         clear_unifi_environment(monkeypatch)
         data_dir = tmp_path / "not-created"

@@ -9,6 +9,7 @@ from mcp.types import ToolAnnotations
 
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
+from unifi_mcp.tools import exports as export_tools
 from unifi_mcp.tools import runtime as runtime_tools
 from unifi_mcp.tools import system as system_tools
 from unifi_mcp.tools.network import clients as client_tools
@@ -63,6 +64,30 @@ mcp = MCPServer(
 async def get_server_health(ctx: Context) -> system_tools.ServerHealth:
     """Get redaction-safe UniFi MCP runtime health and service counts."""
     return await system_tools.build_server_health(ctx.request_context.lifespan_context)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_snapshot_capabilities(ctx: Context):
+    """Describe portable snapshot/report capabilities and native backup limitations."""
+    return await export_tools.get_snapshot_capabilities(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def export_portable_snapshot(ctx: Context, filename: str, confirm: bool = False):
+    """Export a deterministic secret-free JSON snapshot. Requires confirm=true."""
+    return await export_tools.export_portable_snapshot(ctx, filename, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def verify_snapshot(ctx: Context, filename: str):
+    """Verify the schema and checksum of a confined snapshot export."""
+    return await export_tools.verify_snapshot(ctx, filename)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def export_network_report(ctx: Context, filename: str, format: str, confirm: bool = False):
+    """Export an HTML or CSV report from the portable snapshot model. Requires confirm=true."""
+    return await export_tools.export_network_report(ctx, filename, format, confirm)
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))

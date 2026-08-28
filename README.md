@@ -194,6 +194,19 @@ WEBHOOK_SECRET_AUTOMATION='replace-with-a-random-secret'
 
 Useful tools include `get_event_polling_status`, `poll_events_now`, `list_runtime_events`, `create_interval_schedule`, `run_schedule_now`, `list_job_runs`, `create_webhook_destination`, `test_webhook_destination`, and `list_webhook_deliveries`. Retryable jobs and webhook failures use bounded exponential backoff; exhausted deliveries enter `dead_letter` state.
 
+### Portable Snapshots and Reports
+
+Portable snapshots are versioned, canonical JSON exports assembled from supported read APIs. They include source scope, explicit data limitations, Network/Protect inventory, networks, WLAN metadata, and firewall rule/policy metadata. Credentials, API keys, cookies, authorization headers, and WLAN passphrases are structurally excluded.
+
+```bash
+# Optional absolute override; defaults to <UNIFI_DATA_DIR>/exports
+UNIFI_EXPORT_DIR=/var/lib/unifi-mcp/exports
+```
+
+Export tools accept a plain filename rather than an arbitrary path, reject traversal and symlinks, and atomically write files with `0600` permissions. `export_portable_snapshot` includes a SHA-256 content checksum; `verify_snapshot` detects malformed, truncated, or modified snapshots. `export_network_report` renders the same strict model as escaped standalone HTML or formula-safe CSV.
+
+Native controller backup download and restore are intentionally reported as unavailable until controller-family endpoints and safe restore verification are validated. Portable snapshots support assessment and assisted reconstruction; they are not represented as restorable native controller backups.
+
 ### Multi-Device Configuration (Recommended)
 
 Configure multiple UniFi devices with different services:
