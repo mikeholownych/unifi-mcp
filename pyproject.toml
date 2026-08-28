@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 protect = ["uiprotect>=6.0.0"]
+observability = ["prometheus-client>=0.22,<1"]
 
 [dependency-groups]
 dev = [
@@ -56,6 +57,9 @@ ruff = ">=0.8"
 
 [tool.poetry.group.protect.dependencies]
 uiprotect = {version = "^6.0.0", optional = true}
+
+[tool.poetry.group.observability.dependencies]
+prometheus-client = {version = "^0.22.0", optional = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

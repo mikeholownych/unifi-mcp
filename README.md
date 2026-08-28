@@ -40,7 +40,7 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 ### Events and Safe Automation
 - Normalize and durably deduplicate Network and Protect events in optional SQLite storage
 - Poll each configured source independently and report unsupported capabilities explicitly
-- Run only three built-in interval jobs: `poll_events`, `retry_webhook_deliveries`, and `prune_runtime_data`
+- Run only built-in interval jobs: `poll_events`, `retry_webhook_deliveries`, `capture_observations`, and `prune_runtime_data`
 - Deliver filtered, signed HTTPS webhooks with bounded retries and dead-letter state
 - Keep persistence, background automation, and private webhook destinations disabled by default
 
@@ -182,7 +182,7 @@ Event ingestion is capability-based polling, not a claim of universal UniFi push
 - Integration API and cloud Network configurations are reported as unsupported for event polling.
 - Polling uses overlap plus durable source-key deduplication so timestamp boundaries do not create duplicate records.
 
-Schedules can invoke only `poll_events`, `retry_webhook_deliveries`, or `prune_runtime_data`. Schedule and webhook mutations require `confirm=true`; arbitrary MCP tool names, commands, imports, and expressions are rejected.
+Schedules can invoke only `poll_events`, `retry_webhook_deliveries`, `capture_observations`, or `prune_runtime_data`. Schedule and webhook mutations require `confirm=true`; arbitrary MCP tool names, commands, imports, and expressions are rejected.
 
 Webhook destinations use HTTPS, do not follow redirects, and are resolved and checked before every attempt. Loopback, private, link-local, multicast, and reserved addresses are rejected unless `UNIFI_WEBHOOK_ALLOW_PRIVATE=true`. The dedicated webhook client retains certificate verification even when a UniFi controller uses a self-signed certificate.
 
@@ -206,6 +206,21 @@ UNIFI_EXPORT_DIR=/var/lib/unifi-mcp/exports
 Export tools accept a plain filename rather than an arbitrary path, reject traversal and symlinks, and atomically write files with `0600` permissions. `export_portable_snapshot` includes a SHA-256 content checksum; `verify_snapshot` detects malformed, truncated, or modified snapshots. `export_network_report` renders the same strict model as escaped standalone HTML or formula-safe CSV.
 
 Native controller backup download and restore are intentionally reported as unavailable until controller-family endpoints and safe restore verification are validated. Portable snapshots support assessment and assisted reconstruction; they are not represented as restorable native controller backups.
+
+### History and Prometheus
+
+With runtime persistence enabled, `capture_observations_now` stores bounded aggregate site health, device/client counts, traffic totals, and Protect camera health. It never stores per-client history or packet-flow telemetry. `query_observation_trends` returns bounded UTC buckets with `present=false` for missed collections rather than inventing interpolated values.
+
+Prometheus support is not part of the base dependency set and starts no listener by default:
+
+```bash
+uv sync --extra observability
+UNIFI_RUNTIME_ENABLED=true
+UNIFI_PROMETHEUS_ENABLED=true
+UNIFI_PROMETHEUS_HOST=127.0.0.1
+```
+
+Metrics use fixed names without controller, site, client, MAC, IP, or SSID labels. Binding beyond loopback additionally requires `UNIFI_PROMETHEUS_ALLOW_REMOTE=true` and `UNIFI_PROMETHEUS_BEARER_TOKEN_ENV` naming an environment variable that contains the bearer token. The token value is read at request time and is never persisted.
 
 ### Multi-Device Configuration (Recommended)
 

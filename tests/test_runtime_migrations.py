@@ -5,7 +5,7 @@ import sqlite3
 from unifi_mcp.runtime import SCHEMA_VERSION, RuntimeStore
 
 
-async def test_v1_database_upgrades_to_v2_without_losing_metadata(tmp_path):
+async def test_v1_database_upgrades_to_latest_without_losing_metadata(tmp_path):
     database_path = tmp_path / "runtime.db"
     with sqlite3.connect(database_path) as connection:
         connection.execute(
@@ -41,9 +41,9 @@ async def test_v1_database_upgrades_to_v2_without_losing_metadata(tmp_path):
             for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
         }
 
-    assert SCHEMA_VERSION == 2
-    assert health["schema_version"] == 2
-    assert versions == [1, 2]
+    assert SCHEMA_VERSION == 3
+    assert health["schema_version"] == 3
+    assert versions == [1, 2, 3]
     assert metadata == ("phase-1",)
     assert {
         "events",
@@ -52,4 +52,5 @@ async def test_v1_database_upgrades_to_v2_without_losing_metadata(tmp_path):
         "job_runs",
         "webhook_destinations",
         "webhook_deliveries",
+        "observations",
     } <= tables

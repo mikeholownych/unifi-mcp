@@ -112,6 +112,23 @@
     }
   },
   {
+    "name": "capture_observations_now",
+    "description": "Capture bounded aggregate UniFi health observations now.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "capture_observations_nowArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "create_firewall_policy",
     "description": "Create a zone-based firewall policy (UniFi Network 9+).",
     "inputSchema": {
@@ -1797,6 +1814,23 @@
     }
   },
   {
+    "name": "get_observation_retention_status",
+    "description": "Get aggregate observation count and retained time range.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_observation_retention_statusArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "get_optimization_recommendations",
     "description": "\nAnalyze network configuration and provide optimization recommendations.\n\nChecks channel selection, TX power, VLAN efficiency, port configurations,\nand bandwidth utilization patterns.\n",
     "inputSchema": {
@@ -2772,6 +2806,23 @@
     }
   },
   {
+    "name": "list_observation_scopes",
+    "description": "List aggregate observation scopes currently retained.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_observation_scopesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "list_runtime_events",
     "description": "List normalized events retained by the optional runtime store.",
     "inputSchema": {
@@ -3025,6 +3076,87 @@
       "title": null,
       "readOnlyHint": null,
       "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "query_observation_trends",
+    "description": "Query bounded UTC trend buckets with explicit missing intervals.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "title": "End",
+          "type": "string"
+        },
+        "bucket_seconds": {
+          "default": 300,
+          "title": "Bucket Seconds",
+          "type": "integer"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "controller": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Controller"
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Site"
+        }
+      },
+      "required": [
+        "kind",
+        "metric",
+        "start",
+        "end"
+      ],
+      "title": "query_observation_trendsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
       "idempotentHint": null,
       "openWorldHint": null
     }

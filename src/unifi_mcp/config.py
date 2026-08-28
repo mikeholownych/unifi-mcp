@@ -171,11 +171,20 @@ class UniFiSettings(BaseSettings):
     automation_retry_initial_delay_seconds: float = Field(default=1.0, ge=0, le=60)
     event_poll_jitter_seconds: float = Field(default=1.0, ge=0, le=60)
     event_retention_days: int = Field(default=30, ge=1, le=3650)
+    observation_retention_days: int = Field(default=30, ge=1, le=3650)
     job_retention_days: int = Field(default=30, ge=1, le=3650)
     webhook_delivery_retention_days: int = Field(default=30, ge=1, le=3650)
     webhook_allow_private: bool = Field(default=False)
     webhook_timeout_seconds: float = Field(default=10.0, ge=1, le=120)
     webhook_max_attempts: int = Field(default=5, ge=1, le=20)
+
+    # Optional Prometheus listener
+    prometheus_enabled: bool = Field(default=False)
+    prometheus_host: str = Field(default="127.0.0.1")
+    prometheus_port: int = Field(default=9109, ge=1, le=65535)
+    prometheus_allow_remote: bool = Field(default=False)
+    prometheus_bearer_token_env: str | None = Field(default=None)
+    prometheus_refresh_seconds: float = Field(default=15.0, ge=1, le=300)
 
     # Default device name for legacy config
     default_device_name: str = Field(
@@ -241,6 +250,22 @@ class UniFiSettings(BaseSettings):
                 "mutation_verify_max_delay must be greater than or equal to "
                 "mutation_verify_initial_delay"
             )
+        loopback_hosts = {"127.0.0.1", "::1", "localhost"}
+        if (
+            self.prometheus_enabled
+            and self.prometheus_host not in loopback_hosts
+            and (not self.prometheus_allow_remote or not self.prometheus_bearer_token_env)
+        ):
+            raise ValueError(
+                "remote Prometheus binding requires prometheus_allow_remote=true and "
+                "prometheus_bearer_token_env"
+            )
+        if self.prometheus_bearer_token_env is not None:
+            name = self.prometheus_bearer_token_env
+            if not name or not name.replace("_", "A").isalnum() or name.upper() != name:
+                raise ValueError(
+                    "prometheus_bearer_token_env must be an uppercase environment variable name"
+                )
         return self
 
     @property

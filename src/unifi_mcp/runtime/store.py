@@ -10,7 +10,7 @@ import aiosqlite
 
 from unifi_mcp.exceptions import UniFiConfigError
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 async def _apply_v2(connection: aiosqlite.Connection) -> None:
@@ -113,6 +113,32 @@ async def _apply_v2(connection: aiosqlite.Connection) -> None:
         await connection.execute(statement)
 
 
+async def _apply_v3(connection: aiosqlite.Connection) -> None:
+    statements = (
+        """
+        CREATE TABLE observations (
+            id TEXT PRIMARY KEY,
+            source TEXT NOT NULL,
+            controller TEXT NOT NULL DEFAULT '',
+            site TEXT NOT NULL DEFAULT '',
+            kind TEXT NOT NULL,
+            status TEXT NOT NULL,
+            observed_at TEXT NOT NULL,
+            metrics_json TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            UNIQUE (source, controller, site, kind, observed_at)
+        )
+        """,
+        """
+        CREATE INDEX observations_scope_time_idx
+        ON observations (kind, source, controller, site, observed_at DESC)
+        """,
+        "CREATE INDEX observations_retention_idx ON observations (observed_at)",
+    )
+    for statement in statements:
+        await connection.execute(statement)
+
+
 async def _initialize_connection(connection: aiosqlite.Connection) -> None:
     await connection.execute("PRAGMA journal_mode=WAL")
     await connection.execute("PRAGMA foreign_keys=ON")
@@ -162,6 +188,13 @@ async def _migrate(connection: aiosqlite.Connection) -> None:
         await connection.execute(
             "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
             (2, datetime.now(timezone.utc).isoformat()),  # noqa: UP017
+        )
+
+    if current_version < 3:
+        await _apply_v3(connection)
+        await connection.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+            (3, datetime.now(timezone.utc).isoformat()),  # noqa: UP017
         )
 
     await connection.commit()

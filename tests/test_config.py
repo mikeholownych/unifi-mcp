@@ -179,6 +179,24 @@ class TestRuntimeConfig:
         with pytest.raises(ValueError, match="export_dir must be an absolute path"):
             UniFiSettings(_env_file=None, data_dir=tmp_path, export_dir="relative/exports")
 
+    def test_prometheus_defaults_off_and_remote_bind_requires_token_reference(
+        self, tmp_path, monkeypatch
+    ):
+        clear_unifi_environment(monkeypatch)
+
+        settings = UniFiSettings(_env_file=None, data_dir=tmp_path)
+
+        assert settings.prometheus_enabled is False
+        assert settings.prometheus_host == "127.0.0.1"
+        with pytest.raises(ValueError, match="remote Prometheus binding"):
+            UniFiSettings(
+                _env_file=None,
+                data_dir=tmp_path,
+                prometheus_enabled=True,
+                prometheus_host="0.0.0.0",
+                prometheus_allow_remote=True,
+            )
+
     def test_runtime_paths_are_paths_without_creating_directories(self, tmp_path, monkeypatch):
         clear_unifi_environment(monkeypatch)
         data_dir = tmp_path / "not-created"

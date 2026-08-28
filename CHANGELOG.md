@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deterministic portable JSON snapshots with secret exclusion, source limitations,
   atomic private-file export, and SHA-256 verification.
 - Snapshot-backed standalone HTML and formula-safe CSV reports.
+- Bounded aggregate health observations, explicit-gap trend queries, scheduled
+  collection, and retention pruning.
+- Optional label-free Prometheus metrics with loopback defaults and authenticated
+  remote binding; the base install remains dependency-free from Prometheus.
 - Copied network-management additions: `get_device_ports`, `set_device_port`,
   `create_network`, `update_network`, and `delete_network`.
 

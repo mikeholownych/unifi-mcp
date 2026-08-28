@@ -13,9 +13,18 @@ from unifi_mcp.clients.network import UniFiNetworkClient
 from unifi_mcp.clients.protect import UniFiProtectClient
 from unifi_mcp.events.poller import EventPoller
 from unifi_mcp.events.sources import EventSource, NetworkEventSource, ProtectEventSource
+from unifi_mcp.observability.collectors import (
+    NetworkObservationSource,
+    ObservationCollector,
+    ObservationSource,
+    ProtectObservationSource,
+)
+from unifi_mcp.observability.prometheus import MetricsSnapshot, MetricsState
 from unifi_mcp.runtime.events import EventRepository
 from unifi_mcp.runtime.jobs import JobDefinition, JobRegistry
+from unifi_mcp.runtime.observations import ObservationRepository
 from unifi_mcp.runtime.scheduler import Scheduler
+from unifi_mcp.runtime.store import RuntimeStore
 from unifi_mcp.runtime.webhooks import WebhookService
 
 if TYPE_CHECKING:
@@ -39,6 +48,13 @@ class PruneRuntimeArguments(BaseModel):
     """The retention job intentionally accepts no arbitrary options."""
 
 
+class CaptureObservationsArguments(BaseModel):
+    """Optional aggregate observation source scope."""
+
+    source: str | None = None
+    controller: str | None = None
+
+
 @dataclass(frozen=True)
 class SourceCapability:
     source: str
@@ -52,6 +68,7 @@ class SourceCapability:
 class RuntimeServices:
     """Runtime components owned by the application lifespan."""
 
+    store: RuntimeStore
     repository: EventRepository
     poller: EventPoller
     sources: list[EventSource]
@@ -59,9 +76,39 @@ class RuntimeServices:
     scheduler: Scheduler
     webhooks: WebhookService
     webhook_client: httpx.AsyncClient
+    observation_repository: ObservationRepository
+    observation_collector: ObservationCollector
+    metrics_state: MetricsState
+    configured_controller_count: int
 
     async def close(self) -> None:
         await self.webhook_client.aclose()
+
+    async def refresh_metrics(self) -> MetricsSnapshot:
+        async with self.store.transaction() as connection:
+            result = await connection.execute(
+                """
+                SELECT
+                    (SELECT COUNT(*) FROM events),
+                    (SELECT COUNT(*) FROM schedules WHERE enabled = 1),
+                    (SELECT COUNT(*) FROM webhook_deliveries WHERE status IN ('pending', 'retry')),
+                    (SELECT COUNT(*) FROM observations),
+                    (SELECT COUNT(DISTINCT controller) FROM observations)
+                """
+            )
+            row = await result.fetchone()
+        reachable = min(int(row[4]), self.configured_controller_count)
+        snapshot = MetricsSnapshot(
+            runtime_up=1,
+            events_total=int(row[0]),
+            schedules_enabled=int(row[1]),
+            webhook_pending=int(row[2]),
+            observations_total=int(row[3]),
+            controllers_reachable=reachable,
+            controllers_unreachable=max(0, self.configured_controller_count - reachable),
+        )
+        self.metrics_state.set(snapshot)
+        return snapshot
 
 
 async def build_runtime_services(
@@ -130,6 +177,41 @@ async def build_runtime_services(
         allow_private=ctx.settings.webhook_allow_private,
         max_attempts=ctx.settings.webhook_max_attempts,
     )
+    observation_sources: list[ObservationSource] = []
+    for device in ctx.settings.get_network_devices():
+        observation_sources.append(
+            NetworkObservationSource(
+                UniFiNetworkClient(ctx, device.name),
+                controller=device.name,
+                site=device.site,
+            )
+        )
+    if not observation_sources and ctx.settings.mode == "local":
+        observation_sources.append(
+            NetworkObservationSource(
+                UniFiNetworkClient(ctx),
+                controller=ctx.settings.default_device_name,
+                site=ctx.settings.site,
+            )
+        )
+    for device in ctx.settings.get_protect_devices():
+        observation_sources.append(
+            ProtectObservationSource(UniFiProtectClient(ctx.client, device), controller=device.name)
+        )
+    observation_repository = ObservationRepository(ctx.runtime)
+    observation_collector = ObservationCollector(observation_sources)
+    configured_controller_count = max(1, len(ctx.settings.get_device_names()))
+    metrics_state = MetricsState(
+        MetricsSnapshot(
+            runtime_up=1,
+            events_total=0,
+            schedules_enabled=0,
+            webhook_pending=0,
+            observations_total=0,
+            controllers_reachable=0,
+            controllers_unreachable=configured_controller_count,
+        )
+    )
 
     async def poll_events(arguments: PollEventsArguments) -> dict[str, Any]:
         selected = [
@@ -154,12 +236,28 @@ async def build_runtime_services(
             "failed": sum(result.status == "failed" for result in results),
         }
 
+    async def capture_observations(arguments: CaptureObservationsArguments) -> dict[str, Any]:
+        selected = [
+            source
+            for source in observation_sources
+            if (arguments.source is None or source.source == arguments.source)
+            and (arguments.controller is None or source.controller == arguments.controller)
+        ]
+        result = await ObservationCollector(selected).collect()
+        inserted = await observation_repository.insert_batch(result.observations)
+        await services.refresh_metrics()
+        return {
+            "inserted": inserted,
+            "limitations": [asdict(item) for item in result.limitations],
+        }
+
     async def prune_runtime(_arguments: PruneRuntimeArguments) -> dict[str, Any]:
         now = datetime.now(UTC)
         cutoffs = (
             now - timedelta(days=ctx.settings.event_retention_days),
             now - timedelta(days=ctx.settings.job_retention_days),
             now - timedelta(days=ctx.settings.webhook_delivery_retention_days),
+            now - timedelta(days=ctx.settings.observation_retention_days),
         )
         async with ctx.runtime.transaction() as connection:
             deliveries = await connection.execute(
@@ -174,10 +272,15 @@ async def build_runtime_services(
                 "DELETE FROM events WHERE occurred_at < ?",
                 (cutoffs[0].isoformat(),),
             )
+            observations = await connection.execute(
+                "DELETE FROM observations WHERE observed_at < ?",
+                (cutoffs[3].isoformat(),),
+            )
         return {
             "events_deleted": events.rowcount,
             "job_runs_deleted": runs.rowcount,
             "deliveries_deleted": deliveries.rowcount,
+            "observations_deleted": observations.rowcount,
         }
 
     registry = JobRegistry(
@@ -185,6 +288,9 @@ async def build_runtime_services(
             JobDefinition("poll_events", PollEventsArguments, poll_events),
             JobDefinition("retry_webhook_deliveries", RetryWebhookArguments, retry_webhooks, True),
             JobDefinition("prune_runtime_data", PruneRuntimeArguments, prune_runtime),
+            JobDefinition(
+                "capture_observations", CaptureObservationsArguments, capture_observations
+            ),
         ]
     )
     scheduler = Scheduler(
@@ -195,7 +301,8 @@ async def build_runtime_services(
         max_job_attempts=ctx.settings.automation_job_max_attempts,
         retry_initial_delay_seconds=ctx.settings.automation_retry_initial_delay_seconds,
     )
-    return RuntimeServices(
+    services = RuntimeServices(
+        store=ctx.runtime,
         repository=repository,
         poller=poller,
         sources=sources,
@@ -203,4 +310,9 @@ async def build_runtime_services(
         scheduler=scheduler,
         webhooks=webhooks,
         webhook_client=webhook_client,
+        observation_repository=observation_repository,
+        observation_collector=observation_collector,
+        metrics_state=metrics_state,
+        configured_controller_count=configured_controller_count,
     )
+    return services

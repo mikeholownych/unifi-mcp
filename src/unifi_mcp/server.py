@@ -10,6 +10,7 @@ from mcp.types import ToolAnnotations
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
 from unifi_mcp.tools import exports as export_tools
+from unifi_mcp.tools import observability as observability_tools
 from unifi_mcp.tools import runtime as runtime_tools
 from unifi_mcp.tools import system as system_tools
 from unifi_mcp.tools.network import clients as client_tools
@@ -88,6 +89,42 @@ async def verify_snapshot(ctx: Context, filename: str):
 async def export_network_report(ctx: Context, filename: str, format: str, confirm: bool = False):
     """Export an HTML or CSV report from the portable snapshot model. Requires confirm=true."""
     return await export_tools.export_network_report(ctx, filename, format, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def capture_observations_now(ctx: Context):
+    """Capture bounded aggregate UniFi health observations now."""
+    return await observability_tools.capture_observations_now(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def query_observation_trends(
+    ctx: Context,
+    kind: str,
+    metric: str,
+    start: str,
+    end: str,
+    bucket_seconds: int = 300,
+    source: str | None = None,
+    controller: str | None = None,
+    site: str | None = None,
+):
+    """Query bounded UTC trend buckets with explicit missing intervals."""
+    return await observability_tools.query_observation_trends(
+        ctx, kind, metric, start, end, bucket_seconds, source, controller, site
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_observation_scopes(ctx: Context):
+    """List aggregate observation scopes currently retained."""
+    return await observability_tools.list_observation_scopes(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_observation_retention_status(ctx: Context):
+    """Get aggregate observation count and retained time range."""
+    return await observability_tools.get_observation_retention_status(ctx)
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))

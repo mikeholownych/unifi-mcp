@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 from collections.abc import AsyncIterator, Mapping, MutableMapping
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
@@ -371,6 +372,8 @@ async def create_app_lifespan(
     runtime_services: Any | None = None
     runtime_webhook_client: httpx.AsyncClient | None = None
     scheduler_task: asyncio.Task[None] | None = None
+    metrics_refresh_task: asyncio.Task[None] | None = None
+    metrics_server: Any | None = None
     primary_exception: BaseException | None = None
 
     try:
@@ -421,6 +424,40 @@ async def create_app_lifespan(
             )
             runtime_services = await build_runtime_services(ctx, runtime_webhook_client)
             ctx.runtime_services = runtime_services
+            if settings.prometheus_enabled:
+                from unifi_mcp.observability.prometheus import (
+                    MetricsServer,
+                    render_prometheus,
+                )
+
+                token_env = settings.prometheus_bearer_token_env
+                if token_env and not os.environ.get(token_env):
+                    raise UniFiConfigError(
+                        "Prometheus bearer token environment variable is not set"
+                    )
+                await runtime_services.refresh_metrics()
+                render_prometheus(runtime_services.metrics_state.get())
+                metrics_server = MetricsServer(
+                    settings.prometheus_host,
+                    settings.prometheus_port,
+                    runtime_services.metrics_state.get,
+                    bearer_token_provider=(
+                        (lambda: os.environ.get(token_env)) if token_env else None
+                    ),
+                )
+                metrics_server.start()
+
+                async def refresh_metrics() -> None:
+                    while True:
+                        await asyncio.sleep(settings.prometheus_refresh_seconds)
+                        try:
+                            await runtime_services.refresh_metrics()
+                        except Exception:
+                            logger.warning("Prometheus metric refresh failed", exc_info=True)
+
+                metrics_refresh_task = asyncio.create_task(
+                    refresh_metrics(), name="unifi-prometheus-refresh"
+                )
             if settings.automation_enabled:
                 scheduler_task = asyncio.create_task(
                     runtime_services.scheduler.serve(
@@ -439,6 +476,16 @@ async def create_app_lifespan(
         logger.info("Shutting down UniFi MCP Server")
 
         cleanup_steps = []
+        if metrics_refresh_task is not None:
+
+            async def stop_metrics_refresh() -> None:
+                metrics_refresh_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await metrics_refresh_task
+
+            cleanup_steps.append(("Prometheus refresh", stop_metrics_refresh))
+        if metrics_server is not None:
+            cleanup_steps.append(("Prometheus listener", metrics_server.close))
         if scheduler_task is not None:
 
             async def stop_scheduler() -> None:
