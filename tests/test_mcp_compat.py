@@ -1,6 +1,7 @@
 """Compatibility contract for the supported MCP stack."""
 
 import asyncio
+import inspect
 import json
 import os
 import subprocess
@@ -46,8 +47,24 @@ def normalize_tool_contracts(tools):
     contracts = []
     for tool in tools:
         wire_tool = tool.model_dump(by_alias=True)
-        contracts.append({field: wire_tool.get(field) for field in CONTRACT_FIELDS})
+        contract = {field: wire_tool.get(field) for field in CONTRACT_FIELDS}
+        # Python 3.13+ changed docstring cleaning, so normalize description
+        # whitespace before comparing across interpreter versions.
+        if contract.get("description"):
+            contract["description"] = inspect.cleandoc(contract["description"])
+        contracts.append(contract)
     return sorted(contracts, key=lambda contract: contract["name"])
+
+
+def normalize_fixture_contracts(contracts):
+    """Mirror normalize_tool_contracts for stored fixture dictionaries."""
+    normalized = []
+    for contract in contracts:
+        cleaned = dict(contract)
+        if cleaned.get("description"):
+            cleaned["description"] = inspect.cleandoc(cleaned["description"])
+        normalized.append(cleaned)
+    return sorted(normalized, key=lambda contract: contract["name"])
 
 
 def test_server_imports_with_supported_mcp_stack():
@@ -113,7 +130,9 @@ async def test_public_tool_wire_contracts_match_fixture():
             tools = (await client.list_tools()).tools
 
     runtime_contracts = normalize_tool_contracts(tools)
-    fixture_contracts = json.loads(CONTRACT_FIXTURE.read_text(encoding="utf-8"))
+    fixture_contracts = normalize_fixture_contracts(
+        json.loads(CONTRACT_FIXTURE.read_text(encoding="utf-8"))
+    )
 
     assert runtime_contracts == fixture_contracts, (
         "Public MCP tool contracts changed. Review the protocol diff, then intentionally "
