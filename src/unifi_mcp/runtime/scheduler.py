@@ -232,8 +232,6 @@ class Scheduler:
 
     async def _execute(self, schedule: Schedule, started_at: datetime) -> JobRun:
         run_id = str(uuid4())
-        definition = self._registry.get(schedule.job_name)
-        arguments = self._registry.validate(schedule.job_name, schedule.arguments)
         async with self._store.transaction() as connection:
             await connection.execute(
                 """
@@ -247,28 +245,41 @@ class Scheduler:
         error_code = None
         result_payload: dict[str, Any] | None = None
         cancelled = False
-        attempt = 0
-        max_attempts = self._max_job_attempts if definition.retryable else 1
+        attempt = 1
         try:
-            while True:
-                attempt += 1
+            definition = self._registry.get(schedule.job_name)
+        except ValueError:
+            status = "failed"
+            error_code = "job_unavailable"
+        else:
+            try:
+                arguments = self._registry.validate(schedule.job_name, schedule.arguments)
+            except ValueError:
+                status = "failed"
+                error_code = "job_configuration_invalid"
+            else:
+                attempt = 0
+                max_attempts = self._max_job_attempts if definition.retryable else 1
                 try:
-                    async with asyncio.timeout(self._job_timeout_seconds):
-                        result_payload = await definition.handler(arguments)
-                except Exception as exc:
-                    if attempt >= max_attempts:
-                        status = "failed"
-                        error_code = type(exc).__name__
-                        break
-                    delay = self._retry_initial_delay_seconds * (2 ** (attempt - 1))
-                    await self._sleep(delay)
-                else:
-                    status = "succeeded"
-                    break
-        except asyncio.CancelledError:
-            status = "cancelled"
-            error_code = "CancelledError"
-            cancelled = True
+                    while True:
+                        attempt += 1
+                        try:
+                            async with asyncio.timeout(self._job_timeout_seconds):
+                                result_payload = await definition.handler(arguments)
+                        except Exception as exc:
+                            if attempt >= max_attempts:
+                                status = "failed"
+                                error_code = type(exc).__name__
+                                break
+                            delay = self._retry_initial_delay_seconds * (2 ** (attempt - 1))
+                            await self._sleep(delay)
+                        else:
+                            status = "succeeded"
+                            break
+                except asyncio.CancelledError:
+                    status = "cancelled"
+                    error_code = "CancelledError"
+                    cancelled = True
 
         finished_at = datetime.now(UTC)
         next_run = started_at + timedelta(seconds=schedule.interval_seconds)

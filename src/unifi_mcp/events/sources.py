@@ -49,6 +49,10 @@ class NetworkEventSource:
 
     async def poll(self, cursor: dict[str, object] | None) -> PollBatch:
         raw_events = await self._client.get_events(3000, self.site)
+        if len(raw_events) >= 3000:
+            raise RuntimeError(
+                "Network event window reached its 3000-event limit; refusing to advance the cursor"
+            )
         events = [
             normalize_network_event(raw, device_name=self.device_name, site=self.site)
             for raw in raw_events
@@ -80,5 +84,9 @@ class ProtectEventSource:
         previous = (cursor or {}).get("watermark_ms")
         start = int(previous) - self._overlap_ms if previous is not None else end - 86_400_000
         raw_events = await self._client.get_events(start=start, end=end, limit=1000)
+        if len(raw_events) >= 1000:
+            raise RuntimeError(
+                "Protect event window reached its 1000-event limit; refusing to advance the cursor"
+            )
         events = [normalize_protect_event(raw, device_name=self.device_name) for raw in raw_events]
         return PollBatch(events=events, cursor=_cursor_for(events, cursor))

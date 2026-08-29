@@ -195,3 +195,44 @@ async def test_retryable_job_uses_bounded_attempts(tmp_path):
     assert result[0].status == "succeeded"
     assert attempts == 3
     assert stored[0].attempt == 3
+
+
+async def test_removed_plugin_job_fails_without_stopping_other_schedules(tmp_path):
+    calls: list[int] = []
+
+    async def handler(arguments: ExampleArguments) -> dict[str, int]:
+        calls.append(arguments.value)
+        return {"value": arguments.value}
+
+    definition = JobDefinition(name="example", arguments_model=ExampleArguments, handler=handler)
+    plugin_definition = JobDefinition(
+        name="removed_plugin", arguments_model=ExampleArguments, handler=handler
+    )
+    store = RuntimeStore(tmp_path / "runtime.db")
+    await store.open()
+    setup_scheduler = Scheduler(store, JobRegistry([definition, plugin_definition]))
+    now = datetime(2026, 8, 28, 12, tzinfo=UTC)
+    await setup_scheduler.create_interval_schedule(
+        name="removed",
+        job_name="removed_plugin",
+        interval_seconds=60,
+        arguments={"value": 1},
+        now=now,
+    )
+    await setup_scheduler.create_interval_schedule(
+        name="active", job_name="example", interval_seconds=60, arguments={"value": 2}, now=now
+    )
+    scheduler = Scheduler(store, JobRegistry([definition]))
+
+    try:
+        runs = await scheduler.run_due(now=now)
+        schedules = await scheduler.list_schedules()
+    finally:
+        await store.close()
+
+    assert sorted((run.job_name, run.status, run.error_code) for run in runs) == [
+        ("example", "succeeded", None),
+        ("removed_plugin", "failed", "job_unavailable"),
+    ]
+    assert calls == [2]
+    assert all(not schedule.running for schedule in schedules)

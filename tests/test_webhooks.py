@@ -92,6 +92,9 @@ async def test_new_event_is_delivered_with_environment_secret_signature(tmp_path
     assert [result.status for result in results] == ["delivered"]
     assert len(requests) == 1
     request = requests[0]
+    assert request.url.host == "93.184.216.34"
+    assert request.headers["Host"] == "hooks.example.test"
+    assert request.extensions["sni_hostname"] == "hooks.example.test"
     timestamp = request.headers["X-UniFi-Timestamp"]
     expected = hmac.new(
         b"signing-secret",
@@ -101,6 +104,55 @@ async def test_new_event_is_delivered_with_environment_secret_signature(tmp_path
     assert request.headers["X-UniFi-Signature"] == f"sha256={expected}"
     assert json.loads(request.content)["event"]["source_key"] == "event-1"
     assert b"signing-secret" not in request.content
+
+
+async def test_stale_delivery_claim_is_recovered_after_restart(tmp_path):
+    async def public_resolver(_hostname: str) -> set[str]:
+        return {"93.184.216.34"}
+
+    store = RuntimeStore(tmp_path / "runtime.db")
+    await store.open()
+    client = httpx.AsyncClient(transport=httpx.MockTransport(lambda _request: httpx.Response(204)))
+    service = WebhookService(store, client, resolver=public_resolver, stale_claim_seconds=60)
+    repository = EventRepository(store)
+    now = datetime(2026, 8, 28, 12, tzinfo=UTC)
+
+    try:
+        await service.create_destination(
+            name="automation",
+            url="https://hooks.example.test/events",
+            secret_env_name=None,
+            categories=[],
+        )
+        await repository.insert_batch(
+            [
+                NormalizedEvent(
+                    source="network",
+                    source_key="event-stale",
+                    device_name="gateway",
+                    site="default",
+                    category="network.connected",
+                    severity="info",
+                    occurred_at=now,
+                    summary="Connected",
+                )
+            ],
+            source="network",
+            device_name="gateway",
+            site="default",
+            cursor={"watermark_ms": 1},
+        )
+        async with store.transaction() as connection:
+            await connection.execute(
+                "UPDATE webhook_deliveries SET status = 'delivering', updated_at = ?",
+                ((now - timedelta(minutes=2)).isoformat(),),
+            )
+        results = await service.deliver_due(now=now)
+    finally:
+        await client.aclose()
+        await store.close()
+
+    assert [result.status for result in results] == ["delivered"]
 
 
 async def test_retryable_failures_end_in_dead_letter(tmp_path):

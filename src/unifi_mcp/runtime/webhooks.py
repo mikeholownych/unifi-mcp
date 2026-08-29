@@ -72,6 +72,7 @@ class WebhookService:
         resolver: Resolver = resolve_hostname,
         secret_lookup: Callable[[str], str | None] = os.environ.get,
         max_attempts: int = 5,
+        stale_claim_seconds: float = 900,
     ) -> None:
         self._store = store
         self._client = client
@@ -79,6 +80,29 @@ class WebhookService:
         self._resolver = resolver
         self._secret_lookup = secret_lookup
         self._max_attempts = max_attempts
+        self._stale_claim_seconds = max(1, stale_claim_seconds)
+
+    async def _post_validated(
+        self, url: str, body: bytes, headers: dict[str, str]
+    ) -> httpx.Response:
+        destination = await validate_webhook_url(
+            url, allow_private=self._allow_private, resolver=self._resolver
+        )
+        request_headers = {**headers, "Host": destination.host_header}
+        transport_error: httpx.HTTPError | None = None
+        for pinned_url in destination.pinned_urls():
+            try:
+                return await self._client.post(
+                    pinned_url,
+                    content=body,
+                    headers=request_headers,
+                    follow_redirects=False,
+                    extensions={"sni_hostname": destination.hostname},
+                )
+            except httpx.HTTPError as exc:
+                transport_error = exc
+        assert transport_error is not None
+        raise transport_error
 
     async def create_destination(
         self,
@@ -171,12 +195,7 @@ class WebhookService:
             headers["X-UniFi-Signature"] = f"sha256={signature}"
 
         try:
-            await validate_webhook_url(
-                url, allow_private=self._allow_private, resolver=self._resolver
-            )
-            response = await self._client.post(
-                url, content=body, headers=headers, follow_redirects=False
-            )
+            response = await self._post_validated(url, body, headers)
         except ValueError:
             return WebhookTestResult(status="failed", error_code="destination_rejected")
         except httpx.HTTPError:
@@ -236,6 +255,16 @@ class WebhookService:
 
     async def _claim_due(self, now: datetime, limit: int) -> list[tuple[Any, ...]]:
         async with self._store.transaction() as connection:
+            stale_before = now - timedelta(seconds=self._stale_claim_seconds)
+            await connection.execute(
+                """
+                UPDATE webhook_deliveries
+                SET status = 'retry', next_attempt_at = ?, error_code = 'stale_claim',
+                    updated_at = ?
+                WHERE status = 'delivering' AND updated_at <= ?
+                """,
+                (now.isoformat(), now.isoformat(), stale_before.isoformat()),
+            )
             result = await connection.execute(
                 """
                 SELECT d.id, d.attempt_count,
@@ -340,12 +369,7 @@ class WebhookService:
             headers["X-UniFi-Signature"] = f"sha256={signature}"
 
         try:
-            await validate_webhook_url(
-                url, allow_private=self._allow_private, resolver=self._resolver
-            )
-            response = await self._client.post(
-                url, content=body, headers=headers, follow_redirects=False
-            )
+            response = await self._post_validated(url, body, headers)
         except ValueError:
             status, error_code, http_status = "failed", "destination_rejected", None
         except httpx.HTTPError:

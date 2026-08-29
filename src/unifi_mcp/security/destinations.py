@@ -4,9 +4,37 @@ import asyncio
 import ipaddress
 import socket
 from collections.abc import Awaitable, Callable
-from urllib.parse import urlsplit
+from dataclasses import dataclass
+from urllib.parse import SplitResult, urlsplit, urlunsplit
 
 Resolver = Callable[[str], Awaitable[set[str]]]
+
+
+@dataclass(frozen=True)
+class ValidatedWebhookDestination:
+    url: str
+    parsed: SplitResult
+    addresses: tuple[str, ...]
+
+    @property
+    def hostname(self) -> str:
+        assert self.parsed.hostname is not None
+        return self.parsed.hostname
+
+    @property
+    def host_header(self) -> str:
+        return self.parsed.netloc
+
+    def pinned_urls(self) -> list[str]:
+        port = f":{self.parsed.port}" if self.parsed.port is not None else ""
+        return [
+            urlunsplit(
+                self.parsed._replace(
+                    netloc=f"[{address}]{port}" if ":" in address else f"{address}{port}"
+                )
+            )
+            for address in self.addresses
+        ]
 
 
 async def resolve_hostname(hostname: str) -> set[str]:
@@ -20,7 +48,7 @@ async def validate_webhook_url(
     *,
     allow_private: bool = False,
     resolver: Resolver = resolve_hostname,
-) -> str:
+) -> ValidatedWebhookDestination:
     """Return a validated webhook URL after checking its current DNS answers."""
     parsed = urlsplit(url)
     if parsed.scheme.lower() != "https":
@@ -48,4 +76,4 @@ async def validate_webhook_url(
         not ipaddress.ip_address(address).is_global for address in addresses
     ):
         raise ValueError("webhook destination resolves to a private or reserved address")
-    return url
+    return ValidatedWebhookDestination(url, parsed, tuple(sorted(addresses)))
