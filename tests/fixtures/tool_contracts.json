@@ -1,0 +1,4496 @@
+[
+  {
+    "name": "analyze_network_issues",
+    "description": "\nAnalyze the network for potential issues and return a structured report.\n\nAggregates device health, client connection issues, interference,\nfirmware status, and recent alarms into an AI-friendly summary.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "analyze_network_issuesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "apply_client_qos_policy",
+    "description": "Apply a validated QoS preview when a supported adapter exists. Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "plan_token": {
+          "title": "Plan Token",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "plan_token"
+      ],
+      "title": "apply_client_qos_policyArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "archive_all_alarms",
+    "description": "Archive all active alarms.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "archive_all_alarmsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "assign_client_group",
+    "description": "Assign or unassign one local client group. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "title": "Identity",
+          "type": "string"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Group"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "identity",
+        "group"
+      ],
+      "title": "assign_client_groupArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "block_client",
+    "description": "Block a client from the network.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "block_clientArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "capture_observations_now",
+    "description": "Capture bounded aggregate UniFi health observations now.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "capture_observations_nowArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_client_group",
+    "description": "Create a controller-independent local client group. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "create_client_groupArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_firewall_policy",
+    "description": "Create a zone-based firewall policy (UniFi Network 9+).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "src_zone_id": {
+          "title": "Src Zone Id",
+          "type": "string"
+        },
+        "dst_zone_id": {
+          "title": "Dst Zone Id",
+          "type": "string"
+        },
+        "protocol": {
+          "default": "all",
+          "title": "Protocol",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "client_macs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Client Macs"
+        },
+        "index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Index"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "name",
+        "action",
+        "src_zone_id",
+        "dst_zone_id"
+      ],
+      "title": "create_firewall_policyArguments"
+    },
+    "outputSchema": null,
+    "annotations": null
+  },
+  {
+    "name": "create_interval_schedule",
+    "description": "Create an allowlisted recurring job. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "job_name": {
+          "title": "Job Name",
+          "type": "string"
+        },
+        "interval_seconds": {
+          "title": "Interval Seconds",
+          "type": "integer"
+        },
+        "arguments": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arguments"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "job_name",
+        "interval_seconds"
+      ],
+      "title": "create_interval_scheduleArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_network",
+    "description": "Create a new network/VLAN (corporate by default).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "subnet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subnet"
+        },
+        "vlan": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vlan"
+        },
+        "purpose": {
+          "default": "corporate",
+          "title": "Purpose",
+          "type": "string"
+        },
+        "domain_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Domain Name"
+        },
+        "dhcp_start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dhcp Start"
+        },
+        "dhcp_stop": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dhcp Stop"
+        },
+        "dhcp_lease_time": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dhcp Lease Time"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "create_networkArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_port_forward",
+    "description": "Create a port forwarding rule on the gateway.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "dst_port": {
+          "title": "Dst Port",
+          "type": "string"
+        },
+        "fwd_ip": {
+          "title": "Fwd Ip",
+          "type": "string"
+        },
+        "fwd_port": {
+          "title": "Fwd Port",
+          "type": "string"
+        },
+        "proto": {
+          "default": "tcp_udp",
+          "title": "Proto",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "name",
+        "dst_port",
+        "fwd_ip",
+        "fwd_port"
+      ],
+      "title": "create_port_forwardArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_webhook_destination",
+    "description": "Create a filtered outbound webhook. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "secret_env_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secret Env Name"
+        },
+        "categories": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categories"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "url"
+      ],
+      "title": "create_webhook_destinationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_wlan",
+    "description": "Create a wireless network (SSID) with WPA2/WPA3 transition security.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "passphrase": {
+          "title": "Passphrase",
+          "type": "string"
+        },
+        "network_conf_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Network Conf Id"
+        },
+        "wpa3_transition": {
+          "default": true,
+          "title": "Wpa3 Transition",
+          "type": "boolean"
+        },
+        "hide_ssid": {
+          "default": false,
+          "title": "Hide Ssid",
+          "type": "boolean"
+        },
+        "is_guest": {
+          "default": false,
+          "title": "Is Guest",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "name",
+        "passphrase"
+      ],
+      "title": "create_wlanArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_client_group",
+    "description": "Delete a local group and its memberships. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "delete_client_groupArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_firewall_policy",
+    "description": "Delete a zone-based firewall policy. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "policy_id": {
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "policy_id"
+      ],
+      "title": "delete_firewall_policyArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_network",
+    "description": "Delete a network/VLAN by name or ID. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "delete_networkArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_port_forward",
+    "description": "Delete a port forwarding rule. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "rule_id"
+      ],
+      "title": "delete_port_forwardArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_schedule",
+    "description": "Delete a non-running schedule. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "title": "Schedule Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schedule_id"
+      ],
+      "title": "delete_scheduleArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_webhook_destination",
+    "description": "Delete a webhook destination and queued deliveries. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "destination_id"
+      ],
+      "title": "delete_webhook_destinationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_wlan",
+    "description": "Delete a wireless network (SSID). Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "wlan": {
+          "title": "Wlan",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "wlan"
+      ],
+      "title": "delete_wlanArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "export_camera_clip",
+    "description": "Export an MP4 beneath the confined export directory. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "camera": {
+          "title": "Camera",
+          "type": "string"
+        },
+        "start_ts": {
+          "title": "Start Ts",
+          "type": "integer"
+        },
+        "end_ts": {
+          "title": "End Ts",
+          "type": "integer"
+        },
+        "output_path": {
+          "title": "Output Path",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "camera",
+        "start_ts",
+        "end_ts",
+        "output_path"
+      ],
+      "title": "export_camera_clipArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "export_network_report",
+    "description": "Export an HTML or CSV report from the portable snapshot model. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "format": {
+          "title": "Format",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "filename",
+        "format"
+      ],
+      "title": "export_network_reportArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "export_portable_snapshot",
+    "description": "Export a deterministic secret-free JSON snapshot. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "filename"
+      ],
+      "title": "export_portable_snapshotArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "forget_client",
+    "description": "Remove a client from the known clients list.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "forget_clientArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_alarms",
+    "description": "Get active alarms.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_alarmsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_all_sites_health",
+    "description": "Get health overview across all sites.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_all_sites_healthArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_camera_details",
+    "description": "Get detailed information about a specific camera.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "camera_id": {
+          "title": "Camera Id",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "camera_id"
+      ],
+      "title": "get_camera_detailsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_camera_health_summary",
+    "description": "\nGet a health summary of all cameras.\n\nProvides an overview of camera status, connectivity, and potential issues.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_camera_health_summaryArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_camera_snapshot",
+    "description": "\nGet a snapshot from a camera.\n\nReturns a base64-encoded JPEG image.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "camera_id": {
+          "title": "Camera Id",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height"
+        }
+      },
+      "required": [
+        "camera_id"
+      ],
+      "title": "get_camera_snapshotArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_details",
+    "description": "Get detailed information about a specific client.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "get_client_detailsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_experience_report",
+    "description": "\nGenerate a client experience report with connection quality metrics.\n\nIncludes signal strength distribution, roaming stats, failed connections,\nand problematic clients.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_client_experience_reportArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_organization",
+    "description": "Get durable local tags and group membership for one known client.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "title": "Identity",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "identity"
+      ],
+      "title": "get_client_organizationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_qos_capabilities",
+    "description": "Describe validated controller QoS mutation capabilities.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_client_qos_capabilitiesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_client_traffic",
+    "description": "Get traffic statistics for a specific client.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "get_client_trafficArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_device_details",
+    "description": "Get detailed information about a specific device.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "get_device_detailsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_device_health_summary",
+    "description": "\nSummarize device health across all APs, switches, and routers.\n\nIncludes uptime, load, memory, temperature, firmware versions,\nand devices needing attention.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_device_health_summaryArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_device_ports",
+    "description": "List the switch/gateway ports on a device (index, name, link, speed, VLAN).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "get_device_portsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_device_stats",
+    "description": "Get performance statistics for a device.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "get_device_statsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_dpi_stats",
+    "description": "Get Deep Packet Inspection statistics for the site.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_dpi_statsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_event_polling_status",
+    "description": "List event source capabilities and background polling state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_event_polling_statusArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_firewall_policies",
+    "description": "Get zone-based firewall policies (UniFi Network 9+).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_firewall_policiesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_firewall_rules",
+    "description": "Get firewall rule configurations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_firewall_rulesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_global_client_summary",
+    "description": "\nGet a summary of all connected clients across all controllers.\n\nAggregates client counts, top talkers, and blocked clients\nacross the entire infrastructure.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_global_client_summaryArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_global_health",
+    "description": "\nGet health summary across all configured controllers.\n\nCollects site health from every network-enabled device and produces\na unified health report with per-device breakdowns.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_global_healthArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_global_inventory",
+    "description": "\nGet a unified inventory of all devices across all configured controllers.\n\nAggregates list_devices from every network-enabled UniFi device.\nUse this to see the full picture across gateways, sites, or locations.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_global_inventoryArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_liveviews",
+    "description": "Get all configured Protect liveviews.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_liveviewsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_motion_events",
+    "description": "\nGet recent motion events from cameras.\n\nRequires username and password configured for the Protect device.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "default": 24,
+          "title": "Hours",
+          "type": "integer"
+        },
+        "limit": {
+          "default": 50,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "camera_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Camera Id"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_motion_eventsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_network_health",
+    "description": "Get overall network health summary.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_network_healthArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_networks",
+    "description": "Get all network/VLAN configurations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_networksArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_observation_retention_status",
+    "description": "Get aggregate observation count and retained time range.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_observation_retention_statusArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_optimization_recommendations",
+    "description": "\nAnalyze network configuration and provide optimization recommendations.\n\nChecks channel selection, TX power, VLAN efficiency, port configurations,\nand bandwidth utilization patterns.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_optimization_recommendationsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_plugin_status",
+    "description": "List redacted trusted-plugin loading outcomes. Requires admin scope over HTTP.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_plugin_statusArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_port_forwards",
+    "description": "Get all port forwarding rules (external port+protocol \u2192 internal IP+port).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_port_forwardsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_port_profiles",
+    "description": "Get switch port profile configurations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_port_profilesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_protect_accessories",
+    "description": "Get all Protect accessories (lights, sensors, chimes, viewers).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_protect_accessoriesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_protect_event_summary",
+    "description": "\nGet a summary of all Protect events for the time period.\n\nShows motion count, smart detections breakdown, and doorbell activity.\nRequires username and password configured for the Protect device.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "default": 24,
+          "title": "Hours",
+          "type": "integer"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_protect_event_summaryArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_protect_system_info",
+    "description": "Get UniFi Protect system information including camera and accessory counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_protect_system_infoArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_recent_events",
+    "description": "Get recent network events.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 50,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_recent_eventsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_recent_protect_activity",
+    "description": "\nGet recent activity across all cameras.\n\nProvides a quick overview of the most recent events.\nRequires username and password configured for the Protect device.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 20,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_recent_protect_activityArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_routing_table",
+    "description": "Get the current routing table.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_routing_tableArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_server_health",
+    "description": "Get redaction-safe UniFi MCP runtime health and service counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_server_healthArguments"
+    },
+    "outputSchema": {
+      "$defs": {
+        "DisabledPersistenceHealth": {
+          "additionalProperties": false,
+          "description": "Health shape when runtime persistence is disabled.",
+          "properties": {
+            "enabled": {
+              "const": false,
+              "title": "Enabled",
+              "type": "boolean"
+            },
+            "connected": {
+              "const": false,
+              "title": "Connected",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "enabled",
+            "connected"
+          ],
+          "title": "DisabledPersistenceHealth",
+          "type": "object"
+        },
+        "EnabledPersistenceHealth": {
+          "additionalProperties": false,
+          "description": "Health shape for an enabled runtime store.",
+          "properties": {
+            "enabled": {
+              "const": true,
+              "title": "Enabled",
+              "type": "boolean"
+            },
+            "connected": {
+              "title": "Connected",
+              "type": "boolean"
+            },
+            "schema_version": {
+              "title": "Schema Version",
+              "type": "integer"
+            },
+            "journal_mode": {
+              "title": "Journal Mode",
+              "type": "string"
+            }
+          },
+          "required": [
+            "enabled",
+            "connected",
+            "schema_version",
+            "journal_mode"
+          ],
+          "title": "EnabledPersistenceHealth",
+          "type": "object"
+        },
+        "ServiceHealth": {
+          "additionalProperties": false,
+          "description": "Configured device counts by UniFi service.",
+          "properties": {
+            "network": {
+              "title": "Network",
+              "type": "integer"
+            },
+            "protect": {
+              "title": "Protect",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "network",
+            "protect"
+          ],
+          "title": "ServiceHealth",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Redaction-safe UniFi MCP server health response.",
+      "properties": {
+        "status": {
+          "const": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "transport": {
+          "enum": [
+            "stdio",
+            "streamable-http"
+          ],
+          "title": "Transport",
+          "type": "string"
+        },
+        "configured_devices": {
+          "title": "Configured Devices",
+          "type": "integer"
+        },
+        "services": {
+          "$ref": "#/$defs/ServiceHealth"
+        },
+        "persistence": {
+          "discriminator": {
+            "mapping": {
+              "False": "#/$defs/DisabledPersistenceHealth",
+              "True": "#/$defs/EnabledPersistenceHealth"
+            },
+            "propertyName": "enabled"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/DisabledPersistenceHealth"
+            },
+            {
+              "$ref": "#/$defs/EnabledPersistenceHealth"
+            }
+          ],
+          "title": "Persistence"
+        }
+      },
+      "required": [
+        "status",
+        "version",
+        "transport",
+        "configured_devices",
+        "services",
+        "persistence"
+      ],
+      "title": "ServerHealth",
+      "type": "object"
+    },
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_site_health",
+    "description": "Get comprehensive health status for a site.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_site_healthArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_site_settings",
+    "description": "Get site configuration settings.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_site_settingsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_smart_detections",
+    "description": "\nGet smart detection events (person, vehicle, animal, package).\n\nRequires username and password configured for the Protect device.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "default": 24,
+          "title": "Hours",
+          "type": "integer"
+        },
+        "limit": {
+          "default": 50,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "detection_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detection Type"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_smart_detectionsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_snapshot_capabilities",
+    "description": "Describe portable snapshot/report capabilities and native backup limitations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_snapshot_capabilitiesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_speed_test_status",
+    "description": "Get speed test status and results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_speed_test_statusArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_sysinfo",
+    "description": "Get system information for the site controller.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_sysinfoArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_traffic_analysis",
+    "description": "\nAnalyze traffic patterns over the specified time period.\n\nIncludes top talkers, application breakdown (DPI), bandwidth trends,\nand unusual activity.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "default": 24,
+          "title": "Hours",
+          "type": "integer"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_traffic_analysisArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_traffic_summary",
+    "description": "Get traffic summary for the site.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_traffic_summaryArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "get_wlans",
+    "description": "Get all wireless network (SSID) configurations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "get_wlansArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "kick_client",
+    "description": "Disconnect a client (they can reconnect).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "kick_clientArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_all_clients",
+    "description": "List all known clients (including offline).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_all_clientsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_cameras",
+    "description": "List all UniFi Protect cameras with status.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_camerasArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_client_groups",
+    "description": "List local client groups and deterministic member counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_client_groupsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_clients",
+    "description": "List all currently connected clients.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_clientsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_clients_by_organization",
+    "description": "List stable client identities for exactly one local tag or group.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_clients_by_organizationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_devices",
+    "description": "List all UniFi network devices (APs, switches, routers).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_devicesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_job_runs",
+    "description": "List redacted background job run outcomes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "list_job_runsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_observation_scopes",
+    "description": "List aggregate observation scopes currently retained.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_observation_scopesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_runtime_events",
+    "description": "List normalized events retained by the optional runtime store.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "list_runtime_eventsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_schedules",
+    "description": "List allowlisted interval schedules.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_schedulesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_sites",
+    "description": "List all UniFi sites accessible to the current user.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "list_sitesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_unifi_devices",
+    "description": "\nList all configured UniFi devices.\n\nShows device names, URLs, and available services (network, protect).\nUse the device name with other tools to target specific devices.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_unifi_devicesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_webhook_deliveries",
+    "description": "List redacted webhook delivery and dead-letter state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 100,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "list_webhook_deliveriesArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "list_webhook_destinations",
+    "description": "List webhook destinations without secret values.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "list_webhook_destinationsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "locate_device",
+    "description": "Enable/disable LED blinking to locate a device.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "locate_deviceArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "plan_client_qos_policy",
+    "description": "Persist a deterministic QoS target preview without controller mutation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "selector_type": {
+          "title": "Selector Type",
+          "type": "string"
+        },
+        "selector_value": {
+          "title": "Selector Value",
+          "type": "string"
+        },
+        "download_kbps": {
+          "title": "Download Kbps",
+          "type": "integer"
+        },
+        "upload_kbps": {
+          "title": "Upload Kbps",
+          "type": "integer"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "selector_type",
+        "selector_value",
+        "download_kbps",
+        "upload_kbps"
+      ],
+      "title": "plan_client_qos_policyArguments"
+    },
+    "outputSchema": null,
+    "annotations": null
+  },
+  {
+    "name": "poll_events_now",
+    "description": "Poll supported event sources now and durably deduplicate results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "device_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Name"
+        }
+      },
+      "title": "poll_events_nowArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "provision_device",
+    "description": "Force re-provision a device with current configuration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "provision_deviceArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "query_observation_trends",
+    "description": "Query bounded UTC trend buckets with explicit missing intervals.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "title": "End",
+          "type": "string"
+        },
+        "bucket_seconds": {
+          "default": 300,
+          "title": "Bucket Seconds",
+          "type": "integer"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "controller": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Controller"
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Site"
+        }
+      },
+      "required": [
+        "kind",
+        "metric",
+        "start",
+        "end"
+      ],
+      "title": "query_observation_trendsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "reserve_client_ip",
+    "description": "Reserve a device's current IP (or a specific one) via DHCP reservation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "title": "Client",
+          "type": "string"
+        },
+        "ip": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ip"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "client"
+      ],
+      "title": "reserve_client_ipArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "restart_device",
+    "description": "Restart a UniFi device.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "restart_deviceArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "run_schedule_now",
+    "description": "Run one allowlisted schedule immediately. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "title": "Schedule Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schedule_id"
+      ],
+      "title": "run_schedule_nowArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "run_speed_test",
+    "description": "Initiate a WAN speed test.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "title": "run_speed_testArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_client_tags",
+    "description": "Replace local client tags by stable identity. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "title": "Identity",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "identity",
+        "tags"
+      ],
+      "title": "set_client_tagsArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_device_port",
+    "description": "Configure a single switch port: native VLAN, PoE mode, name, or enable state.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "port_idx": {
+          "title": "Port Idx",
+          "type": "integer"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "native_network": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Native Network"
+        },
+        "poe_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Poe Mode"
+        },
+        "forward": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Forward"
+        },
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enabled"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "mac",
+        "port_idx"
+      ],
+      "title": "set_device_portArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_firewall_policy_enabled",
+    "description": "Enable or disable a zone-based firewall policy.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "policy_id": {
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "policy_id",
+        "enabled"
+      ],
+      "title": "set_firewall_policy_enabledArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_schedule_enabled",
+    "description": "Enable or pause a schedule. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "schedule_id": {
+          "title": "Schedule Id",
+          "type": "string"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schedule_id",
+        "enabled"
+      ],
+      "title": "set_schedule_enabledArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "set_webhook_destination_enabled",
+    "description": "Enable or pause a webhook destination. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "destination_id",
+        "enabled"
+      ],
+      "title": "set_webhook_destination_enabledArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "test_webhook_destination",
+    "description": "Send a synthetic payload to a webhook destination. Requires confirm=true.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "destination_id": {
+          "title": "Destination Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "destination_id"
+      ],
+      "title": "test_webhook_destinationArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "troubleshoot_client",
+    "description": "\nDeep-dive troubleshooting for a specific client.\n\nIncludes connection history, signal quality, AP associations,\nroaming events, and potential issues.\n",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "troubleshoot_clientArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "unblock_client",
+    "description": "Unblock a previously blocked client.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "unblock_clientArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": null,
+      "idempotentHint": true,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "update_network",
+    "description": "Update a network/VLAN by name or ID - only provided fields change.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "name_new": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name New"
+        },
+        "subnet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subnet"
+        },
+        "vlan": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Vlan"
+        },
+        "domain_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Domain Name"
+        },
+        "dhcp_start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dhcp Start"
+        },
+        "dhcp_stop": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dhcp Stop"
+        },
+        "dhcp_lease_time": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dhcp Lease Time"
+        },
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enabled"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "update_networkArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "update_wlan",
+    "description": "Update a wireless network (SSID) by ID or name - only provided fields change.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "wlan": {
+          "title": "Wlan",
+          "type": "string"
+        },
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enabled"
+        },
+        "hide_ssid": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hide Ssid"
+        },
+        "passphrase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Passphrase"
+        },
+        "wpa3_support": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wpa3 Support"
+        },
+        "wpa3_transition": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wpa3 Transition"
+        },
+        "pmf_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pmf Mode"
+        },
+        "bss_transition": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bss Transition"
+        },
+        "fast_roaming_enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fast Roaming Enabled"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "wlan"
+      ],
+      "title": "update_wlanArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "upgrade_device",
+    "description": "Upgrade device firmware to the latest version.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mac": {
+          "title": "Mac",
+          "type": "string"
+        },
+        "site": {
+          "default": "default",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device"
+        }
+      },
+      "required": [
+        "mac"
+      ],
+      "title": "upgrade_deviceArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "verify_snapshot",
+    "description": "Verify the schema and checksum of a confined snapshot export.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        }
+      },
+      "required": [
+        "filename"
+      ],
+      "title": "verify_snapshotArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  }
+]

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
 
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.network import UniFiNetworkClient, is_device_online, is_wireless_client
@@ -27,7 +27,9 @@ async def _fetch_optional(coro) -> tuple[Any, str | None]:
         return [], f"unavailable: {e}"
 
 
-async def analyze_network_issues(ctx: Context, site: str = "default", device: str | None = None) -> dict[str, Any]:
+async def analyze_network_issues(
+    ctx: Context, site: str = "default", device: str | None = None
+) -> dict[str, Any]:
     """Analyze the network for potential issues and return a structured report.
 
     Aggregates device health, client connection issues, interference,
@@ -51,9 +53,7 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
     alarms, alarms_limit = await _fetch_optional(client.get_alarms(site))
     events, events_limit = await _fetch_optional(client.get_events(100, site))
 
-    limitations = [
-        note for note in (alarms_limit, events_limit) if note is not None
-    ]
+    limitations = [note for note in (alarms_limit, events_limit) if note is not None]
 
     issues = []
     warnings = []
@@ -64,24 +64,30 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
     # Check for offline devices
     offline_devices = [d for d in devices if not is_device_online(d) and d.get("adopted", True)]
     if offline_devices:
-        issues.append({
-            "category": "devices",
-            "severity": "critical",
-            "issue": f"{len(offline_devices)} device(s) are offline",
-            "details": [{"name": d.get("name"), "mac": d.get("mac")} for d in offline_devices],
-            "recommendation": "Check power and network connectivity for offline devices",
-        })
+        issues.append(
+            {
+                "category": "devices",
+                "severity": "critical",
+                "issue": f"{len(offline_devices)} device(s) are offline",
+                "details": [{"name": d.get("name"), "mac": d.get("mac")} for d in offline_devices],
+                "recommendation": "Check power and network connectivity for offline devices",
+            }
+        )
 
     # Check for devices needing updates (Integration API uses firmwareUpdatable)
     upgradable = [d for d in devices if d.get("upgradable") or d.get("firmwareUpdatable")]
     if upgradable:
-        warnings.append({
-            "category": "firmware",
-            "severity": "warning",
-            "issue": f"{len(upgradable)} device(s) have firmware updates available",
-            "details": [{"name": d.get("name"), "version": d.get("version")} for d in upgradable],
-            "recommendation": "Schedule firmware updates to get latest features and security patches",
-        })
+        warnings.append(
+            {
+                "category": "firmware",
+                "severity": "warning",
+                "issue": f"{len(upgradable)} device(s) have firmware updates available",
+                "details": [
+                    {"name": d.get("name"), "version": d.get("version")} for d in upgradable
+                ],
+                "recommendation": "Schedule firmware updates to get latest features and security patches",
+            }
+        )
 
     # Check for high CPU/memory usage
     for device in devices:
@@ -90,22 +96,26 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
         mem = sys_stats.get("mem")
 
         if cpu and float(cpu) > 80:
-            warnings.append({
-                "category": "performance",
-                "severity": "warning",
-                "issue": f"High CPU usage on {device.get('name')}",
-                "details": {"device": device.get("name"), "cpu_percent": cpu},
-                "recommendation": "Investigate load sources or consider hardware upgrade",
-            })
+            warnings.append(
+                {
+                    "category": "performance",
+                    "severity": "warning",
+                    "issue": f"High CPU usage on {device.get('name')}",
+                    "details": {"device": device.get("name"), "cpu_percent": cpu},
+                    "recommendation": "Investigate load sources or consider hardware upgrade",
+                }
+            )
 
         if mem and float(mem) > 85:
-            warnings.append({
-                "category": "performance",
-                "severity": "warning",
-                "issue": f"High memory usage on {device.get('name')}",
-                "details": {"device": device.get("name"), "memory_percent": mem},
-                "recommendation": "Restart device if memory leak suspected",
-            })
+            warnings.append(
+                {
+                    "category": "performance",
+                    "severity": "warning",
+                    "issue": f"High memory usage on {device.get('name')}",
+                    "details": {"device": device.get("name"), "memory_percent": mem},
+                    "recommendation": "Restart device if memory leak suspected",
+                }
+            )
 
     # === Wireless Analysis ===
 
@@ -116,21 +126,25 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
             rssi = c.get("rssi")
             signal = c.get("signal")
             if rssi and rssi < -75:
-                poor_signal_clients.append({
-                    "name": c.get("name") or c.get("hostname") or c.get("mac"),
-                    "rssi": rssi,
-                    "signal": signal,
-                    "ap": c.get("ap_name"),
-                })
+                poor_signal_clients.append(
+                    {
+                        "name": c.get("name") or c.get("hostname") or c.get("mac"),
+                        "rssi": rssi,
+                        "signal": signal,
+                        "ap": c.get("ap_name"),
+                    }
+                )
 
     if poor_signal_clients:
-        warnings.append({
-            "category": "wireless",
-            "severity": "warning",
-            "issue": f"{len(poor_signal_clients)} client(s) have poor signal strength",
-            "details": poor_signal_clients[:10],  # Top 10
-            "recommendation": "Consider adding APs or adjusting AP placement for better coverage",
-        })
+        warnings.append(
+            {
+                "category": "wireless",
+                "severity": "warning",
+                "issue": f"{len(poor_signal_clients)} client(s) have poor signal strength",
+                "details": poor_signal_clients[:10],  # Top 10
+                "recommendation": "Consider adding APs or adjusting AP placement for better coverage",
+            }
+        )
 
     # Check for channel congestion (APs on same channel)
     channel_usage = {}
@@ -145,53 +159,61 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
 
     congested_channels = {ch: aps for ch, aps in channel_usage.items() if len(aps) > 1}
     if congested_channels:
-        info.append({
-            "category": "wireless",
-            "severity": "info",
-            "issue": "Multiple APs sharing same channel",
-            "details": congested_channels,
-            "recommendation": "Enable auto-channel or manually distribute channels to reduce interference",
-        })
+        info.append(
+            {
+                "category": "wireless",
+                "severity": "info",
+                "issue": "Multiple APs sharing same channel",
+                "details": congested_channels,
+                "recommendation": "Enable auto-channel or manually distribute channels to reduce interference",
+            }
+        )
 
     # === WAN Analysis ===
 
     for subsystem in health:
         if subsystem.get("subsystem") == "wan":
             if subsystem.get("status") != "ok":
-                issues.append({
-                    "category": "wan",
-                    "severity": "critical",
-                    "issue": f"WAN connectivity issue: {subsystem.get('status')}",
-                    "details": {
-                        "wan_ip": subsystem.get("wan_ip"),
-                        "status": subsystem.get("status"),
-                    },
-                    "recommendation": "Check ISP connection and gateway device",
-                })
+                issues.append(
+                    {
+                        "category": "wan",
+                        "severity": "critical",
+                        "issue": f"WAN connectivity issue: {subsystem.get('status')}",
+                        "details": {
+                            "wan_ip": subsystem.get("wan_ip"),
+                            "status": subsystem.get("status"),
+                        },
+                        "recommendation": "Check ISP connection and gateway device",
+                    }
+                )
 
             # Check latency
             latency = subsystem.get("latency")
             if latency and latency > 50:
-                warnings.append({
-                    "category": "wan",
-                    "severity": "warning",
-                    "issue": f"High WAN latency: {latency}ms",
-                    "details": {"latency_ms": latency},
-                    "recommendation": "Contact ISP if consistently high latency",
-                })
+                warnings.append(
+                    {
+                        "category": "wan",
+                        "severity": "warning",
+                        "issue": f"High WAN latency: {latency}ms",
+                        "details": {"latency_ms": latency},
+                        "recommendation": "Contact ISP if consistently high latency",
+                    }
+                )
 
     # === Alarm Analysis ===
 
     if alarms:
         unarchived = [a for a in alarms if not a.get("archived")]
         if unarchived:
-            issues.append({
-                "category": "alarms",
-                "severity": "warning",
-                "issue": f"{len(unarchived)} active alarm(s)",
-                "details": [{"key": a.get("key"), "msg": a.get("msg")} for a in unarchived[:5]],
-                "recommendation": "Review and address active alarms",
-            })
+            issues.append(
+                {
+                    "category": "alarms",
+                    "severity": "warning",
+                    "issue": f"{len(unarchived)} active alarm(s)",
+                    "details": [{"key": a.get("key"), "msg": a.get("msg")} for a in unarchived[:5]],
+                    "recommendation": "Review and address active alarms",
+                }
+            )
 
     return {
         "site": site,
@@ -241,13 +263,15 @@ async def get_optimization_recommendations(
         if device.get("type") == "uap":
             for radio in device.get("radio_table", []):
                 if radio.get("channel") and radio.get("channel") != "auto":
-                    recommendations.append({
-                        "category": "wireless",
-                        "priority": "medium",
-                        "recommendation": f"Consider enabling auto-channel on {device.get('name')} ({radio.get('name')})",
-                        "reason": "Auto-channel helps avoid interference automatically",
-                        "current": f"Fixed channel: {radio.get('channel')}",
-                    })
+                    recommendations.append(
+                        {
+                            "category": "wireless",
+                            "priority": "medium",
+                            "recommendation": f"Consider enabling auto-channel on {device.get('name')} ({radio.get('name')})",
+                            "reason": "Auto-channel helps avoid interference automatically",
+                            "current": f"Fixed channel: {radio.get('channel')}",
+                        }
+                    )
 
     # Check for SSIDs on 2.4GHz only
     for device in devices:
@@ -263,46 +287,54 @@ async def get_optimization_recommendations(
 
             only_2g = ssids_2g - ssids_5g
             if only_2g:
-                recommendations.append({
-                    "category": "wireless",
-                    "priority": "low",
-                    "recommendation": f"Enable 5GHz for SSIDs: {', '.join(only_2g)}",
-                    "reason": "5GHz offers higher speeds and less interference",
-                })
+                recommendations.append(
+                    {
+                        "category": "wireless",
+                        "priority": "low",
+                        "recommendation": f"Enable 5GHz for SSIDs: {', '.join(only_2g)}",
+                        "reason": "5GHz offers higher speeds and less interference",
+                    }
+                )
 
     # Check band steering
     for wlan in wlans:
         if wlan.get("enabled") and not wlan.get("is_guest") and wlan.get("band_steering") == "off":
-                recommendations.append({
+            recommendations.append(
+                {
                     "category": "wireless",
                     "priority": "low",
                     "recommendation": f"Enable band steering for '{wlan.get('name')}'",
                     "reason": "Helps clients connect to optimal band automatically",
-                })
+                }
+            )
 
     # === Network Optimizations ===
 
     # Check for networks without VLANs
     flat_networks = [n for n in networks if not n.get("vlan_enabled") and n.get("purpose") != "wan"]
     if len(flat_networks) > 1:
-        recommendations.append({
-            "category": "security",
-            "priority": "medium",
-            "recommendation": "Consider using VLANs to segment network traffic",
-            "reason": "VLANs improve security and reduce broadcast domains",
-            "current": f"{len(flat_networks)} networks without VLAN segmentation",
-        })
+        recommendations.append(
+            {
+                "category": "security",
+                "priority": "medium",
+                "recommendation": "Consider using VLANs to segment network traffic",
+                "reason": "VLANs improve security and reduce broadcast domains",
+                "current": f"{len(flat_networks)} networks without VLAN segmentation",
+            }
+        )
 
     # Check for guest network isolation
     for wlan in wlans:
         if wlan.get("is_guest") and wlan.get("enabled"):
             # Guest networks should typically have isolation
-            recommendations.append({
-                "category": "security",
-                "priority": "high",
-                "recommendation": f"Verify guest network '{wlan.get('name')}' has client isolation enabled",
-                "reason": "Prevents guest devices from communicating with each other",
-            })
+            recommendations.append(
+                {
+                    "category": "security",
+                    "priority": "high",
+                    "recommendation": f"Verify guest network '{wlan.get('name')}' has client isolation enabled",
+                    "reason": "Prevents guest devices from communicating with each other",
+                }
+            )
 
     # === Performance Optimizations ===
 
@@ -311,13 +343,15 @@ async def get_optimization_recommendations(
         if device.get("type") == "uap":
             num_sta = device.get("num_sta", 0)
             if num_sta > 30:
-                recommendations.append({
-                    "category": "performance",
-                    "priority": "medium",
-                    "recommendation": f"Consider adding APs near {device.get('name')}",
-                    "reason": f"AP has {num_sta} clients which may impact performance",
-                    "current": f"{num_sta} connected clients",
-                })
+                recommendations.append(
+                    {
+                        "category": "performance",
+                        "priority": "medium",
+                        "recommendation": f"Consider adding APs near {device.get('name')}",
+                        "reason": f"AP has {num_sta} clients which may impact performance",
+                        "current": f"{num_sta} connected clients",
+                    }
+                )
 
     return {
         "site": site,
@@ -361,9 +395,9 @@ async def get_client_experience_report(
     # Signal strength distribution
     signal_dist = {
         "excellent": [],  # > -50 dBm
-        "good": [],       # -50 to -60 dBm
-        "fair": [],       # -60 to -70 dBm
-        "poor": [],       # -70 to -80 dBm
+        "good": [],  # -50 to -60 dBm
+        "fair": [],  # -60 to -70 dBm
+        "poor": [],  # -70 to -80 dBm
         "very_poor": [],  # < -80 dBm
     }
 
@@ -390,7 +424,9 @@ async def get_client_experience_report(
         if sat is not None:
             satisfaction_scores.append(sat)
 
-    avg_satisfaction = sum(satisfaction_scores) / len(satisfaction_scores) if satisfaction_scores else None
+    avg_satisfaction = (
+        sum(satisfaction_scores) / len(satisfaction_scores) if satisfaction_scores else None
+    )
 
     # Analyze connection events
     connection_issues = []
@@ -400,20 +436,24 @@ async def get_client_experience_report(
         key = event.get("key", "")
 
         if "EVT_WU_Disconnected" in key or "EVT_WC_Disconnected" in key:
-            connection_issues.append({
-                "type": "disconnect",
-                "client": event.get("hostname") or event.get("client"),
-                "ap": event.get("ap_name"),
-                "time": event.get("datetime"),
-            })
+            connection_issues.append(
+                {
+                    "type": "disconnect",
+                    "client": event.get("hostname") or event.get("client"),
+                    "ap": event.get("ap_name"),
+                    "time": event.get("datetime"),
+                }
+            )
 
         if "EVT_WU_Roam" in key:
-            roaming_events.append({
-                "client": event.get("hostname") or event.get("client"),
-                "from_ap": event.get("ap_from"),
-                "to_ap": event.get("ap_name"),
-                "time": event.get("datetime"),
-            })
+            roaming_events.append(
+                {
+                    "client": event.get("hostname") or event.get("client"),
+                    "from_ap": event.get("ap_from"),
+                    "to_ap": event.get("ap_name"),
+                    "time": event.get("datetime"),
+                }
+            )
 
     # Identify problem clients (high retry rate or low satisfaction)
     problem_clients = []
@@ -430,12 +470,14 @@ async def get_client_experience_report(
             issues.append(f"Weak signal: {c.get('rssi')} dBm")
 
         if issues:
-            problem_clients.append({
-                "name": c.get("name") or c.get("hostname") or c.get("mac"),
-                "mac": c.get("mac"),
-                "issues": issues,
-                "ap": c.get("ap_name"),
-            })
+            problem_clients.append(
+                {
+                    "name": c.get("name") or c.get("hostname") or c.get("mac"),
+                    "mac": c.get("mac"),
+                    "issues": issues,
+                    "ap": c.get("ap_name"),
+                }
+            )
 
     return {
         "site": site,
@@ -563,11 +605,13 @@ async def get_device_health_summary(
             attention_reasons.append(f"high memory ({mem}%)")
 
         if attention_reasons:
-            needs_attention.append({
-                "name": device.get("name"),
-                "mac": device.get("mac") or device.get("macAddress"),
-                "reasons": attention_reasons,
-            })
+            needs_attention.append(
+                {
+                    "name": device.get("name"),
+                    "mac": device.get("mac") or device.get("macAddress"),
+                    "reasons": attention_reasons,
+                }
+            )
 
     # Filter out empty categories
     device_types = {k: v for k, v in device_types.items() if v["devices"]}
@@ -613,15 +657,17 @@ async def get_traffic_analysis(
         total = tx + rx
 
         if total > 0:
-            client_traffic.append({
-                "name": c.get("name") or c.get("hostname") or c.get("mac"),
-                "mac": c.get("mac"),
-                "tx_bytes": tx,
-                "rx_bytes": rx,
-                "total_bytes": total,
-                "tx_mb": round(tx / 1024 / 1024, 2),
-                "rx_mb": round(rx / 1024 / 1024, 2),
-            })
+            client_traffic.append(
+                {
+                    "name": c.get("name") or c.get("hostname") or c.get("mac"),
+                    "mac": c.get("mac"),
+                    "tx_bytes": tx,
+                    "rx_bytes": rx,
+                    "total_bytes": total,
+                    "tx_mb": round(tx / 1024 / 1024, 2),
+                    "rx_mb": round(rx / 1024 / 1024, 2),
+                }
+            )
 
     # Sort by total traffic
     client_traffic.sort(key=lambda x: x["total_bytes"], reverse=True)
@@ -634,14 +680,16 @@ async def get_traffic_analysis(
         total = tx + rx
 
         if total > 0:
-            app_traffic.append({
-                "category": item.get("cat_name", "Unknown"),
-                "application": item.get("app_name", "Unknown"),
-                "tx_bytes": tx,
-                "rx_bytes": rx,
-                "total_bytes": total,
-                "total_mb": round(total / 1024 / 1024, 2),
-            })
+            app_traffic.append(
+                {
+                    "category": item.get("cat_name", "Unknown"),
+                    "application": item.get("app_name", "Unknown"),
+                    "tx_bytes": tx,
+                    "rx_bytes": rx,
+                    "total_bytes": total,
+                    "total_mb": round(total / 1024 / 1024, 2),
+                }
+            )
 
     app_traffic.sort(key=lambda x: x["total_bytes"], reverse=True)
 
@@ -732,26 +780,32 @@ async def troubleshoot_client(
 
         # Check for issues
         if rssi and rssi < -75:
-            report["issues_detected"].append({
-                "issue": "Weak signal strength",
-                "details": f"RSSI: {rssi} dBm (should be > -70 dBm)",
-                "severity": "warning",
-            })
+            report["issues_detected"].append(
+                {
+                    "issue": "Weak signal strength",
+                    "details": f"RSSI: {rssi} dBm (should be > -70 dBm)",
+                    "severity": "warning",
+                }
+            )
             report["recommendations"].append("Move client closer to AP or add additional AP")
 
         if satisfaction and satisfaction < 70:
-            report["issues_detected"].append({
-                "issue": "Low satisfaction score",
-                "details": f"Satisfaction: {satisfaction}% (should be > 80%)",
-                "severity": "warning",
-            })
+            report["issues_detected"].append(
+                {
+                    "issue": "Low satisfaction score",
+                    "details": f"Satisfaction: {satisfaction}% (should be > 80%)",
+                    "severity": "warning",
+                }
+            )
 
         if tx_retries > 100:
-            report["issues_detected"].append({
-                "issue": "High transmission retries",
-                "details": f"TX retries: {tx_retries} (indicates interference or weak signal)",
-                "severity": "warning",
-            })
+            report["issues_detected"].append(
+                {
+                    "issue": "High transmission retries",
+                    "details": f"TX retries: {tx_retries} (indicates interference or weak signal)",
+                    "severity": "warning",
+                }
+            )
             report["recommendations"].append("Check for interference sources or adjust channel")
 
     # Analyze recent events for this client
@@ -761,12 +815,14 @@ async def troubleshoot_client(
     for event in events:
         event_client = event.get("client", "").lower().replace(":", "")
         if event_client == mac_lower:
-            client_events.append({
-                "time": event.get("datetime"),
-                "type": event.get("key"),
-                "message": event.get("msg"),
-                "ap": event.get("ap_name"),
-            })
+            client_events.append(
+                {
+                    "time": event.get("datetime"),
+                    "type": event.get("key"),
+                    "message": event.get("msg"),
+                    "ap": event.get("ap_name"),
+                }
+            )
 
     report["recent_events"] = client_events[:20]
 
@@ -775,26 +831,34 @@ async def troubleshoot_client(
     roam_count = sum(1 for e in client_events if "Roam" in e.get("type", ""))
 
     if disconnect_count > 5:
-        report["issues_detected"].append({
-            "issue": "Frequent disconnections",
-            "details": f"{disconnect_count} disconnection events in recent history",
-            "severity": "error",
-        })
-        report["recommendations"].append("Check for interference, verify DHCP settings, or update client drivers")
+        report["issues_detected"].append(
+            {
+                "issue": "Frequent disconnections",
+                "details": f"{disconnect_count} disconnection events in recent history",
+                "severity": "error",
+            }
+        )
+        report["recommendations"].append(
+            "Check for interference, verify DHCP settings, or update client drivers"
+        )
 
     if roam_count > 10:
-        report["issues_detected"].append({
-            "issue": "Excessive roaming",
-            "details": f"{roam_count} roaming events (may indicate coverage issues)",
-            "severity": "warning",
-        })
+        report["issues_detected"].append(
+            {
+                "issue": "Excessive roaming",
+                "details": f"{roam_count} roaming events (may indicate coverage issues)",
+                "severity": "warning",
+            }
+        )
         report["recommendations"].append("Adjust AP power levels or add additional coverage")
 
     # Overall assessment
     if not report["issues_detected"]:
         report["assessment"] = "Client appears healthy with no detected issues"
     else:
-        report["assessment"] = f"Found {len(report['issues_detected'])} potential issue(s) requiring attention"
+        report["assessment"] = (
+            f"Found {len(report['issues_detected'])} potential issue(s) requiring attention"
+        )
 
     report["data_limitations"] = limitations
 

@@ -6,7 +6,7 @@ mcp-name: io.github.mikeholownych/unifi-mcp
 [![unifi-mcp MCP server](https://glama.ai/mcp/servers/mikeholownych/unifi-mcp/badges/score.svg)](https://glama.ai/mcp/servers/mikeholownych/unifi-mcp)
 [![Smithery](https://img.shields.io/badge/Smithery-mike--holownych%2Funifi--mcp-purple)](https://smithery.ai/server/mike-holownych/unifi-mcp)
 
-An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities.
+An MCP (Model Context Protocol) server that provides AI assistants like Claude with access to UniFi Network and Protect infrastructure management and analysis capabilities. It uses the native MCP SDK 2 `MCPServer` API (not FastMCP 3) and communicates over stdio by default.
 
 > **Credits:** This project started as a fork of [gbassaragh/Unifi-mcp](https://github.com/gbassaragh/Unifi-mcp) and has since evolved into a fully independent project. Thanks to [@gbassaragh](https://github.com/gbassaragh) for the excellent starting point.
 
@@ -14,7 +14,7 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 
 - **Fixed local session authentication routing** — in `UNIFI_MODE=local`, requests now correctly use the traditional controller API (`/proxy/network`) with cookie + CSRF session auth. Upstream always routed through the Integration API regardless of mode.
 - **Mode-aware base URL resolution** — `api_base_url` now respects the configured auth mode instead of unconditionally returning the Integration API endpoint.
-- **Expanded test suite** — 57 passing tests covering config, network client behavior, server tool registration, and Protect integrations.
+- **Expanded test suite** — 250+ passing tests covering configuration, MCP compatibility, runtime persistence, network client behavior, server tool registration, and Protect integrations.
 
 ## Features
 
@@ -36,6 +36,13 @@ An MCP (Model Context Protocol) server that provides AI assistants like Claude w
 - Target specific devices by name — **all** network and Protect tools accept an optional `device` parameter
 - Per-device API keys: each configured device authenticates with its own key
 - Mix of Network and Protect services across devices
+
+### Events and Safe Automation
+- Normalize and durably deduplicate Network and Protect events in optional SQLite storage
+- Poll each configured source independently and report unsupported capabilities explicitly
+- Run only built-in interval jobs: `poll_events`, `retry_webhook_deliveries`, `capture_observations`, and `prune_runtime_data`
+- Deliver filtered, signed HTTPS webhooks with bounded retries and dead-letter state
+- Keep persistence, background automation, and private webhook destinations disabled by default
 
 ### Authentication Modes
 
@@ -133,6 +140,127 @@ pip install -e .
 ## Configuration
 
 Create a `.env` file in the project root (or set environment variables). See [.env.example](.env.example) for all options.
+
+`UNIFI_CACHE_TTL` controls the shared GET cache lifetime across client instances (default: 30
+seconds). Mutation verification defaults to five fresh reads with exponential delays of 0.5, 1,
+2, and 2 seconds. Tune this with `UNIFI_MUTATION_VERIFY_ATTEMPTS`,
+`UNIFI_MUTATION_VERIFY_INITIAL_DELAY`, and `UNIFI_MUTATION_VERIFY_MAX_DELAY` when a controller
+converges more slowly or quickly.
+
+### Optional Runtime Persistence
+
+SQLite-backed runtime persistence is disabled by default. Enable it only when persistent runtime state is needed:
+
+```bash
+UNIFI_RUNTIME_ENABLED=true
+```
+
+By default, the database is `runtime.db` under `UNIFI_DATA_DIR`. If `UNIFI_DATA_DIR` is not set, the server follows the XDG data convention: `$XDG_DATA_HOME/unifi-mcp` when `XDG_DATA_HOME` is an absolute path, otherwise `~/.local/share/unifi-mcp`. The resulting default database is therefore `$XDG_DATA_HOME/unifi-mcp/runtime.db` or `~/.local/share/unifi-mcp/runtime.db`.
+
+Set an explicit data directory or database path when needed:
+
+```bash
+UNIFI_DATA_DIR=/var/lib/unifi-mcp
+UNIFI_RUNTIME_DATABASE=/var/lib/unifi-mcp/runtime.db
+```
+
+`UNIFI_DATA_DIR` and `UNIFI_RUNTIME_DATABASE` must resolve to absolute paths. `UNIFI_RUNTIME_DATABASE` overrides the database derived from `UNIFI_DATA_DIR`.
+
+### Events, Schedules, and Webhooks
+
+Runtime persistence enables event storage and management tools, but does not start background work. Enable the scheduler separately:
+
+```bash
+UNIFI_RUNTIME_ENABLED=true
+UNIFI_AUTOMATION_ENABLED=true
+```
+
+Event ingestion is capability-based polling, not a claim of universal UniFi push support:
+
+- Network event polling requires traditional local session auth with `UNIFI_MODE=local`.
+- Protect event polling requires a configured local `username` and `password` for each Protect device.
+- Integration API and cloud Network configurations are reported as unsupported for event polling.
+- Polling uses overlap plus durable source-key deduplication so timestamp boundaries do not create duplicate records.
+
+Schedules can invoke only `poll_events`, `retry_webhook_deliveries`, `capture_observations`, or `prune_runtime_data`. Schedule and webhook mutations require `confirm=true`; arbitrary MCP tool names, commands, imports, and expressions are rejected.
+
+Webhook destinations use HTTPS, do not follow redirects, and are resolved and checked before every attempt. Loopback, private, link-local, multicast, and reserved addresses are rejected unless `UNIFI_WEBHOOK_ALLOW_PRIVATE=true`. The dedicated webhook client retains certificate verification even when a UniFi controller uses a self-signed certificate.
+
+Signing secrets never enter SQLite or MCP arguments. Set a secret in the server environment, then pass only its variable name as `secret_env_name`:
+
+```bash
+WEBHOOK_SECRET_AUTOMATION='replace-with-a-random-secret'
+```
+
+Useful tools include `get_event_polling_status`, `poll_events_now`, `list_runtime_events`, `create_interval_schedule`, `run_schedule_now`, `list_job_runs`, `create_webhook_destination`, `test_webhook_destination`, and `list_webhook_deliveries`. Retryable jobs and webhook failures use bounded exponential backoff; exhausted deliveries enter `dead_letter` state.
+
+### Portable Snapshots and Reports
+
+Portable snapshots are versioned, canonical JSON exports assembled from supported read APIs. They include source scope, explicit data limitations, Network/Protect inventory, networks, WLAN metadata, and firewall rule/policy metadata. Credentials, API keys, cookies, authorization headers, and WLAN passphrases are structurally excluded.
+
+```bash
+# Optional absolute override; defaults to <UNIFI_DATA_DIR>/exports
+UNIFI_EXPORT_DIR=/var/lib/unifi-mcp/exports
+```
+
+Export tools accept a plain filename rather than an arbitrary path, reject traversal and symlinks, and atomically write files with `0600` permissions. `export_portable_snapshot` includes a SHA-256 content checksum; `verify_snapshot` detects malformed, truncated, or modified snapshots. `export_network_report` renders the same strict model as escaped standalone HTML or formula-safe CSV.
+
+Native controller backup download and restore are intentionally reported as unavailable until controller-family endpoints and safe restore verification are validated. Portable snapshots support assessment and assisted reconstruction; they are not represented as restorable native controller backups.
+
+### History and Prometheus
+
+With runtime persistence enabled, `capture_observations_now` stores bounded aggregate site health, device/client counts, traffic totals, and Protect camera health. It never stores per-client history or packet-flow telemetry. `query_observation_trends` returns bounded UTC buckets with `present=false` for missed collections rather than inventing interpolated values.
+
+Prometheus support is not part of the base dependency set and starts no listener by default:
+
+```bash
+uv sync --extra observability
+UNIFI_RUNTIME_ENABLED=true
+UNIFI_PROMETHEUS_ENABLED=true
+UNIFI_PROMETHEUS_HOST=127.0.0.1
+```
+
+Metrics use fixed names without controller, site, client, MAC, IP, or SSID labels. Binding beyond loopback additionally requires `UNIFI_PROMETHEUS_ALLOW_REMOTE=true` and `UNIFI_PROMETHEUS_BEARER_TOKEN_ENV` naming an environment variable that contains the bearer token. The token value is read at request time and is never persisted.
+
+### Client Organization and QoS Previews
+
+With runtime persistence enabled, clients can have multiple local tags and at most one local group. Membership is keyed by a controller/site-scoped SHA-256 value derived from the stable client MAC; raw MACs and mutable client names are not stored. Exact names and hostnames can be used as transient lookup hints, but ambiguous matches are rejected and the exact MAC must be supplied. Tags and groups survive client renames and do not change controller configuration.
+
+Organization mutations require `confirm=true`. Use `set_client_tags`, `create_client_group`, `assign_client_group`, `list_client_groups`, and `list_clients_by_organization` to manage or query local metadata.
+
+`plan_client_qos_policy` persists a one-hour deterministic target snapshot selected by one client, tag, or group. The target ledger contains only scoped one-way client keys and supports future resumable per-target apply state. This release has no validated controller QoS adapter: `get_client_qos_capabilities` reports that limitation, and `apply_client_qos_policy` returns without making a controller mutation. Local tags never imply a QoS policy.
+
+### Trusted Plugins
+
+Plugins are disabled unless their Python entry-point name is explicitly listed in `UNIFI_PLUGIN_ALLOWLIST`. They execute as trusted local code in the server process and are not sandboxed. Required plugins must also be allowlisted and are listed in `UNIFI_PLUGIN_REQUIRED`; missing, incompatible, duplicate, or failed required plugins stop startup. Optional failures are isolated and visible through `get_plugin_status`.
+
+Plugins use API version 1 and the `unifi_mcp.plugins` entry-point group:
+
+```toml
+[project.entry-points."unifi_mcp.plugins"]
+example = "example_package.plugin:plugin"
+```
+
+The loaded object declares `api_version = 1` and implements `register(registry)`. The registry supports `register_tool` with an explicit `read`, `write`, or `admin` scope, plus named collectors, `JobDefinition` jobs, notification sinks, and byte-returning report renderers. Plugin names cannot shadow core tools or jobs.
+
+### Streamable HTTP and OIDC
+
+Stdio remains the default local process transport and requires no identity-provider configuration. Remote MCP starts only when `UNIFI_TRANSPORT=streamable-http`; install the declared authentication capability with `uv sync --extra oidc` and provide complete OIDC settings:
+
+```bash
+UNIFI_TRANSPORT=streamable-http
+UNIFI_HTTP_HOST=127.0.0.1
+UNIFI_HTTP_PORT=8000
+UNIFI_HTTP_PATH=/mcp
+UNIFI_HTTP_PUBLIC_URL=https://mcp.example.com/mcp
+UNIFI_OIDC_ISSUER=https://identity.example.com
+UNIFI_OIDC_AUDIENCE=unifi-mcp
+UNIFI_OIDC_ALGORITHMS=RS256
+```
+
+Discovery and JWKS data are fetched over HTTPS with bounded timeouts, cached for five minutes by default, and refreshed once for an unknown signing key. Tokens are validated locally for allowed asymmetric algorithm, signature, issuer, audience, expiry, subject, and scopes. Authorization headers, tokens, claims, and signing keys are not logged or persisted.
+
+All HTTP tool calls require `UNIFI_OIDC_READ_SCOPE` (`unifi:read` by default). Mutations additionally require `UNIFI_OIDC_WRITE_SCOPE`; runtime administration and plugin status require `UNIFI_OIDC_ADMIN_SCOPE`. Existing `confirm=true` gates still apply. Non-loopback binding additionally requires `UNIFI_HTTP_ALLOW_REMOTE=true`; production TLS should terminate at the declared HTTPS public URL.
 
 ### Multi-Device Configuration (Recommended)
 
@@ -256,6 +384,9 @@ Or in `opencode.json`:
 
 ## Available Tools
 
+### Server Health
+- `get_server_health` - Report the server version, stdio transport, configured service counts, and optional persistence status. The response deliberately omits credentials, controller addresses, device names, and database paths.
+
 ### Multi-Device Management
 - `list_unifi_devices` - List all configured UniFi devices and their services
 
@@ -267,6 +398,8 @@ Or in `opencode.json`:
 - `get_device_stats` - Get performance statistics
 - `upgrade_device` - Upgrade firmware
 - `provision_device` - Force re-provision
+- `get_device_ports` - List switch/gateway port configuration and link state
+- `set_device_port` - Configure one port; requires `confirm=true` and verifies controller read-back
 
 ### Client Management
 - `list_clients` - List connected clients
@@ -277,6 +410,12 @@ Or in `opencode.json`:
 - `forget_client` - Remove from known clients
 - `get_client_traffic` - Get traffic statistics
 - `reserve_client_ip` - Reserve IP via DHCP reservation
+- `get_client_organization` / `set_client_tags` - Read or replace durable local tags
+- `create_client_group` / `delete_client_group` - Manage local-only groups
+- `assign_client_group` / `list_client_groups` - Manage and inspect single-group membership
+- `list_clients_by_organization` - Resolve deterministic tag or group target sets
+- `get_client_qos_capabilities` - Report validated controller QoS support
+- `plan_client_qos_policy` / `apply_client_qos_policy` - Preview QoS targets and apply only when a validated adapter exists
 
 ### Site Management
 - `list_sites` - List all sites
@@ -293,9 +432,10 @@ Or in `opencode.json`:
 - `create_port_forward` / `delete_port_forward` - Manage port forwards
 
 ### Configuration Management (writes)
+- `create_network` / `update_network` / `delete_network` - Manage networks and VLANs; each requires `confirm=true` and verifies controller read-back
 - `create_wlan` / `update_wlan` / `delete_wlan` - Manage wireless networks
 - `create_firewall_policy` / `set_firewall_policy_enabled` / `delete_firewall_policy` - Manage zone-based firewall policies
-- `export_camera_clip` - Export a camera recording clip as MP4 (Protect)
+- `export_camera_clip` - Export an MP4 beneath `UNIFI_EXPORT_DIR`; requires `confirm=true`
 - `get_all_sites_health` - Health overview across all sites
 
 Write tools that remove data or cause disruption are confirm-gated or flagged destructive via MCP annotations.
@@ -397,6 +537,19 @@ docker build -t unifi-mcp .
 docker run -i --rm --env-file .env unifi-mcp
 ```
 
+To enable optional runtime persistence, mount a named volume at the image's writable `/data` directory:
+
+```bash
+docker run -i --rm \
+  --env-file .env \
+  --env UNIFI_RUNTIME_ENABLED=true \
+  --env UNIFI_DATA_DIR=/data \
+  --volume unifi-mcp-data:/data \
+  unifi-mcp
+```
+
+`--rm` removes the stopped container, but the `unifi-mcp-data` named volume remains and preserves `/data/runtime.db` for subsequent runs.
+
 ## Requesting new functionality
 
 - **New skills**: Open an issue with `[Skill]` prefix — describe the problem, workflow, and expected output
@@ -411,8 +564,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release history and [CONTRIBUTING.md](CONTR
 
 - Credentials are passed via environment variables — never commit `.env`
 - SSL verification is disabled by default for self-signed certificates
-- The server only exposes read operations and safe management commands
-- Destructive operations (delete site, factory reset) are not exposed
+- The server exposes both read and write tools
+- Disruptive or destructive tools are annotated and/or explicitly confirm-gated where implemented; MCP clients decide how to present or honor annotations
+- Especially dangerous operations such as factory reset remain unexposed
 - API keys should be kept secure and rotated periodically
 
 ## License

@@ -45,9 +45,7 @@ class TestCameras:
 
     @respx.mock
     async def test_camera_by_name_partial_match(self):
-        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras").respond(
-            json=CAMERAS
-        )
+        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras").respond(json=CAMERAS)
         client = make_client()
         camera = await client.get_camera_by_name("front door")
         assert camera["id"] == "cam1"
@@ -57,18 +55,16 @@ class TestCameras:
     @respx.mock
     async def test_snapshot_base64(self):
         jpeg = b"\xff\xd8fakejpegdata"
-        respx.get(
-            "https://10.0.0.2/proxy/protect/integration/v1/cameras/cam1/snapshot"
-        ).respond(content=jpeg)
+        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras/cam1/snapshot").respond(
+            content=jpeg
+        )
         client = make_client()
         result = await client.get_camera_snapshot_base64("cam1")
         assert base64.b64decode(result) == jpeg
 
     @respx.mock
     async def test_camera_summary_counts(self):
-        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras").respond(
-            json=CAMERAS
-        )
+        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras").respond(json=CAMERAS)
         client = make_client()
         summary = await client.get_camera_summary()
         assert summary["total_cameras"] == 2
@@ -131,9 +127,7 @@ class TestEventSummary:
                 {"id": "3", "type": "ring", "camera": "cam1", "start": now_ms},
             ]
         )
-        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras").respond(
-            json=CAMERAS
-        )
+        respx.get("https://10.0.0.2/proxy/protect/integration/v1/cameras").respond(json=CAMERAS)
 
         client = make_client(device)
         summary = await client.get_event_summary(hours=24)

@@ -579,7 +579,8 @@ class UniFiProtectClient:
         # Filter by detection type if specified
         if detection_types:
             events = [
-                e for e in events
+                e
+                for e in events
                 if any(dt in e.get("smartDetectTypes", []) for dt in detection_types)
             ]
 
@@ -731,20 +732,23 @@ class UniFiProtectClient:
             # Convert timestamp to readable format
             if event_time:
                 from datetime import datetime
+
                 dt = datetime.fromtimestamp(event_time / 1000)
                 time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 time_str = "Unknown"
 
-            result.append({
-                "id": event.get("id"),
-                "type": event.get("type"),
-                "camera": camera_names.get(camera_id, camera_id),
-                "camera_id": camera_id,
-                "time": time_str,
-                "timestamp": event_time,
-                "smart_detect_types": event.get("smartDetectTypes", []),
-                "score": event.get("score"),
-            })
+            result.append(
+                {
+                    "id": event.get("id"),
+                    "type": event.get("type"),
+                    "camera": camera_names.get(camera_id, camera_id),
+                    "camera_id": camera_id,
+                    "time": time_str,
+                    "timestamp": event_time,
+                    "smart_detect_types": event.get("smartDetectTypes", []),
+                    "score": event.get("score"),
+                }
+            )
 
         return result

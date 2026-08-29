@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.9.0] - 2026-08-29
+
+### Added
+- Optional SQLite runtime persistence foundation, disabled by default.
+- `get_server_health` for redaction-safe server, service, and persistence status.
+- Durable normalized Network and Protect event polling with per-source cursors and deduplication.
+- Confirmation-gated allowlisted interval schedules and retained job-run history.
+- Filtered HTTPS event webhooks with environment-referenced HMAC secrets, SSRF checks,
+  bounded retries, and dead-letter state.
+- Runtime event, polling, schedule, job-run, destination, and delivery management tools.
+- Deterministic portable JSON snapshots with secret exclusion, source limitations,
+  atomic private-file export, and SHA-256 verification.
+- Snapshot-backed standalone HTML and formula-safe CSV reports.
+- Bounded aggregate health observations, explicit-gap trend queries, scheduled
+  collection, and retention pruning.
+- Optional label-free Prometheus metrics with loopback defaults and authenticated
+  remote binding; the base install remains dependency-free from Prometheus.
+- Durable local client tags and single-group membership keyed by scoped one-way
+  identities, with ambiguity-safe client resolution and confirmation-gated writes.
+- Deterministic, expiring QoS policy previews with resumable target ledgers and
+  explicit unsupported-capability guidance that performs no controller mutation.
+- Allowlisted versioned trusted plugins for scoped tools, collectors, jobs,
+  notification sinks, and report renderers, with required-plugin startup gates.
+- Optional native Streamable HTTP transport with local OIDC/JWKS validation,
+  bounded metadata caches, safe loopback defaults, and read/write/admin scopes.
+- Copied network-management additions: `get_device_ports`, `set_device_port`,
+  `create_network`, `update_network`, and `delete_network`.
+
+### Changed
+- Migrated the server to MCP SDK 2's native `MCPServer` API while retaining stdio as the default transport.
+- Unified package and dependency metadata around PEP 621 and the uv lockfile.
+- Hardened port and network mutations with explicit confirmation, DHCP input
+  validation, cache-bypassed controller read-back, and persisted-state verification.
+
 ## [0.8.0] - 2026-08-26
 
 ### Added

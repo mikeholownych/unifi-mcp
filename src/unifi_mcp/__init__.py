@@ -1,3 +1,5 @@
 """UniFi MCP Server - MCP integration for UniFi Network and Protect APIs."""
 
-__version__ = "0.1.0"
+from unifi_mcp.version import get_version
+
+__version__ = get_version()

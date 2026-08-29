@@ -107,7 +107,9 @@ class UniFiLocalAuth:
             error_msg = data.get("meta", {}).get("msg", "Unknown error")
             raise UniFiAuthError(f"Authentication failed: {error_msg}") from None
         except Exception:
-            raise UniFiAuthError(f"Authentication failed with status {response.status_code}") from None
+            raise UniFiAuthError(
+                f"Authentication failed with status {response.status_code}"
+            ) from None
 
     async def logout(self) -> None:
         """Log out from the UniFi controller."""

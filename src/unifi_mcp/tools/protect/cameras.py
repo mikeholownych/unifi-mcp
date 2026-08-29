@@ -2,12 +2,13 @@
 
 from typing import Any
 
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import Context
 
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.protect import UniFiProtectClient
 from unifi_mcp.config import settings
 from unifi_mcp.exceptions import UniFiNotFoundError
+from unifi_mcp.snapshots.export import SnapshotExporter
 
 
 def _get_protect_client(ctx: Context, device_name: str | None = None) -> UniFiProtectClient:
@@ -208,11 +209,13 @@ async def get_camera_health_summary(
             connected.append(cam_info)
         else:
             disconnected.append(cam_info)
-            issues.append({
-                "camera": cam.get("name"),
-                "issue": f"Camera is {cam.get('state', 'UNKNOWN')}",
-                "severity": "critical",
-            })
+            issues.append(
+                {
+                    "camera": cam.get("name"),
+                    "issue": f"Camera is {cam.get('state', 'UNKNOWN')}",
+                    "severity": "critical",
+                }
+            )
 
     return {
         "summary": {
@@ -228,7 +231,9 @@ async def get_camera_health_summary(
             "Check network connectivity for disconnected cameras",
             "Verify PoE power supply for wired cameras",
             "Check camera logs in Protect for more details",
-        ] if disconnected else [],
+        ]
+        if disconnected
+        else [],
     }
 
 
@@ -334,17 +339,20 @@ async def get_motion_events(
 
         if event_time:
             from datetime import datetime
+
             dt = datetime.fromtimestamp(event_time / 1000)
             time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             time_str = "Unknown"
 
-        formatted.append({
-            "camera": camera_names.get(cam_id, cam_id),
-            "time": time_str,
-            "type": event.get("type"),
-            "score": event.get("score"),
-        })
+        formatted.append(
+            {
+                "camera": camera_names.get(cam_id, cam_id),
+                "time": time_str,
+                "type": event.get("type"),
+                "score": event.get("score"),
+            }
+        )
 
     return {
         "period_hours": hours,
@@ -395,17 +403,20 @@ async def get_smart_detections(
 
         if event_time:
             from datetime import datetime
+
             dt = datetime.fromtimestamp(event_time / 1000)
             time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             time_str = "Unknown"
 
-        formatted.append({
-            "camera": camera_names.get(cam_id, cam_id),
-            "time": time_str,
-            "detections": event.get("smartDetectTypes", []),
-            "score": event.get("score"),
-        })
+        formatted.append(
+            {
+                "camera": camera_names.get(cam_id, cam_id),
+                "time": time_str,
+                "detections": event.get("smartDetectTypes", []),
+                "score": event.get("score"),
+            }
+        )
 
     return {
         "period_hours": hours,
@@ -471,6 +482,7 @@ async def export_camera_clip(
     end_ts: int,
     output_path: str,
     device: str | None = None,
+    confirm: bool = False,
 ) -> dict[str, Any]:
     """Export a camera recording clip (MP4) to a local file.
 
@@ -488,7 +500,15 @@ async def export_camera_clip(
     Returns:
         Export result with file path and size
     """
-    import pathlib
+    if not confirm:
+        return {
+            "success": False,
+            "message": "Camera clip export writes a local file and requires confirm=true.",
+        }
+
+    app: AppContext = ctx.request_context.lifespan_context
+    exporter = SnapshotExporter(app.settings.export_directory, max_bytes=1024 * 1024 * 1024)
+    exporter.validate_filename(output_path)
 
     client = _get_protect_client(ctx, device)
 
@@ -496,7 +516,8 @@ async def export_camera_clip(
     cameras = await client.get_cameras()
     cam = next(
         (
-            c for c in cameras
+            c
+            for c in cameras
             if c.get("id") == camera or c.get("_id") == camera or c.get("name") == camera
         ),
         None,
@@ -507,15 +528,13 @@ async def export_camera_clip(
 
     clip = await client.export_camera_clip(cam_id, int(start_ts), int(end_ts))
 
-    out = pathlib.Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(clip)
+    result = await exporter.write(output_path, clip)
 
     return {
         "success": True,
         "camera": cam.get("name") or camera,
-        "file": str(out),
-        "size_bytes": len(clip),
+        "file": str(result.path),
+        "size_bytes": result.size_bytes,
         "start_ts": start_ts,
         "end_ts": end_ts,
     }

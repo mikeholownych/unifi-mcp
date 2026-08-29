@@ -2,12 +2,21 @@
 
 import logging
 import sys
+from typing import Any
 
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.mcpserver import Context, MCPServer
 from mcp.types import ToolAnnotations
 
+from unifi_mcp.auth.authorization import ScopeAuthorizer, ScopeMiddleware
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
+from unifi_mcp.plugins import PluginManager, activate_plugins, discover_plugins
+from unifi_mcp.tools import client_organization as organization_tools
+from unifi_mcp.tools import exports as export_tools
+from unifi_mcp.tools import observability as observability_tools
+from unifi_mcp.tools import qos as qos_tools
+from unifi_mcp.tools import runtime as runtime_tools
+from unifi_mcp.tools import system as system_tools
 from unifi_mcp.tools.network import clients as client_tools
 from unifi_mcp.tools.network import devices as device_tools
 from unifi_mcp.tools.network import insights as insight_tools
@@ -15,6 +24,7 @@ from unifi_mcp.tools.network import multisite as multisite_tools
 from unifi_mcp.tools.network import sites as site_tools
 from unifi_mcp.tools.network import stats as stat_tools
 from unifi_mcp.tools.protect import cameras as protect_tools
+from unifi_mcp.version import get_version
 
 # Configure logging
 logging.basicConfig(
@@ -24,9 +34,45 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def _build_server_security(configured=settings) -> tuple[dict[str, Any], ScopeAuthorizer | None]:
+    if configured.transport == "stdio":
+        return {}, None
+    from mcp.server.auth.settings import AuthSettings
+
+    from unifi_mcp.auth.oidc import OIDCTokenVerifier
+
+    authorizer = ScopeAuthorizer(
+        configured.oidc_read_scope,
+        configured.oidc_write_scope,
+        configured.oidc_admin_scope,
+    )
+    verifier = OIDCTokenVerifier(
+        issuer=configured.oidc_issuer or "",
+        audience=configured.oidc_audience or "",
+        algorithms=configured.oidc_allowed_algorithms,
+        required_scope=configured.oidc_read_scope,
+        cache_ttl_seconds=configured.oidc_cache_ttl_seconds,
+        timeout_seconds=configured.oidc_timeout_seconds,
+    )
+    auth = AuthSettings(
+        issuer_url=configured.oidc_issuer,
+        resource_server_url=configured.http_public_url,
+        required_scopes=[configured.oidc_read_scope],
+    )
+    return {
+        "token_verifier": verifier,
+        "auth": auth,
+        "middleware": [ScopeMiddleware(authorizer)],
+    }, authorizer
+
+
+_security_options, scope_authorizer = _build_server_security()
+
 # Create the MCP server with lifespan management
-mcp = FastMCP(
+mcp = MCPServer(
     name="UniFi MCP Server",
+    version=get_version(),
     instructions="""
     Manage and analyze UniFi network and Protect infrastructure.
 
@@ -47,7 +93,313 @@ mcp = FastMCP(
     for comprehensive network analysis and recommendations.
     """,
     lifespan=create_app_lifespan,
+    **_security_options,
 )
+
+# =============================================================================
+# System Tools
+# =============================================================================
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_server_health(ctx: Context) -> system_tools.ServerHealth:
+    """Get redaction-safe UniFi MCP runtime health and service counts."""
+    return await system_tools.build_server_health(ctx.request_context.lifespan_context)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_plugin_status():
+    """List redacted trusted-plugin loading outcomes. Requires admin scope over HTTP."""
+    return {
+        "trusted_code": True,
+        "sandboxed": False,
+        "plugins": plugin_manager.status(),
+    }
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_snapshot_capabilities(ctx: Context):
+    """Describe portable snapshot/report capabilities and native backup limitations."""
+    return await export_tools.get_snapshot_capabilities(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def export_portable_snapshot(ctx: Context, filename: str, confirm: bool = False):
+    """Export a deterministic secret-free JSON snapshot. Requires confirm=true."""
+    return await export_tools.export_portable_snapshot(ctx, filename, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def verify_snapshot(ctx: Context, filename: str):
+    """Verify the schema and checksum of a confined snapshot export."""
+    return await export_tools.verify_snapshot(ctx, filename)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def export_network_report(ctx: Context, filename: str, format: str, confirm: bool = False):
+    """Export an HTML or CSV report from the portable snapshot model. Requires confirm=true."""
+    return await export_tools.export_network_report(ctx, filename, format, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def capture_observations_now(ctx: Context):
+    """Capture bounded aggregate UniFi health observations now."""
+    return await observability_tools.capture_observations_now(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def query_observation_trends(
+    ctx: Context,
+    kind: str,
+    metric: str,
+    start: str,
+    end: str,
+    bucket_seconds: int = 300,
+    source: str | None = None,
+    controller: str | None = None,
+    site: str | None = None,
+):
+    """Query bounded UTC trend buckets with explicit missing intervals."""
+    return await observability_tools.query_observation_trends(
+        ctx, kind, metric, start, end, bucket_seconds, source, controller, site
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_observation_scopes(ctx: Context):
+    """List aggregate observation scopes currently retained."""
+    return await observability_tools.list_observation_scopes(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_observation_retention_status(ctx: Context):
+    """Get aggregate observation count and retained time range."""
+    return await observability_tools.get_observation_retention_status(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_client_organization(
+    ctx: Context, identity: str, site: str = "default", device: str | None = None
+):
+    """Get durable local tags and group membership for one known client."""
+    return await organization_tools.get_client_organization(ctx, identity, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_client_tags(
+    ctx: Context,
+    identity: str,
+    tags: list[str],
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Replace local client tags by stable identity. Requires confirm=true."""
+    return await organization_tools.set_client_tags(ctx, identity, tags, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_client_group(
+    ctx: Context,
+    name: str,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Create a controller-independent local client group. Requires confirm=true."""
+    return await organization_tools.create_client_group(ctx, name, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_client_group(
+    ctx: Context,
+    name: str,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Delete a local group and its memberships. Requires confirm=true."""
+    return await organization_tools.delete_client_group(ctx, name, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def assign_client_group(
+    ctx: Context,
+    identity: str,
+    group: str | None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Assign or unassign one local client group. Requires confirm=true."""
+    return await organization_tools.assign_client_group(ctx, identity, group, site, device, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_client_groups(ctx: Context, site: str = "default", device: str | None = None):
+    """List local client groups and deterministic member counts."""
+    return await organization_tools.list_client_groups(ctx, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_clients_by_organization(
+    ctx: Context,
+    tag: str | None = None,
+    group: str | None = None,
+    site: str = "default",
+    device: str | None = None,
+):
+    """List stable client identities for exactly one local tag or group."""
+    return await organization_tools.list_clients_by_organization(ctx, tag, group, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_client_qos_capabilities(ctx: Context, device: str | None = None):
+    """Describe validated controller QoS mutation capabilities."""
+    return await qos_tools.get_client_qos_capabilities(ctx, device)
+
+
+@mcp.tool()
+async def plan_client_qos_policy(
+    ctx: Context,
+    selector_type: str,
+    selector_value: str,
+    download_kbps: int,
+    upload_kbps: int,
+    site: str = "default",
+    device: str | None = None,
+):
+    """Persist a deterministic QoS target preview without controller mutation."""
+    return await qos_tools.plan_client_qos_policy(
+        ctx,
+        selector_type,
+        selector_value,
+        download_kbps,
+        upload_kbps,
+        site,
+        device,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def apply_client_qos_policy(ctx: Context, plan_token: str, confirm: bool = False):
+    """Apply a validated QoS preview when a supported adapter exists. Requires confirmation."""
+    return await qos_tools.apply_client_qos_policy(ctx, plan_token, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_runtime_events(ctx: Context, limit: int = 100):
+    """List normalized events retained by the optional runtime store."""
+    return await runtime_tools.list_runtime_events(ctx, limit)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_event_polling_status(ctx: Context):
+    """List event source capabilities and background polling state."""
+    return await runtime_tools.get_event_polling_status(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def poll_events_now(ctx: Context, source: str | None = None, device_name: str | None = None):
+    """Poll supported event sources now and durably deduplicate results."""
+    return await runtime_tools.poll_events_now(ctx, source, device_name)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_schedules(ctx: Context):
+    """List allowlisted interval schedules."""
+    return await runtime_tools.list_schedules(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_interval_schedule(
+    ctx: Context,
+    name: str,
+    job_name: str,
+    interval_seconds: int,
+    arguments: dict[str, Any] | None = None,
+    confirm: bool = False,
+):
+    """Create an allowlisted recurring job. Requires confirm=true."""
+    return await runtime_tools.create_interval_schedule(
+        ctx, name, job_name, interval_seconds, arguments, confirm
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_schedule_enabled(
+    ctx: Context, schedule_id: str, enabled: bool, confirm: bool = False
+):
+    """Enable or pause a schedule. Requires confirm=true."""
+    return await runtime_tools.set_schedule_enabled(ctx, schedule_id, enabled, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_schedule(ctx: Context, schedule_id: str, confirm: bool = False):
+    """Delete a non-running schedule. Requires confirm=true."""
+    return await runtime_tools.delete_schedule(ctx, schedule_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def run_schedule_now(ctx: Context, schedule_id: str, confirm: bool = False):
+    """Run one allowlisted schedule immediately. Requires confirm=true."""
+    return await runtime_tools.run_schedule_now(ctx, schedule_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_job_runs(ctx: Context, limit: int = 100):
+    """List redacted background job run outcomes."""
+    return await runtime_tools.list_job_runs(ctx, limit)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_webhook_destinations(ctx: Context):
+    """List webhook destinations without secret values."""
+    return await runtime_tools.list_webhook_destinations(ctx)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_webhook_destination(
+    ctx: Context,
+    name: str,
+    url: str,
+    secret_env_name: str | None = None,
+    categories: list[str] | None = None,
+    confirm: bool = False,
+):
+    """Create a filtered outbound webhook. Requires confirm=true."""
+    return await runtime_tools.create_webhook_destination(
+        ctx, name, url, secret_env_name, categories, confirm
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
+async def set_webhook_destination_enabled(
+    ctx: Context, destination_id: str, enabled: bool, confirm: bool = False
+):
+    """Enable or pause a webhook destination. Requires confirm=true."""
+    return await runtime_tools.set_webhook_destination_enabled(
+        ctx, destination_id, enabled, confirm
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_webhook_destination(ctx: Context, destination_id: str, confirm: bool = False):
+    """Delete a webhook destination and queued deliveries. Requires confirm=true."""
+    return await runtime_tools.delete_webhook_destination(ctx, destination_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def test_webhook_destination(ctx: Context, destination_id: str, confirm: bool = False):
+    """Send a synthetic payload to a webhook destination. Requires confirm=true."""
+    return await runtime_tools.test_webhook_destination(ctx, destination_id, confirm)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def list_webhook_deliveries(ctx: Context, limit: int = 100):
+    """List redacted webhook delivery and dead-letter state."""
+    return await runtime_tools.list_webhook_deliveries(ctx, limit)
+
 
 # =============================================================================
 # Device Management Tools
@@ -61,7 +413,9 @@ async def list_devices(ctx: Context, site: str = "default", device: str | None =
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_device_details(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_device_details(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get detailed information about a specific device."""
     return await device_tools.get_device_details(ctx, mac, site, device)
 
@@ -73,13 +427,17 @@ async def restart_device(ctx: Context, mac: str, site: str = "default", device: 
 
 
 @mcp.tool(annotations=ToolAnnotations(idempotent_hint=True))
-async def locate_device(ctx: Context, mac: str, enabled: bool = True, site: str = "default", device: str | None = None):
+async def locate_device(
+    ctx: Context, mac: str, enabled: bool = True, site: str = "default", device: str | None = None
+):
     """Enable/disable LED blinking to locate a device."""
     return await device_tools.locate_device(ctx, mac, enabled, site, device)
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_device_stats(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_device_stats(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get performance statistics for a device."""
     return await device_tools.get_device_stats(ctx, mac, site, device)
 
@@ -91,9 +449,49 @@ async def upgrade_device(ctx: Context, mac: str, site: str = "default", device: 
 
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
-async def provision_device(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def provision_device(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Force re-provision a device with current configuration."""
     return await device_tools.provision_device(ctx, mac, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_device_ports(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
+    """List the switch/gateway ports on a device (index, name, link, speed, VLAN)."""
+    return await device_tools.get_device_ports(ctx, mac, site, device)
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def set_device_port(
+    ctx: Context,
+    mac: str,
+    port_idx: int,
+    name: str | None = None,
+    native_network: str | None = None,
+    poe_mode: str | None = None,
+    forward: str | None = None,
+    enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Configure a single switch port: native VLAN, PoE mode, name, or enable state."""
+    return await device_tools.set_device_port(
+        ctx,
+        mac,
+        port_idx,
+        name,
+        native_network,
+        poe_mode,
+        forward,
+        enabled,
+        site,
+        device,
+        confirm,
+    )
 
 
 # =============================================================================
@@ -114,7 +512,9 @@ async def list_all_clients(ctx: Context, site: str = "default", device: str | No
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_client_details(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_client_details(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get detailed information about a specific client."""
     return await client_tools.get_client_details(ctx, mac, site, device)
 
@@ -144,7 +544,9 @@ async def forget_client(ctx: Context, mac: str, site: str = "default", device: s
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_client_traffic(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def get_client_traffic(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """Get traffic statistics for a specific client."""
     return await client_tools.get_client_traffic(ctx, mac, site, device)
 
@@ -196,6 +598,84 @@ async def get_networks(ctx: Context, site: str = "default", device: str | None =
     return await site_tools.get_networks(ctx, site, device)
 
 
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def create_network(
+    ctx: Context,
+    name: str,
+    subnet: str | None = None,
+    vlan: int | None = None,
+    purpose: str = "corporate",
+    domain_name: str | None = None,
+    dhcp_start: str | None = None,
+    dhcp_stop: str | None = None,
+    dhcp_lease_time: int | None = None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Create a new network/VLAN (corporate by default)."""
+    return await site_tools.create_network(
+        ctx,
+        name,
+        subnet,
+        vlan,
+        purpose,
+        domain_name,
+        dhcp_start,
+        dhcp_stop,
+        dhcp_lease_time,
+        site,
+        device,
+        confirm,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def update_network(
+    ctx: Context,
+    name: str,
+    name_new: str | None = None,
+    subnet: str | None = None,
+    vlan: int | None = None,
+    domain_name: str | None = None,
+    dhcp_start: str | None = None,
+    dhcp_stop: str | None = None,
+    dhcp_lease_time: int | None = None,
+    enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Update a network/VLAN by name or ID - only provided fields change."""
+    return await site_tools.update_network(
+        ctx,
+        name,
+        name_new,
+        subnet,
+        vlan,
+        domain_name,
+        dhcp_start,
+        dhcp_stop,
+        dhcp_lease_time,
+        enabled,
+        site,
+        device,
+        confirm,
+    )
+
+
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
+async def delete_network(
+    ctx: Context,
+    name: str,
+    site: str = "default",
+    device: str | None = None,
+    confirm: bool = False,
+):
+    """Delete a network/VLAN by name or ID. Requires confirm=true."""
+    return await site_tools.delete_network(ctx, name, site, device, confirm)
+
+
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 async def get_wlans(ctx: Context, site: str = "default", device: str | None = None):
     """Get all wireless network (SSID) configurations."""
@@ -237,8 +717,18 @@ async def update_wlan(
 ):
     """Update a wireless network (SSID) by ID or name - only provided fields change."""
     return await site_tools.update_wlan(
-        ctx, wlan, enabled, hide_ssid, passphrase, wpa3_support,
-        wpa3_transition, pmf_mode, bss_transition, fast_roaming_enabled, site, device,
+        ctx,
+        wlan,
+        enabled,
+        hide_ssid,
+        passphrase,
+        wpa3_support,
+        wpa3_transition,
+        pmf_mode,
+        bss_transition,
+        fast_roaming_enabled,
+        site,
+        device,
     )
 
 
@@ -256,7 +746,15 @@ async def create_wlan(
 ):
     """Create a wireless network (SSID) with WPA2/WPA3 transition security."""
     return await site_tools.create_wlan(
-        ctx, name, passphrase, network_conf_id, wpa3_transition, hide_ssid, is_guest, site, device,
+        ctx,
+        name,
+        passphrase,
+        network_conf_id,
+        wpa3_transition,
+        hide_ssid,
+        is_guest,
+        site,
+        device,
     )
 
 
@@ -285,8 +783,18 @@ async def create_firewall_policy(
 ):
     """Create a zone-based firewall policy (UniFi Network 9+)."""
     return await site_tools.create_firewall_policy(
-        ctx, name, action, src_zone_id, dst_zone_id, protocol,
-        description, client_macs, index, enabled, site, device,
+        ctx,
+        name,
+        action,
+        src_zone_id,
+        dst_zone_id,
+        protocol,
+        description,
+        client_macs,
+        index,
+        enabled,
+        site,
+        device,
     )
 
 
@@ -300,7 +808,11 @@ async def set_firewall_policy_enabled(
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def delete_firewall_policy(
-    ctx: Context, policy_id: str, confirm: bool = False, site: str = "default", device: str | None = None
+    ctx: Context,
+    policy_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
 ):
     """Delete a zone-based firewall policy. Requires confirm=true."""
     return await site_tools.delete_firewall_policy(ctx, policy_id, confirm, site, device)
@@ -325,12 +837,18 @@ async def create_port_forward(
     device: str | None = None,
 ):
     """Create a port forwarding rule on the gateway."""
-    return await site_tools.create_port_forward(ctx, name, dst_port, fwd_ip, fwd_port, proto, enabled, site, device)
+    return await site_tools.create_port_forward(
+        ctx, name, dst_port, fwd_ip, fwd_port, proto, enabled, site, device
+    )
 
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def delete_port_forward(
-    ctx: Context, rule_id: str, confirm: bool = False, site: str = "default", device: str | None = None
+    ctx: Context,
+    rule_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
 ):
     """Delete a port forwarding rule. Requires confirm=true."""
     return await site_tools.delete_port_forward(ctx, rule_id, confirm, site, device)
@@ -360,7 +878,9 @@ async def get_network_health(ctx: Context, site: str = "default", device: str | 
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_recent_events(ctx: Context, limit: int = 50, site: str = "default", device: str | None = None):
+async def get_recent_events(
+    ctx: Context, limit: int = 50, site: str = "default", device: str | None = None
+):
     """Get recent network events."""
     return await stat_tools.get_recent_events(ctx, limit, site, device)
 
@@ -418,7 +938,9 @@ async def analyze_network_issues(ctx: Context, site: str = "default", device: st
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_optimization_recommendations(ctx: Context, site: str = "default", device: str | None = None):
+async def get_optimization_recommendations(
+    ctx: Context, site: str = "default", device: str | None = None
+):
     """
     Analyze network configuration and provide optimization recommendations.
 
@@ -429,7 +951,9 @@ async def get_optimization_recommendations(ctx: Context, site: str = "default", 
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_client_experience_report(ctx: Context, site: str = "default", device: str | None = None):
+async def get_client_experience_report(
+    ctx: Context, site: str = "default", device: str | None = None
+):
     """
     Generate a client experience report with connection quality metrics.
 
@@ -451,7 +975,9 @@ async def get_device_health_summary(ctx: Context, site: str = "default", device:
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def get_traffic_analysis(ctx: Context, hours: int = 24, site: str = "default", device: str | None = None):
+async def get_traffic_analysis(
+    ctx: Context, hours: int = 24, site: str = "default", device: str | None = None
+):
     """
     Analyze traffic patterns over the specified time period.
 
@@ -462,7 +988,9 @@ async def get_traffic_analysis(ctx: Context, hours: int = 24, site: str = "defau
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
-async def troubleshoot_client(ctx: Context, mac: str, site: str = "default", device: str | None = None):
+async def troubleshoot_client(
+    ctx: Context, mac: str, site: str = "default", device: str | None = None
+):
     """
     Deep-dive troubleshooting for a specific client.
 
@@ -668,14 +1196,18 @@ def main():
         logger.info(f"Configured devices: {settings.get_device_names()}")
     else:
         logger.warning("No devices configured!")
-    mcp.run()
+    if settings.transport == "stdio":
+        mcp.run()
+    else:
+        mcp.run(
+            "streamable-http",
+            host=settings.http_host,
+            port=settings.http_port,
+            streamable_http_path=settings.http_path,
+        )
 
 
-if __name__ == "__main__":
-    main()
-
-
-@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def export_camera_clip(
     ctx: Context,
     camera: str,
@@ -683,6 +1215,39 @@ async def export_camera_clip(
     end_ts: int,
     output_path: str,
     device: str | None = None,
+    confirm: bool = False,
 ):
-    """Export a camera recording clip (MP4) to a local file. Requires Protect credentials."""
-    return await protect_tools.export_camera_clip(ctx, camera, start_ts, end_ts, output_path, device)
+    """Export an MP4 beneath the confined export directory. Requires confirm=true."""
+    return await protect_tools.export_camera_clip(
+        ctx, camera, start_ts, end_ts, output_path, device, confirm
+    )
+
+
+def _load_configured_plugins() -> PluginManager:
+    core_tool_names = {tool.name for tool in mcp._tool_manager.list_tools()}
+    manager = PluginManager.load(
+        discover_plugins(),
+        allowlist=settings.allowed_plugins,
+        required=settings.required_plugins,
+        core_tool_names=core_tool_names,
+    )
+    for tool in manager.registry.tools.values():
+        mcp.add_tool(
+            tool.function,
+            name=tool.name,
+            description=tool.description,
+            annotations=tool.annotations,
+        )
+        if scope_authorizer is not None:
+            scope_authorizer.add_plugin_tool(tool.name, tool.scope)
+    activate_plugins(manager)
+    if scope_authorizer is not None:
+        scope_authorizer.audit_tools(mcp._tool_manager.list_tools())
+    return manager
+
+
+plugin_manager = _load_configured_plugins()
+
+
+if __name__ == "__main__":
+    main()
