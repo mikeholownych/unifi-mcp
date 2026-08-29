@@ -765,6 +765,9 @@ dependencies = [
 observability = [
     { name = "prometheus-client" },
 ]
+oidc = [
+    { name = "pyjwt", extra = ["crypto"] },
+]
 protect = [
     { name = "uiprotect" },
 ]
@@ -786,10 +789,11 @@ requires-dist = [
     { name = "prometheus-client", marker = "extra == 'observability'", specifier = ">=0.22,<1" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
+    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'oidc'", specifier = ">=2.10,<3" },
     { name = "tenacity", specifier = ">=8.0.0" },
     { name = "uiprotect", marker = "extra == 'protect'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["protect", "observability"]
+provides-extras = ["protect", "observability", "oidc"]
 
 [package.metadata.requires-dev]
 dev = [

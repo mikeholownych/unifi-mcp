@@ -27,9 +27,13 @@ class SnapshotExporter:
         candidate = Path(filename)
         if not filename or candidate.name != filename or candidate.is_absolute():
             raise ValueError("export destination must be a plain filename")
-        if not filename.endswith((".json", ".html", ".csv")):
-            raise ValueError("export filename extension must be .json, .html, or .csv")
+        if not filename.endswith((".json", ".html", ".csv", ".mp4")):
+            raise ValueError("export filename extension must be .json, .html, .csv, or .mp4")
         return self._root / filename
+
+    def validate_filename(self, filename: str) -> None:
+        """Validate a confined export filename before performing upstream work."""
+        self._destination(filename)
 
     def _write(self, filename: str, data: bytes) -> ExportResult:
         if len(data) > self._max_bytes:

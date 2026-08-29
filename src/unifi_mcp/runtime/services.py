@@ -20,6 +20,7 @@ from unifi_mcp.observability.collectors import (
     ProtectObservationSource,
 )
 from unifi_mcp.observability.prometheus import MetricsSnapshot, MetricsState
+from unifi_mcp.plugins import active_plugin_registry
 from unifi_mcp.runtime.client_organization import ClientOrganizationRepository
 from unifi_mcp.runtime.events import EventRepository
 from unifi_mcp.runtime.jobs import JobDefinition, JobRegistry
@@ -202,6 +203,7 @@ async def build_runtime_services(
         observation_sources.append(
             ProtectObservationSource(UniFiProtectClient(ctx.client, device), controller=device.name)
         )
+    observation_sources.extend(active_plugin_registry().collectors.values())
     observation_repository = ObservationRepository(ctx.runtime)
     client_organization = ClientOrganizationRepository(ctx.runtime)
     qos_plans = QoSPlanRepository(ctx.runtime)
@@ -297,6 +299,7 @@ async def build_runtime_services(
             JobDefinition(
                 "capture_observations", CaptureObservationsArguments, capture_observations
             ),
+            *active_plugin_registry().jobs.values(),
         ]
     )
     scheduler = Scheduler(

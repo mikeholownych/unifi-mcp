@@ -7,8 +7,10 @@ from typing import Any
 from mcp.server.mcpserver import Context, MCPServer
 from mcp.types import ToolAnnotations
 
+from unifi_mcp.auth.authorization import ScopeAuthorizer, ScopeMiddleware
 from unifi_mcp.clients.base import create_app_lifespan
 from unifi_mcp.config import settings
+from unifi_mcp.plugins import PluginManager, activate_plugins, discover_plugins
 from unifi_mcp.tools import client_organization as organization_tools
 from unifi_mcp.tools import exports as export_tools
 from unifi_mcp.tools import observability as observability_tools
@@ -31,6 +33,41 @@ logging.basicConfig(
     stream=sys.stderr,
 )
 logger = logging.getLogger(__name__)
+
+
+def _build_server_security(configured=settings) -> tuple[dict[str, Any], ScopeAuthorizer | None]:
+    if configured.transport == "stdio":
+        return {}, None
+    from mcp.server.auth.settings import AuthSettings
+
+    from unifi_mcp.auth.oidc import OIDCTokenVerifier
+
+    authorizer = ScopeAuthorizer(
+        configured.oidc_read_scope,
+        configured.oidc_write_scope,
+        configured.oidc_admin_scope,
+    )
+    verifier = OIDCTokenVerifier(
+        issuer=configured.oidc_issuer or "",
+        audience=configured.oidc_audience or "",
+        algorithms=configured.oidc_allowed_algorithms,
+        required_scope=configured.oidc_read_scope,
+        cache_ttl_seconds=configured.oidc_cache_ttl_seconds,
+        timeout_seconds=configured.oidc_timeout_seconds,
+    )
+    auth = AuthSettings(
+        issuer_url=configured.oidc_issuer,
+        resource_server_url=configured.http_public_url,
+        required_scopes=[configured.oidc_read_scope],
+    )
+    return {
+        "token_verifier": verifier,
+        "auth": auth,
+        "middleware": [ScopeMiddleware(authorizer)],
+    }, authorizer
+
+
+_security_options, scope_authorizer = _build_server_security()
 
 # Create the MCP server with lifespan management
 mcp = MCPServer(
@@ -56,6 +93,7 @@ mcp = MCPServer(
     for comprehensive network analysis and recommendations.
     """,
     lifespan=create_app_lifespan,
+    **_security_options,
 )
 
 # =============================================================================
@@ -67,6 +105,16 @@ mcp = MCPServer(
 async def get_server_health(ctx: Context) -> system_tools.ServerHealth:
     """Get redaction-safe UniFi MCP runtime health and service counts."""
     return await system_tools.build_server_health(ctx.request_context.lifespan_context)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+async def get_plugin_status():
+    """List redacted trusted-plugin loading outcomes. Requires admin scope over HTTP."""
+    return {
+        "trusted_code": True,
+        "sandboxed": False,
+        "plugins": plugin_manager.status(),
+    }
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
@@ -1148,10 +1196,18 @@ def main():
         logger.info(f"Configured devices: {settings.get_device_names()}")
     else:
         logger.warning("No devices configured!")
-    mcp.run()
+    if settings.transport == "stdio":
+        mcp.run()
+    else:
+        mcp.run(
+            "streamable-http",
+            host=settings.http_host,
+            port=settings.http_port,
+            streamable_http_path=settings.http_path,
+        )
 
 
-@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 async def export_camera_clip(
     ctx: Context,
     camera: str,
@@ -1159,11 +1215,38 @@ async def export_camera_clip(
     end_ts: int,
     output_path: str,
     device: str | None = None,
+    confirm: bool = False,
 ):
-    """Export a camera recording clip (MP4) to a local file. Requires Protect credentials."""
+    """Export an MP4 beneath the confined export directory. Requires confirm=true."""
     return await protect_tools.export_camera_clip(
-        ctx, camera, start_ts, end_ts, output_path, device
+        ctx, camera, start_ts, end_ts, output_path, device, confirm
     )
+
+
+def _load_configured_plugins() -> PluginManager:
+    core_tool_names = {tool.name for tool in mcp._tool_manager.list_tools()}
+    manager = PluginManager.load(
+        discover_plugins(),
+        allowlist=settings.allowed_plugins,
+        required=settings.required_plugins,
+        core_tool_names=core_tool_names,
+    )
+    for tool in manager.registry.tools.values():
+        mcp.add_tool(
+            tool.function,
+            name=tool.name,
+            description=tool.description,
+            annotations=tool.annotations,
+        )
+        if scope_authorizer is not None:
+            scope_authorizer.add_plugin_tool(tool.name, tool.scope)
+    activate_plugins(manager)
+    if scope_authorizer is not None:
+        scope_authorizer.audit_tools(mcp._tool_manager.list_tools())
+    return manager
+
+
+plugin_manager = _load_configured_plugins()
 
 
 if __name__ == "__main__":

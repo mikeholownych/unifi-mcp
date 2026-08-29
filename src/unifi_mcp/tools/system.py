@@ -55,7 +55,7 @@ class ServerHealth(_StrictHealthModel):
 
     status: Literal["ok"]
     version: str
-    transport: Literal["stdio"]
+    transport: Literal["stdio", "streamable-http"]
     configured_devices: int
     services: ServiceHealth
     persistence: PersistenceHealth
@@ -80,7 +80,7 @@ async def build_server_health(ctx: AppContext) -> ServerHealth:
     return ServerHealth(
         status="ok",
         version=get_version(),
-        transport="stdio",
+        transport=ctx.settings.transport,
         configured_devices=len(devices),
         services=ServiceHealth(
             network=sum(device.has_network for device in devices),

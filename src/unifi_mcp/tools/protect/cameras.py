@@ -8,6 +8,7 @@ from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.protect import UniFiProtectClient
 from unifi_mcp.config import settings
 from unifi_mcp.exceptions import UniFiNotFoundError
+from unifi_mcp.snapshots.export import SnapshotExporter
 
 
 def _get_protect_client(ctx: Context, device_name: str | None = None) -> UniFiProtectClient:
@@ -481,6 +482,7 @@ async def export_camera_clip(
     end_ts: int,
     output_path: str,
     device: str | None = None,
+    confirm: bool = False,
 ) -> dict[str, Any]:
     """Export a camera recording clip (MP4) to a local file.
 
@@ -498,7 +500,15 @@ async def export_camera_clip(
     Returns:
         Export result with file path and size
     """
-    import pathlib
+    if not confirm:
+        return {
+            "success": False,
+            "message": "Camera clip export writes a local file and requires confirm=true.",
+        }
+
+    app: AppContext = ctx.request_context.lifespan_context
+    exporter = SnapshotExporter(app.settings.export_directory, max_bytes=1024 * 1024 * 1024)
+    exporter.validate_filename(output_path)
 
     client = _get_protect_client(ctx, device)
 
@@ -518,15 +528,13 @@ async def export_camera_clip(
 
     clip = await client.export_camera_clip(cam_id, int(start_ts), int(end_ts))
 
-    out = pathlib.Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(clip)
+    result = await exporter.write(output_path, clip)
 
     return {
         "success": True,
         "camera": cam.get("name") or camera,
-        "file": str(out),
-        "size_bytes": len(clip),
+        "file": str(result.path),
+        "size_bytes": result.size_bytes,
         "start_ts": start_ts,
         "end_ts": end_ts,
     }

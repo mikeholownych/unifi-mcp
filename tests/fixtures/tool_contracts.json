@@ -1041,7 +1041,7 @@
   },
   {
     "name": "export_camera_clip",
-    "description": "Export a camera recording clip (MP4) to a local file. Requires Protect credentials.",
+    "description": "Export an MP4 beneath the confined export directory. Requires confirm=true.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1072,6 +1072,11 @@
           ],
           "default": null,
           "title": "Device"
+        },
+        "confirm": {
+          "default": false,
+          "title": "Confirm",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1085,8 +1090,8 @@
     "outputSchema": null,
     "annotations": {
       "title": null,
-      "readOnlyHint": true,
-      "destructiveHint": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
       "idempotentHint": null,
       "openWorldHint": null
     }
@@ -2121,6 +2126,23 @@
     }
   },
   {
+    "name": "get_plugin_status",
+    "description": "List redacted trusted-plugin loading outcomes. Requires admin scope over HTTP.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "title": "get_plugin_statusArguments"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
     "name": "get_port_forwards",
     "description": "Get all port forwarding rules (external port+protocol \u2192 internal IP+port).",
     "inputSchema": {
@@ -2492,7 +2514,10 @@
           "type": "string"
         },
         "transport": {
-          "const": "stdio",
+          "enum": [
+            "stdio",
+            "streamable-http"
+          ],
           "title": "Transport",
           "type": "string"
         },

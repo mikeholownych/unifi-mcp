@@ -139,7 +139,11 @@ async def test_tool_contract_fixture_names_cover_runtime_and_phase_one_tools():
     fixture_names = {
         contract["name"] for contract in json.loads(CONTRACT_FIXTURE.read_text(encoding="utf-8"))
     }
-    required_names = COPIED_NETWORK_TOOLS | {"export_camera_clip", "get_server_health"}
+    required_names = COPIED_NETWORK_TOOLS | {
+        "export_camera_clip",
+        "get_plugin_status",
+        "get_server_health",
+    }
 
     assert fixture_names == runtime_names
     assert required_names <= fixture_names

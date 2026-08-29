@@ -7,6 +7,7 @@ from mcp.server.mcpserver import Context
 from unifi_mcp.clients.base import AppContext
 from unifi_mcp.clients.network import UniFiNetworkClient
 from unifi_mcp.clients.protect import UniFiProtectClient
+from unifi_mcp.plugins import active_plugin_registry
 from unifi_mcp.reports.csv import render_csv_report
 from unifi_mcp.reports.html import render_html_report
 from unifi_mcp.snapshots.codec import encode_snapshot, verify_snapshot_bytes
@@ -135,13 +136,20 @@ async def export_network_report(
             "success": False,
             "message": "Report export writes a local file and requires confirm=true.",
         }
-    if format not in {"html", "csv"}:
-        raise ValueError("report format must be html or csv")
+    renderers = {
+        "html": render_html_report,
+        "csv": render_csv_report,
+        **active_plugin_registry().report_renderers,
+    }
+    if format not in renderers:
+        raise ValueError(f"report format must be one of: {', '.join(sorted(renderers))}")
     if not filename.endswith(f".{format}"):
         raise ValueError(f"{format} reports require a .{format} filename")
     app = _app(ctx)
     document = await SnapshotCollector(_sources(app)).collect()
-    data = render_html_report(document) if format == "html" else render_csv_report(document)
+    data = renderers[format](document)
+    if not isinstance(data, bytes):
+        raise ValueError("report renderer must return bytes")
     result = await SnapshotExporter(app.settings.export_directory).write(filename, data)
     return {
         "success": True,

@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   identities, with ambiguity-safe client resolution and confirmation-gated writes.
 - Deterministic, expiring QoS policy previews with resumable target ledgers and
   explicit unsupported-capability guidance that performs no controller mutation.
+- Allowlisted versioned trusted plugins for scoped tools, collectors, jobs,
+  notification sinks, and report renderers, with required-plugin startup gates.
+- Optional native Streamable HTTP transport with local OIDC/JWKS validation,
+  bounded metadata caches, safe loopback defaults, and read/write/admin scopes.
 - Copied network-management additions: `get_device_ports`, `set_device_port`,
   `create_network`, `update_network`, and `delete_network`.
 

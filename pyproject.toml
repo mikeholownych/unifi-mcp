@@ -20,6 +20,7 @@ dependencies = [
 [project.optional-dependencies]
 protect = ["uiprotect>=6.0.0"]
 observability = ["prometheus-client>=0.22,<1"]
+oidc = ["PyJWT[crypto]>=2.10,<3"]
 
 [dependency-groups]
 dev = [
@@ -60,6 +61,9 @@ uiprotect = {version = "^6.0.0", optional = true}
 
 [tool.poetry.group.observability.dependencies]
 prometheus-client = {version = "^0.22.0", optional = true}
+
+[tool.poetry.group.oidc.dependencies]
+pyjwt = {version = "^2.10.0", extras = ["crypto"], optional = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -5,6 +5,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -186,6 +187,26 @@ class UniFiSettings(BaseSettings):
     prometheus_bearer_token_env: str | None = Field(default=None)
     prometheus_refresh_seconds: float = Field(default=15.0, ge=1, le=300)
 
+    # Optional trusted plugins
+    plugin_allowlist: str = Field(default="")
+    plugin_required: str = Field(default="")
+
+    # Optional authenticated remote MCP transport
+    transport: Literal["stdio", "streamable-http"] = Field(default="stdio")
+    http_host: str = Field(default="127.0.0.1")
+    http_port: int = Field(default=8000, ge=1, le=65535)
+    http_path: str = Field(default="/mcp")
+    http_allow_remote: bool = Field(default=False)
+    http_public_url: str | None = Field(default=None)
+    oidc_issuer: str | None = Field(default=None)
+    oidc_audience: str | None = Field(default=None)
+    oidc_algorithms: str = Field(default="RS256")
+    oidc_read_scope: str = Field(default="unifi:read")
+    oidc_write_scope: str = Field(default="unifi:write")
+    oidc_admin_scope: str = Field(default="unifi:admin")
+    oidc_cache_ttl_seconds: float = Field(default=300.0, ge=10, le=3600)
+    oidc_timeout_seconds: float = Field(default=10.0, ge=1, le=60)
+
     # Default device name for legacy config
     default_device_name: str = Field(
         default="default",
@@ -203,6 +224,18 @@ class UniFiSettings(BaseSettings):
     def export_directory(self) -> Path:
         """Return the confined snapshot and report export directory."""
         return self.export_dir or self.data_dir / "exports"
+
+    @property
+    def allowed_plugins(self) -> set[str]:
+        return {item.strip() for item in self.plugin_allowlist.split(",") if item.strip()}
+
+    @property
+    def required_plugins(self) -> set[str]:
+        return {item.strip() for item in self.plugin_required.split(",") if item.strip()}
+
+    @property
+    def oidc_allowed_algorithms(self) -> list[str]:
+        return [item.strip() for item in self.oidc_algorithms.split(",") if item.strip()]
 
     @field_validator("data_dir", mode="before")
     @classmethod
@@ -266,6 +299,51 @@ class UniFiSettings(BaseSettings):
                 raise ValueError(
                     "prometheus_bearer_token_env must be an uppercase environment variable name"
                 )
+        if not self.required_plugins <= self.allowed_plugins:
+            raise ValueError("required plugins must also be allowlisted")
+        allowed_algorithms = {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}
+        if (
+            not self.oidc_allowed_algorithms
+            or not set(self.oidc_allowed_algorithms) <= allowed_algorithms
+        ):
+            raise ValueError("OIDC algorithms must be an explicit asymmetric algorithm allowlist")
+        if self.transport == "streamable-http":
+            if not self.oidc_issuer or not self.oidc_audience or not self.http_public_url:
+                raise ValueError(
+                    "HTTP transport requires complete OIDC issuer, audience, and public URL configuration"
+                )
+            for field, value in (
+                ("oidc_issuer", self.oidc_issuer),
+                ("http_public_url", self.http_public_url),
+            ):
+                parsed = urlparse(value)
+                if (
+                    parsed.scheme != "https"
+                    or not parsed.netloc
+                    or parsed.username
+                    or parsed.password
+                    or parsed.query
+                    or parsed.fragment
+                ):
+                    raise ValueError(f"{field} must be an HTTPS URL without embedded credentials")
+            public_url = urlparse(self.http_public_url)
+            if (
+                not self.http_path.startswith("/")
+                or ".." in self.http_path.split("/")
+                or public_url.path != self.http_path
+            ):
+                raise ValueError(
+                    "HTTP path must be absolute, traversal-free, and match the public URL"
+                )
+            scopes = {self.oidc_read_scope, self.oidc_write_scope, self.oidc_admin_scope}
+            if len(scopes) != 3 or any(
+                not scope.strip() or any(c.isspace() for c in scope) for scope in scopes
+            ):
+                raise ValueError(
+                    "OIDC read, write, and admin scopes must be distinct non-empty values"
+                )
+            if self.http_host not in loopback_hosts and not self.http_allow_remote:
+                raise ValueError("remote HTTP binding requires http_allow_remote=true")
         return self
 
     @property

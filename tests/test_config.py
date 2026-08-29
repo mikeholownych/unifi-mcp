@@ -197,6 +197,58 @@ class TestRuntimeConfig:
                 prometheus_allow_remote=True,
             )
 
+    def test_stdio_requires_no_oidc_configuration(self, tmp_path, monkeypatch):
+        clear_unifi_environment(monkeypatch)
+        configured = UniFiSettings(_env_file=None, data_dir=tmp_path)
+
+        assert configured.transport == "stdio"
+        assert configured.oidc_issuer is None
+
+    def test_http_transport_requires_complete_oidc_configuration(self, tmp_path, monkeypatch):
+        clear_unifi_environment(monkeypatch)
+        with pytest.raises(ValueError, match="OIDC"):
+            UniFiSettings(
+                _env_file=None,
+                data_dir=tmp_path,
+                transport="streamable-http",
+            )
+
+    def test_remote_http_binding_requires_explicit_opt_in(self, tmp_path, monkeypatch):
+        clear_unifi_environment(monkeypatch)
+        with pytest.raises(ValueError, match="remote HTTP binding"):
+            UniFiSettings(
+                _env_file=None,
+                data_dir=tmp_path,
+                transport="streamable-http",
+                http_host="0.0.0.0",
+                oidc_issuer="https://identity.example.com",
+                oidc_audience="unifi-mcp",
+                http_public_url="https://mcp.example.com/mcp",
+            )
+
+    def test_http_rejects_symmetric_oidc_algorithms(self, tmp_path, monkeypatch):
+        clear_unifi_environment(monkeypatch)
+        with pytest.raises(ValueError, match="asymmetric"):
+            UniFiSettings(
+                _env_file=None,
+                data_dir=tmp_path,
+                transport="streamable-http",
+                oidc_issuer="https://identity.example.com",
+                oidc_audience="unifi-mcp",
+                http_public_url="https://mcp.example.com/mcp",
+                oidc_algorithms="HS256",
+            )
+
+    def test_required_plugins_must_be_allowlisted(self, tmp_path, monkeypatch):
+        clear_unifi_environment(monkeypatch)
+        with pytest.raises(ValueError, match="allowlisted"):
+            UniFiSettings(
+                _env_file=None,
+                data_dir=tmp_path,
+                plugin_allowlist="optional",
+                plugin_required="required",
+            )
+
     def test_runtime_paths_are_paths_without_creating_directories(self, tmp_path, monkeypatch):
         clear_unifi_environment(monkeypatch)
         data_dir = tmp_path / "not-created"

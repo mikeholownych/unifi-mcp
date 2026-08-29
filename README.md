@@ -230,6 +230,38 @@ Organization mutations require `confirm=true`. Use `set_client_tags`, `create_cl
 
 `plan_client_qos_policy` persists a one-hour deterministic target snapshot selected by one client, tag, or group. The target ledger contains only scoped one-way client keys and supports future resumable per-target apply state. This release has no validated controller QoS adapter: `get_client_qos_capabilities` reports that limitation, and `apply_client_qos_policy` returns without making a controller mutation. Local tags never imply a QoS policy.
 
+### Trusted Plugins
+
+Plugins are disabled unless their Python entry-point name is explicitly listed in `UNIFI_PLUGIN_ALLOWLIST`. They execute as trusted local code in the server process and are not sandboxed. Required plugins must also be allowlisted and are listed in `UNIFI_PLUGIN_REQUIRED`; missing, incompatible, duplicate, or failed required plugins stop startup. Optional failures are isolated and visible through `get_plugin_status`.
+
+Plugins use API version 1 and the `unifi_mcp.plugins` entry-point group:
+
+```toml
+[project.entry-points."unifi_mcp.plugins"]
+example = "example_package.plugin:plugin"
+```
+
+The loaded object declares `api_version = 1` and implements `register(registry)`. The registry supports `register_tool` with an explicit `read`, `write`, or `admin` scope, plus named collectors, `JobDefinition` jobs, notification sinks, and byte-returning report renderers. Plugin names cannot shadow core tools or jobs.
+
+### Streamable HTTP and OIDC
+
+Stdio remains the default local process transport and requires no identity-provider configuration. Remote MCP starts only when `UNIFI_TRANSPORT=streamable-http`; install the declared authentication capability with `uv sync --extra oidc` and provide complete OIDC settings:
+
+```bash
+UNIFI_TRANSPORT=streamable-http
+UNIFI_HTTP_HOST=127.0.0.1
+UNIFI_HTTP_PORT=8000
+UNIFI_HTTP_PATH=/mcp
+UNIFI_HTTP_PUBLIC_URL=https://mcp.example.com/mcp
+UNIFI_OIDC_ISSUER=https://identity.example.com
+UNIFI_OIDC_AUDIENCE=unifi-mcp
+UNIFI_OIDC_ALGORITHMS=RS256
+```
+
+Discovery and JWKS data are fetched over HTTPS with bounded timeouts, cached for five minutes by default, and refreshed once for an unknown signing key. Tokens are validated locally for allowed asymmetric algorithm, signature, issuer, audience, expiry, subject, and scopes. Authorization headers, tokens, claims, and signing keys are not logged or persisted.
+
+All HTTP tool calls require `UNIFI_OIDC_READ_SCOPE` (`unifi:read` by default). Mutations additionally require `UNIFI_OIDC_WRITE_SCOPE`; runtime administration and plugin status require `UNIFI_OIDC_ADMIN_SCOPE`. Existing `confirm=true` gates still apply. Non-loopback binding additionally requires `UNIFI_HTTP_ALLOW_REMOTE=true`; production TLS should terminate at the declared HTTPS public URL.
+
 ### Multi-Device Configuration (Recommended)
 
 Configure multiple UniFi devices with different services:
@@ -403,7 +435,7 @@ Or in `opencode.json`:
 - `create_network` / `update_network` / `delete_network` - Manage networks and VLANs; each requires `confirm=true` and verifies controller read-back
 - `create_wlan` / `update_wlan` / `delete_wlan` - Manage wireless networks
 - `create_firewall_policy` / `set_firewall_policy_enabled` / `delete_firewall_policy` - Manage zone-based firewall policies
-- `export_camera_clip` - Export a camera recording clip as MP4 (Protect)
+- `export_camera_clip` - Export an MP4 beneath `UNIFI_EXPORT_DIR`; requires `confirm=true`
 - `get_all_sites_health` - Health overview across all sites
 
 Write tools that remove data or cause disruption are confirm-gated or flagged destructive via MCP annotations.
