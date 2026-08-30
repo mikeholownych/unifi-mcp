@@ -5,6 +5,8 @@
   "repository": "https://github.com/mikeholownych/unifi-mcp",
   "homepage": "https://github.com/mikeholownych/unifi-mcp",
   "license": "MIT",
+  "version": "0.9.0",
+  "documentation": "https://github.com/mikeholownych/unifi-mcp#readme",
   "category": "networking",
   "tags": ["unifi", "ubiquiti", "network", "firewall", "wifi", "iot", "monitoring"],
   "maintainers": [
