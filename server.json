@@ -1,8 +1,8 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.mikeholownych/unifi-mcp",
-  "description": "MCP server for Ubiquiti UniFi Network and Protect. 63 tools, 16 agent skills.",
-"version": "0.8.2",
+  "description": "MCP server for Ubiquiti UniFi Network and Protect. 106 tools, 16 agent skills.",
+"version": "1.0.0",
   "homepage": "https://github.com/mikeholownych/unifi-mcp",
   "repository": {
     "url": "https://github.com/mikeholownych/unifi-mcp",
@@ -14,7 +14,7 @@
     {
       "registryType": "pypi",
       "identifier": "mcp-unifi",
-"version": "0.8.2",
+"version": "1.0.0",
       "transport": {
         "type": "stdio"
       },
@@ -47,10 +47,10 @@
         },
         {
           "name": "UNIFI_VERIFY_SSL",
-          "description": "Verify SSL certificates (false for self-signed)",
+          "description": "Verify SSL certificates (false for self-signed LAN controllers)",
           "isRequired": false,
           "format": "string",
-          "defaultValue": "true"
+          "defaultValue": "false"
         }
       ]
     }
