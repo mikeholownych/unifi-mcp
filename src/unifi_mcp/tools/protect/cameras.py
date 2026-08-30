@@ -475,6 +475,57 @@ async def get_recent_activity(
     }
 
 
+async def update_camera(
+    ctx: Context,
+    camera: str,
+    name: str | None = None,
+    is_recording_enabled: bool | None = None,
+    recording_mode: str | None = None,
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Update a camera's configuration.
+
+    Mutating operation: changes are applied immediately and persisted on the
+    Protect console. Requires username/password configured for the device.
+
+    Args:
+        camera: Camera ID or name (resolved by name if not an ID)
+        name: New camera name
+        is_recording_enabled: Enable/disable recording
+        recording_mode: Recording mode — "always", "motion", "smart_detect", "never"
+        device: Optional Protect device name; omit for first configured Protect device.
+
+    Returns:
+        Updated camera configuration
+    """
+    client = _get_protect_client(ctx, device)
+
+    # Resolve camera by ID or name
+    cameras = await client.get_cameras()
+    cam = next(
+        (
+            c
+            for c in cameras
+            if c.get("id") == camera or c.get("_id") == camera or c.get("name") == camera
+        ),
+        None,
+    )
+    if cam is None:
+        return {"success": False, "message": f"Camera not found: {camera}"}
+    cam_id = cam.get("id") or cam.get("_id")
+
+    data = {}
+    if name is not None:
+        data["name"] = name
+    if is_recording_enabled is not None:
+        data["is_recording_enabled"] = is_recording_enabled
+    if recording_mode is not None:
+        data["recording_mode"] = recording_mode
+
+    updated = await client.update_camera(cam_id, data)
+    return {"success": True, "camera": updated}
+
+
 async def export_camera_clip(
     ctx: Context,
     camera: str,

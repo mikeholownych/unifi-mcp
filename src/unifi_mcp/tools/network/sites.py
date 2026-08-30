@@ -1464,3 +1464,201 @@ async def delete_firewall_policy(
         return {"success": False, "message": "Refusing to delete a predefined controller policy."}
     await client.delete_firewall_policy(policy_id, site)
     return {"success": True, "deleted": target.get("name")}
+
+
+async def create_firewall_rule(
+    ctx: Context,
+    name: str,
+    action: str,
+    protocol: str,
+    dst_port: str | int | None = None,
+    src_zone: str | None = None,
+    dst_zone: str | None = None,
+    src_port: str | int | None = None,
+    logging: bool = False,
+    enabled: bool = True,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Create a legacy firewall rule (UniFi Network <9 or traditional API).
+
+    Mutating operation: applied immediately and persisted on the controller.
+    For zone-based policies (Network 9+), prefer create_firewall_policy.
+    Review existing rules with get_firewall_rules first.
+
+    Args:
+        name: Unique rule name
+        action: Action — "accept", "drop", or "reject"
+        protocol: Protocol — "tcp", "udp", "icmp", "all", or IANA number
+        dst_port: Destination port or range (e.g., "80", "80-443")
+        src_zone: Source zone ID (from get_firewall_policies)
+        dst_zone: Destination zone ID
+        src_port: Source port or range
+        logging: Enable logging for matches
+        enabled: Whether rule is active on creation. Defaults to True.
+        site: Site to operate on. Defaults to "default".
+        device: Optional device name to target a specific console; omit for default.
+
+    Returns:
+        Created firewall rule configuration
+    """
+    client = _get_client(ctx, device)
+    data = {
+        "name": name,
+        "action": action,
+        "protocol": protocol,
+        "logging": logging,
+        "enabled": enabled,
+    }
+    if dst_port is not None:
+        data["dst_port"] = str(dst_port)
+    if src_zone is not None:
+        data["src_firewallgroup_ids"] = [src_zone]
+    if dst_zone is not None:
+        data["dst_firewallgroup_ids"] = [dst_zone]
+    if src_port is not None:
+        data["src_port"] = str(src_port)
+
+    created = await client.create_firewall_rule(data, site)
+    return {
+        "success": True,
+        "rule": {
+            "name": created.get("name"),
+            "_id": created.get("_id"),
+            "action": created.get("action"),
+            "protocol": created.get("protocol"),
+            "enabled": created.get("enabled", True),
+        },
+    }
+
+
+async def update_firewall_rule(
+    ctx: Context,
+    rule_id: str,
+    name: str | None = None,
+    action: str | None = None,
+    protocol: str | None = None,
+    dst_port: str | int | None = None,
+    src_zone: str | None = None,
+    dst_zone: str | None = None,
+    src_port: str | int | None = None,
+    logging: bool | None = None,
+    enabled: bool | None = None,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Update a legacy firewall rule. Only provided fields are changed.
+
+    Mutating operation: applied immediately and persisted on the controller.
+    Use get_firewall_rules to find the rule ID first.
+
+    Args:
+        rule_id: Firewall rule ID (from get_firewall_rules)
+        name: New rule name
+        action: Action — "accept", "drop", or "reject"
+        protocol: Protocol — "tcp", "udp", "icmp", "all", or IANA number
+        dst_port: Destination port or range
+        src_zone: Source zone ID
+        dst_zone: Destination zone ID
+        src_port: Source port or range
+        logging: Enable/disable logging
+        enabled: Enable/disable the rule
+        site: Site to operate on. Defaults to "default".
+        device: Optional device name to target a specific console; omit for default.
+
+    Returns:
+        Updated firewall rule configuration
+    """
+    client = _get_client(ctx, device)
+    rules = await client.get_firewall_rules(site)
+    target = next((r for r in rules if r.get("_id") == rule_id), None)
+    if target is None:
+        return {"success": False, "message": f"Rule not found: {rule_id}"}
+
+    data = {}
+    if name is not None:
+        data["name"] = name
+    if action is not None:
+        data["action"] = action
+    if protocol is not None:
+        data["protocol"] = protocol
+    if dst_port is not None:
+        data["dst_port"] = str(dst_port)
+    if src_zone is not None:
+        data["src_firewallgroup_ids"] = [src_zone]
+    if dst_zone is not None:
+        data["dst_firewallgroup_ids"] = [dst_zone]
+    if src_port is not None:
+        data["src_port"] = str(src_port)
+    if logging is not None:
+        data["logging"] = logging
+    if enabled is not None:
+        data["enabled"] = enabled
+
+    updated = await client.update_firewall_rule(rule_id, data, site)
+    return {
+        "success": True,
+        "rule": {
+            "name": updated.get("name"),
+            "_id": updated.get("_id"),
+            "action": updated.get("action"),
+            "protocol": updated.get("protocol"),
+            "enabled": updated.get("enabled", True),
+        },
+    }
+
+
+async def delete_firewall_rule(
+    ctx: Context,
+    rule_id: str,
+    confirm: bool = False,
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Delete a legacy firewall rule. Requires confirm=True.
+
+    Mutating operation: permanently removes the rule from the controller.
+
+    Args:
+        rule_id: Firewall rule ID (from get_firewall_rules)
+        confirm: Must be True to actually delete
+        site: Site to operate on. Defaults to "default".
+        device: Optional device name to target a specific console; omit for default.
+
+    Returns:
+        Deletion status
+    """
+    if not confirm:
+        return {"success": False, "message": "Set confirm=true to delete this firewall rule."}
+    client = _get_client(ctx, device)
+    rules = await client.get_firewall_rules(site)
+    target = next((r for r in rules if r.get("_id") == rule_id), None)
+    if target is None:
+        return {"success": False, "message": f"Rule not found: {rule_id}"}
+    await client.delete_firewall_rule(rule_id, site)
+    return {"success": True, "deleted": target.get("name")}
+
+
+async def update_site_settings(
+    ctx: Context,
+    settings: dict[str, Any],
+    site: str = "default",
+    device: str | None = None,
+) -> dict[str, Any]:
+    """Update site settings.
+
+    Mutating operation: changes are applied immediately and persisted.
+    Settings are key-value pairs matching the UniFi site setting schema.
+    Use get_site_settings first to see available settings and their current values.
+
+    Args:
+        settings: Dictionary of settings to update (e.g., {"auto_backup_enabled": true})
+        site: Site to operate on. Defaults to "default".
+        device: Optional device name to target a specific console; omit for default.
+
+    Returns:
+        Updated settings response
+    """
+    client = _get_client(ctx, device)
+    result = await client.update_site_settings(settings, site)
+    return {"success": True, "result": result}

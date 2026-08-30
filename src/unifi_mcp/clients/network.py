@@ -250,6 +250,25 @@ class UniFiNetworkClient(UniFiHTTPClient):
         response = await self.get(endpoint)
         return response.get("data", [])
 
+    async def update_site_settings(
+        self, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Update site settings.
+
+        Args:
+            data: Settings to update (key-value pairs matching UniFi setting schema)
+            site: Site name
+
+        Returns:
+            Updated settings response
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("site settings update")
+
+        endpoint = self._site_endpoint("rest/setting", site)
+        response = await self.put(endpoint, json=data)
+        return response
+
     async def get_sysinfo(self, site: str | None = None) -> dict[str, Any]:
         """Get system information for the site.
 
@@ -986,6 +1005,58 @@ class UniFiNetworkClient(UniFiHTTPClient):
         endpoint = self._site_endpoint("rest/firewallrule", site)
         response = await self.get(endpoint)
         return response.get("data", [])
+
+    async def create_firewall_rule(
+        self, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Create a legacy firewall rule (UniFi Network <9 or traditional API).
+
+        Args:
+            data: Rule configuration (name, action, protocol, port, etc.)
+            site: Site name
+
+        Returns:
+            Created firewall rule configuration
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("firewall rule creation")
+
+        endpoint = self._site_endpoint("rest/firewallrule", site)
+        response = await self.post(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def update_firewall_rule(
+        self, rule_id: str, data: dict[str, Any], site: str | None = None
+    ) -> dict[str, Any]:
+        """Update a legacy firewall rule.
+
+        Args:
+            rule_id: Firewall rule ID
+            data: Fields to update
+            site: Site name
+
+        Returns:
+            Updated firewall rule configuration
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("firewall rule updates")
+
+        endpoint = self._site_endpoint(f"rest/firewallrule/{rule_id}", site)
+        response = await self.put(endpoint, json=data)
+        return (response.get("data") or [{}])[0]
+
+    async def delete_firewall_rule(self, rule_id: str, site: str | None = None) -> None:
+        """Delete a legacy firewall rule.
+
+        Args:
+            rule_id: Firewall rule ID
+            site: Site name
+        """
+        if self.is_integration_api or self.is_cloud:
+            self._require_traditional_api("firewall rule deletion")
+
+        endpoint = self._site_endpoint(f"rest/firewallrule/{rule_id}", site)
+        await self.delete(endpoint)
 
     async def get_firewall_policies(self, site: str | None = None) -> list[dict[str, Any]]:
         """Get zone-based firewall policies (UniFi Network 9+).

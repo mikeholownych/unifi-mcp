@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-08-30
+
+### Added
+- Firewall rule lifecycle for legacy rules: `create_firewall_rule`, `update_firewall_rule`, `delete_firewall_rule` (complements zone-based policies).
+- `update_site_settings` for mutating site settings (complements read-only `get_site_settings`).
+- `update_camera` for Protect camera configuration (name, recording mode, enabled state).
+- All 111 tools now have 100% parameter description coverage in MCP schemas.
+
+### Fixed
+- Glama Completeness gaps addressed: firewall CRUD, site settings write, camera config now present.
+
 ## [1.0.0] - 2026-08-30
 
 ### Added

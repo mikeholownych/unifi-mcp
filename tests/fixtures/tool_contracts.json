@@ -1,12 +1,12 @@
 [
   {
     "name": "analyze_network_issues",
-    "description": "\nAnalyze the network for potential issues and return a structured report.\n\nAggregates device health, client connection issues, interference,\nfirmware status, and recent alarms into an AI-friendly summary.\n",
+    "description": "Analyze a site and return a structured report of potential issues.\n\nRead-only operation: it aggregates device health, client connection problems,\ninterference, firmware status, and recent alarms into an AI-friendly summary\nof what may be wrong. Use get_alarms for the raw active-alarm list,\nget_device_health_summary for device-only status, or\nget_optimization_recommendations when you want improvement suggestions rather\nthan a fault report.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -20,10 +20,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "analyze_network_issuesArguments"
+      "title": "analyze_network_issuesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -36,16 +38,17 @@
   },
   {
     "name": "apply_client_qos_policy",
-    "description": "Apply a validated QoS preview when a supported adapter exists. Requires confirmation.",
+    "description": "Apply a validated QoS preview when a supported adapter exists. Requires confirmation.\n\nMutating operation: loads the plan referenced by plan_token and attempts to\nactivate it. In the current release no validated adapter exists, so no controller\nmutation is performed (mutation_attempted=false); the call records the attempt.\nReturns success=false unless confirm=true. Use plan_client_qos_policy first to\nobtain a plan_token.\n\nArgs:\n    plan_token: Token returned by plan_client_qos_policy identifying the plan.\n    confirm: Must be True to attempt application; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "plan_token": {
+          "description": "Token returned by plan_client_qos_policy identifying the plan.",
           "title": "Plan Token",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to attempt application; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -53,7 +56,8 @@
       "required": [
         "plan_token"
       ],
-      "title": "apply_client_qos_policyArguments"
+      "title": "apply_client_qos_policyArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -66,12 +70,12 @@
   },
   {
     "name": "archive_all_alarms",
-    "description": "Archive all active alarms.",
+    "description": "Acknowledge and archive every active alarm on a site.\n\nNon-destructive state change: it marks open alarms as archived so they no\nlonger show in get_alarms; no device configuration is modified. Use\nget_alarms first to review what will be cleared; prefer\nanalyze_network_issues when you want findings without clearing alarm state.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -85,10 +89,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "archive_all_alarmsArguments"
+      "title": "archive_all_alarmsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -101,11 +107,11 @@
   },
   {
     "name": "assign_client_group",
-    "description": "Assign or unassign one local client group. Requires confirm=true.",
+    "description": "Assign or unassign one local client group. Requires confirm=true.\n\nMutating operation: sets the client's single local group membership (local_only)\nto the given group, or clears it when group is null. Does not mutate the\ncontroller. Returns success=false unless confirm=true. Use set_client_tags for\ntags, or list_clients_by_organization to find clients in a group.\n\nArgs:\n    identity: Client MAC, IP, hostname, or alias to resolve to a known client.\n    group: Group name to assign, or null/None to unassign the current group.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.\n    confirm: Must be True to change membership; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "identity": {
+          "description": "Client MAC, IP, hostname, or alias to resolve to a known client.",
           "title": "Identity",
           "type": "string"
         },
@@ -118,10 +124,12 @@
               "type": "null"
             }
           ],
+          "description": "Group name to assign, or null/None to unassign the current group.",
           "title": "Group"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -135,10 +143,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to change membership; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -147,7 +157,8 @@
         "identity",
         "group"
       ],
-      "title": "assign_client_groupArguments"
+      "title": "assign_client_groupArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -160,16 +171,17 @@
   },
   {
     "name": "block_client",
-    "description": "Block a client from the network.",
+    "description": "Block a client from accessing the network by MAC address.\n\nMutating operation: the block is applied immediately and persists in the\ncontroller's firewall/blocklist. Use unblock_client to restore access, or\nkick_client to drop the connection without a persistent block.\n\nArgs:\n    mac: Client MAC address to target.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Client MAC address to target.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -183,13 +195,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "block_clientArguments"
+      "title": "block_clientArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -202,11 +216,11 @@
   },
   {
     "name": "capture_observations_now",
-    "description": "Capture bounded aggregate UniFi health observations now.",
+    "description": "Capture a bounded batch of aggregate UniFi health observations immediately.\n\nMutating operation: collects current health observations and persists them\ninto the observation store right away, then refreshes cached metrics. Returns\nthe number of inserted observations and any scope limitations. Use before\nquery_observation_trends to ensure recent data, or rely on scheduled capture\notherwise.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "capture_observations_nowArguments"
+      "title": "capture_observations_nowArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -219,16 +233,17 @@
   },
   {
     "name": "create_client_group",
-    "description": "Create a controller-independent local client group. Requires confirm=true.",
+    "description": "Create a controller-independent local client group. Requires confirm=true.\n\nMutating operation: persists a new empty local group (local_only) scoped to\nthe controller/site; it does not create anything on the UniFi controller.\nReturns success=false unless confirm=true. Use assign_client_group to add\nmembers, or list_client_groups to see existing groups.\n\nArgs:\n    name: Unique group name to create.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.\n    confirm: Must be True to create the group; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Unique group name to create.",
           "title": "Name",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -242,10 +257,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to create the group; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -253,7 +270,8 @@
       "required": [
         "name"
       ],
-      "title": "create_client_groupArguments"
+      "title": "create_client_groupArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -266,28 +284,32 @@
   },
   {
     "name": "create_firewall_policy",
-    "description": "Create a zone-based firewall policy (UniFi Network 9+).",
+    "description": "Create a zone-based firewall policy (UniFi Network 9+).\n\nMutating operation: applied immediately and persisted on the UniFi console.\nAction is ALLOW, BLOCK, or REJECT across the src_zone_id to dst_zone_id pair.\nLower index evaluates earlier. A controller-generated \"(Return)\" companion rule is\ntypically added. Requires zone ids from get_firewall_policies; review there first.\n\nArgs:\n    name: Policy name (used for display and zone inference).\n    action: Packet decision \u2014 \"ALLOW\", \"BLOCK\", or \"REJECT\".\n    src_zone_id: Source zone id (from get_firewall_policies).\n    dst_zone_id: Destination zone id (from get_firewall_policies).\n    protocol: Protocol selector \u2014 \"all\", \"tcp\", \"udp\", \"tcp_udp\", \"icmp\", \"igmp\", or \"icmpv6\".\n    description: Optional human-readable description.\n    client_macs: Restrict the source to these client MAC addresses.\n    index: Rule order index; lower values evaluate earlier. Omit for auto-order.\n    enabled: Create the policy enabled. Defaults to True.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Policy name (used for display and zone inference).",
           "title": "Name",
           "type": "string"
         },
         "action": {
+          "description": "Packet decision \u2014 \"ALLOW\", \"BLOCK\", or \"REJECT\".",
           "title": "Action",
           "type": "string"
         },
         "src_zone_id": {
+          "description": "Source zone id (from get_firewall_policies).",
           "title": "Src Zone Id",
           "type": "string"
         },
         "dst_zone_id": {
+          "description": "Destination zone id (from get_firewall_policies).",
           "title": "Dst Zone Id",
           "type": "string"
         },
         "protocol": {
           "default": "all",
+          "description": "Protocol selector \u2014 \"all\", \"tcp\", \"udp\", \"tcp_udp\", \"icmp\", \"igmp\", or \"icmpv6\".",
           "title": "Protocol",
           "type": "string"
         },
@@ -301,6 +323,7 @@
             }
           ],
           "default": null,
+          "description": "Optional human-readable description.",
           "title": "Description"
         },
         "client_macs": {
@@ -316,6 +339,7 @@
             }
           ],
           "default": null,
+          "description": "Restrict the source to these client MAC addresses.",
           "title": "Client Macs"
         },
         "index": {
@@ -328,15 +352,18 @@
             }
           ],
           "default": null,
+          "description": "Rule order index; lower values evaluate earlier. Omit for auto-order.",
           "title": "Index"
         },
         "enabled": {
           "default": true,
+          "description": "Create the policy enabled. Defaults to True.",
           "title": "Enabled",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -350,6 +377,7 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
@@ -359,26 +387,156 @@
         "src_zone_id",
         "dst_zone_id"
       ],
-      "title": "create_firewall_policyArguments"
+      "title": "create_firewall_policyArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": null
   },
   {
-    "name": "create_interval_schedule",
-    "description": "Create an allowlisted recurring job. Requires confirm=true.",
+    "name": "create_firewall_rule",
+    "description": "Create a legacy firewall rule (UniFi Network <9 or traditional API).\n\nMutating operation: applied immediately and persisted on the controller.\nFor zone-based policies (Network 9+), prefer create_firewall_policy.\nReview existing rules with get_firewall_rules first.\n\nArgs:\n    name: Unique rule name\n    action: Action \u2014 \"accept\", \"drop\", or \"reject\"\n    protocol: Protocol \u2014 \"tcp\", \"udp\", \"icmp\", \"all\", or IANA number\n    dst_port: Destination port or range (e.g., \"80\", \"80-443\")\n    src_zone: Source zone ID (from get_firewall_policies)\n    dst_zone: Destination zone ID\n    src_port: Source port or range\n    logging: Enable logging for matches\n    enabled: Whether rule is active on creation. Defaults to True.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific console; omit for default.\n\nReturns:\n    Created firewall rule configuration",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Unique rule name",
+          "title": "Name",
+          "type": "string"
+        },
+        "action": {
+          "description": "Action \u2014 \"accept\", \"drop\", or \"reject\"",
+          "title": "Action",
+          "type": "string"
+        },
+        "protocol": {
+          "description": "Protocol \u2014 \"tcp\", \"udp\", \"icmp\", \"all\", or IANA number",
+          "title": "Protocol",
+          "type": "string"
+        },
+        "dst_port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Destination port or range (e.g., '80', '80-443').",
+          "title": "Dst Port"
+        },
+        "src_zone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source zone ID (from get_firewall_policies).",
+          "title": "Src Zone"
+        },
+        "dst_zone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Destination zone ID.",
+          "title": "Dst Zone"
+        },
+        "src_port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source port or range.",
+          "title": "Src Port"
+        },
+        "logging": {
+          "default": false,
+          "description": "Enable logging for matches.",
+          "title": "Logging",
+          "type": "boolean"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Whether rule is active on creation. Defaults to True.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
+          "title": "Device"
+        }
+      },
+      "required": [
+        "name",
+        "action",
+        "protocol"
+      ],
+      "title": "create_firewall_ruleArguments",
+      "type": "object"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "create_interval_schedule",
+    "description": "Create an allowlisted recurring job. Requires confirm=true.\n\nMutating operation: persists a new interval schedule that runs job_name with\nthe given arguments every interval_seconds. Returns success=false unless\nconfirm=true. The job must be on the allowlist. Use set_schedule_enabled to\npause it, or delete_schedule to remove it.\n\nArgs:\n    name: Unique schedule identifier.\n    job_name: Allowlisted job to run on the interval.\n    interval_seconds: Recurrence period between runs, in seconds.\n    arguments: Optional keyword arguments passed to the job on each run.\n    confirm: Must be True to create the schedule; without it the call is a no-op.\n        Defaults to False.",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "description": "Unique schedule identifier.",
           "title": "Name",
           "type": "string"
         },
         "job_name": {
+          "description": "Allowlisted job to run on the interval.",
           "title": "Job Name",
           "type": "string"
         },
         "interval_seconds": {
+          "description": "Recurrence period between runs, in seconds.",
           "title": "Interval Seconds",
           "type": "integer"
         },
@@ -393,10 +551,12 @@
             }
           ],
           "default": null,
+          "description": "Optional keyword arguments passed to the job on each run.",
           "title": "Arguments"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to create the schedule; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -406,7 +566,8 @@
         "job_name",
         "interval_seconds"
       ],
-      "title": "create_interval_scheduleArguments"
+      "title": "create_interval_scheduleArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -419,11 +580,11 @@
   },
   {
     "name": "create_network",
-    "description": "Create a new network/VLAN (corporate by default).",
+    "description": "Create a new network/VLAN segment on the gateway (corporate by default).\n\nMutating operation: applied immediately and persisted on the UniFi console.\nProvide subnet in CIDR form and an optional VLAN id to tag the segment; enable\nDHCP by supplying both dhcp_start and dhcp_stop. Requires confirm=true because\nrouting/VLAN/DHCP changes can disrupt connectivity. Inspect with get_networks;\nreverse with delete_network.\n\nArgs:\n    name: Network name (e.g. \"IoT\").\n    subnet: Subnet in CIDR form (e.g. \"192.168.50.1/24\"); omit for unrouted.\n    vlan: VLAN id (1-4094) for a tagged segment; omit for untagged.\n    purpose: Segment type \u2014 \"corporate\", \"guest\", or \"wan\". Defaults to \"corporate\".\n    domain_name: DNS domain name advertised to clients (e.g. \"example.local\").\n    dhcp_start: DHCP pool start IP; supply with dhcp_stop to enable DHCP.\n    dhcp_stop: DHCP pool end IP; supply with dhcp_start to enable DHCP.\n    dhcp_lease_time: DHCP lease duration in seconds (default 86400).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.\n    confirm: Safety gate: must be True to create. Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Network name (e.g. \"IoT\").",
           "title": "Name",
           "type": "string"
         },
@@ -437,6 +598,7 @@
             }
           ],
           "default": null,
+          "description": "Subnet in CIDR form (e.g. \"192.168.50.1/24\"); omit for unrouted.",
           "title": "Subnet"
         },
         "vlan": {
@@ -449,10 +611,12 @@
             }
           ],
           "default": null,
+          "description": "VLAN id (1-4094) for a tagged segment; omit for untagged.",
           "title": "Vlan"
         },
         "purpose": {
           "default": "corporate",
+          "description": "Segment type \u2014 \"corporate\", \"guest\", or \"wan\". Defaults to \"corporate\".",
           "title": "Purpose",
           "type": "string"
         },
@@ -466,6 +630,7 @@
             }
           ],
           "default": null,
+          "description": "DNS domain name advertised to clients (e.g. \"example.local\").",
           "title": "Domain Name"
         },
         "dhcp_start": {
@@ -478,6 +643,7 @@
             }
           ],
           "default": null,
+          "description": "DHCP pool start IP; supply with dhcp_stop to enable DHCP.",
           "title": "Dhcp Start"
         },
         "dhcp_stop": {
@@ -490,6 +656,7 @@
             }
           ],
           "default": null,
+          "description": "DHCP pool end IP; supply with dhcp_start to enable DHCP.",
           "title": "Dhcp Stop"
         },
         "dhcp_lease_time": {
@@ -502,10 +669,12 @@
             }
           ],
           "default": null,
+          "description": "DHCP lease duration in seconds (default 86400).",
           "title": "Dhcp Lease Time"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -519,10 +688,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Safety gate: must be True to create. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -530,7 +701,8 @@
       "required": [
         "name"
       ],
-      "title": "create_networkArguments"
+      "title": "create_networkArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -543,38 +715,44 @@
   },
   {
     "name": "create_port_forward",
-    "description": "Create a port forwarding rule on the gateway.",
+    "description": "Create a port-forwarding rule that opens an external WAN port and maps it to an internal host/port.\n\nMutating operation: applied immediately and persisted on the UniFi console.\nReview existing rules with get_port_forwards first; remove with delete_port_forward.\nPrefer create_firewall_policy for zone-based/stateful filtering.\n\nArgs:\n    name: Unique rule identifier used to find/delete the rule later.\n    dst_port: Internal destination port (1-65535) on the target host.\n    fwd_ip: LAN IP of the internal host receiving forwarded traffic.\n    fwd_port: External listening port (1-65535) on the WAN.\n    proto: IP protocol to forward \u2014 \"tcp\", \"udp\", or \"both\".\n    enabled: Whether active on creation. Defaults to True.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Unique rule identifier used to find/delete the rule later.",
           "title": "Name",
           "type": "string"
         },
         "dst_port": {
+          "description": "Internal destination port (1-65535) on the target host.",
           "title": "Dst Port",
           "type": "string"
         },
         "fwd_ip": {
+          "description": "LAN IP of the internal host receiving forwarded traffic.",
           "title": "Fwd Ip",
           "type": "string"
         },
         "fwd_port": {
+          "description": "External listening port (1-65535) on the WAN.",
           "title": "Fwd Port",
           "type": "string"
         },
         "proto": {
           "default": "tcp_udp",
+          "description": "IP protocol to forward \u2014 \"tcp\", \"udp\", or \"both\".",
           "title": "Proto",
           "type": "string"
         },
         "enabled": {
           "default": true,
+          "description": "Whether active on creation. Defaults to True.",
           "title": "Enabled",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -588,6 +766,7 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
@@ -597,7 +776,8 @@
         "fwd_ip",
         "fwd_port"
       ],
-      "title": "create_port_forwardArguments"
+      "title": "create_port_forwardArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -610,15 +790,16 @@
   },
   {
     "name": "create_webhook_destination",
-    "description": "Create a filtered outbound webhook. Requires confirm=true.",
+    "description": "Create a filtered outbound webhook. Requires confirm=true.\n\nMutating operation: persists a new outbound webhook destination posting to url,\noptionally signing with a secret from secret_env_name and limited to categories.\nReturns success=false unless confirm=true. Use set_webhook_destination_enabled to\npause it, or delete_webhook_destination to remove it.\n\nArgs:\n    name: Unique destination identifier.\n    url: Endpoint that receives webhook payloads.\n    secret_env_name: Optional name of an env var holding the signing secret.\n    categories: Optional list of event categories to send; empty sends all.\n    confirm: Must be True to create the destination; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Unique destination identifier.",
           "title": "Name",
           "type": "string"
         },
         "url": {
+          "description": "Endpoint that receives webhook payloads.",
           "title": "Url",
           "type": "string"
         },
@@ -632,6 +813,7 @@
             }
           ],
           "default": null,
+          "description": "Optional name of an env var holding the signing secret.",
           "title": "Secret Env Name"
         },
         "categories": {
@@ -647,10 +829,12 @@
             }
           ],
           "default": null,
+          "description": "Optional list of event categories to send; empty sends all.",
           "title": "Categories"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to create the destination; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -659,7 +843,8 @@
         "name",
         "url"
       ],
-      "title": "create_webhook_destinationArguments"
+      "title": "create_webhook_destinationArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -672,15 +857,16 @@
   },
   {
     "name": "create_wlan",
-    "description": "Create a wireless network (SSID) with WPA2/WPA3 transition security.",
+    "description": "Create a wireless network (SSID) with WPA2/WPA3 transition security by default.\n\nMutating operation: applied immediately and persisted on the UniFi console.\nPassphrase must be 8-63 characters. WPA2/WPA3 transition is enabled unless\nwpa3_transition is False, keeping WPA2 for legacy clients. Attach to a VLAN via\nnetwork_conf_id, or mark is_guest for an isolated guest SSID. Inspect with get_wlans.\n\nArgs:\n    name: SSID broadcast name.\n    passphrase: WiFi password, 8-63 characters.\n    network_conf_id: Network id to attach the SSID to; omit for the default LAN.\n    wpa3_transition: Use WPA2/WPA3 transition mode. Defaults to True.\n    hide_ssid: Broadcast the SSID hidden when True. Defaults to False.\n    is_guest: Mark the SSID as an isolated guest network. Defaults to False.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "SSID broadcast name.",
           "title": "Name",
           "type": "string"
         },
         "passphrase": {
+          "description": "WiFi password, 8-63 characters.",
           "title": "Passphrase",
           "type": "string"
         },
@@ -694,25 +880,30 @@
             }
           ],
           "default": null,
+          "description": "Network id to attach the SSID to; omit for the default LAN.",
           "title": "Network Conf Id"
         },
         "wpa3_transition": {
           "default": true,
+          "description": "Use WPA2/WPA3 transition mode. Defaults to True.",
           "title": "Wpa3 Transition",
           "type": "boolean"
         },
         "hide_ssid": {
           "default": false,
+          "description": "Broadcast the SSID hidden when True. Defaults to False.",
           "title": "Hide Ssid",
           "type": "boolean"
         },
         "is_guest": {
           "default": false,
+          "description": "Mark the SSID as an isolated guest network. Defaults to False.",
           "title": "Is Guest",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -726,6 +917,7 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
@@ -733,7 +925,8 @@
         "name",
         "passphrase"
       ],
-      "title": "create_wlanArguments"
+      "title": "create_wlanArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -746,16 +939,17 @@
   },
   {
     "name": "delete_client_group",
-    "description": "Delete a local group and its memberships. Requires confirm=true.",
+    "description": "Delete a local group and its memberships. Requires confirm=true.\n\nMutating operation: removes the local group (local_only) and detaches its\nmembers; it does not touch the UniFi controller. Returns success=false unless\nconfirm=true. Recreate with create_client_group if needed.\n\nArgs:\n    name: Name of the local group to delete.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.\n    confirm: Must be True to delete the group; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Name of the local group to delete.",
           "title": "Name",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -769,10 +963,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to delete the group; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -780,7 +976,8 @@
       "required": [
         "name"
       ],
-      "title": "delete_client_groupArguments"
+      "title": "delete_client_groupArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -793,21 +990,23 @@
   },
   {
     "name": "delete_firewall_policy",
-    "description": "Delete a zone-based firewall policy. Requires confirm=true.",
+    "description": "Delete a zone-based firewall policy.\n\nMutating operation: removed immediately and persisted on the UniFi console.\nRequires confirm=true because removing a policy changes traffic flow. Predefined\ncontroller policies are refused. Target by id from get_firewall_policies.\n\nArgs:\n    policy_id: Policy id to delete (from get_firewall_policies).\n    confirm: Safety gate: must be True to delete. Defaults to False.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "policy_id": {
+          "description": "Policy id to delete (from get_firewall_policies).",
           "title": "Policy Id",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Safety gate: must be True to delete. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -821,13 +1020,66 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "policy_id"
       ],
-      "title": "delete_firewall_policyArguments"
+      "title": "delete_firewall_policyArguments",
+      "type": "object"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "delete_firewall_rule",
+    "description": "Delete a legacy firewall rule. Requires confirm=True.\n\nMutating operation: permanently removes the rule from the controller.\n\nArgs:\n    rule_id: Firewall rule ID (from get_firewall_rules)\n    confirm: Must be True to actually delete\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific console; omit for default.\n\nReturns:\n    Deletion status",
+    "inputSchema": {
+      "properties": {
+        "rule_id": {
+          "description": "Firewall rule ID (from get_firewall_rules).",
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "confirm": {
+          "default": false,
+          "description": "Must be True to actually delete.",
+          "title": "Confirm",
+          "type": "boolean"
+        },
+        "site": {
+          "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
+          "title": "Device"
+        }
+      },
+      "required": [
+        "rule_id"
+      ],
+      "title": "delete_firewall_ruleArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -840,16 +1092,17 @@
   },
   {
     "name": "delete_network",
-    "description": "Delete a network/VLAN by name or ID. Requires confirm=true.",
+    "description": "Delete a network/VLAN by name or ID.\n\nMutating operation: removed immediately and persisted on the UniFi console.\nRequires confirm=true because deleting a network can drop clients and routes that\ndepend on it. List networks with get_networks first to confirm the target.\n\nArgs:\n    name: Network name or record id to delete.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.\n    confirm: Safety gate: must be True to delete. Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "name": {
+          "description": "Network name or record id to delete.",
           "title": "Name",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -863,10 +1116,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Safety gate: must be True to delete. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -874,7 +1129,8 @@
       "required": [
         "name"
       ],
-      "title": "delete_networkArguments"
+      "title": "delete_networkArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -887,21 +1143,23 @@
   },
   {
     "name": "delete_port_forward",
-    "description": "Delete a port forwarding rule. Requires confirm=true.",
+    "description": "Delete a port forwarding rule.\n\nMutating operation: removed immediately and persisted on the UniFi console.\nRequires confirm=true because removing a forward closes external access. Target by\nrule id from get_port_forwards.\n\nArgs:\n    rule_id: Port forward rule id to delete (from get_port_forwards).\n    confirm: Safety gate: must be True to delete. Defaults to False.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "rule_id": {
+          "description": "Port forward rule id to delete (from get_port_forwards).",
           "title": "Rule Id",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Safety gate: must be True to delete. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -915,13 +1173,15 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "rule_id"
       ],
-      "title": "delete_port_forwardArguments"
+      "title": "delete_port_forwardArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -934,16 +1194,17 @@
   },
   {
     "name": "delete_schedule",
-    "description": "Delete a non-running schedule. Requires confirm=true.",
+    "description": "Delete a non-running schedule. Requires confirm=true.\n\nMutating operation: removes the identified schedule from the store. Returns\nsuccess=false unless confirm=true. Use create_interval_schedule to add one, or\nset_schedule_enabled to pause instead of delete.\n\nArgs:\n    schedule_id: Identifier of the schedule to delete.\n    confirm: Must be True to delete the schedule; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "schedule_id": {
+          "description": "Identifier of the schedule to delete.",
           "title": "Schedule Id",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to delete the schedule; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -951,7 +1212,8 @@
       "required": [
         "schedule_id"
       ],
-      "title": "delete_scheduleArguments"
+      "title": "delete_scheduleArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -964,16 +1226,17 @@
   },
   {
     "name": "delete_webhook_destination",
-    "description": "Delete a webhook destination and queued deliveries. Requires confirm=true.",
+    "description": "Delete a webhook destination and queued deliveries. Requires confirm=true.\n\nMutating operation: removes the identified webhook destination and its queued\ndeliveries from the store. Returns success=false unless confirm=true. Use\ncreate_webhook_destination to add one.\n\nArgs:\n    destination_id: Identifier of the webhook destination to delete.\n    confirm: Must be True to delete the destination; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "destination_id": {
+          "description": "Identifier of the webhook destination to delete.",
           "title": "Destination Id",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to delete the destination; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -981,7 +1244,8 @@
       "required": [
         "destination_id"
       ],
-      "title": "delete_webhook_destinationArguments"
+      "title": "delete_webhook_destinationArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -994,21 +1258,23 @@
   },
   {
     "name": "delete_wlan",
-    "description": "Delete a wireless network (SSID). Requires confirm=true.",
+    "description": "Delete a wireless network (SSID).\n\nMutating operation: removed immediately and persisted on the UniFi console.\nRequires confirm=true because deleting an SSID disconnects its clients. Resolve the\ntarget by ID or name and review get_wlans first.\n\nArgs:\n    wlan: WLAN id or SSID name to delete.\n    confirm: Safety gate: must be True to delete. Defaults to False.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "wlan": {
+          "description": "WLAN id or SSID name to delete.",
           "title": "Wlan",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Safety gate: must be True to delete. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1022,13 +1288,15 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "wlan"
       ],
-      "title": "delete_wlanArguments"
+      "title": "delete_wlanArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1041,23 +1309,26 @@
   },
   {
     "name": "export_camera_clip",
-    "description": "Export an MP4 beneath the confined export directory. Requires confirm=true.",
+    "description": "Export a UniFi Protect recording clip as an MP4 file written to local disk.\n\nMutating, file-writing operation: it resolves the camera (by id or name),\nfetches the recording for the requested time range, and writes an MP4 file\ninto the server's confined export directory (the path is validated against\nthat directory, so output_path must not escape it). Requires Protect\nusername/password credentials configured for the console. The write is a\nno-op until confirm is set to true, at which point it returns the written\nfile path and size in bytes. Use get_camera_snapshot for a single still image\ninstead of a time-ranged clip.\n\nArgs:\n    camera: Protect camera identifier or name to export footage from.\n    start_ts: Clip start time as a Unix epoch timestamp (seconds).\n    end_ts: Clip end time as a Unix epoch timestamp (seconds); must be after\n        start_ts.\n    output_path: Destination filename (or path relative to the export\n        directory); it is confined to the server's export directory.\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.\n    confirm: Safety confirmation required for this file-writing operation;\n        the export returns a failure message until set to true.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "camera": {
+          "description": "Protect camera identifier or name to export footage from.",
           "title": "Camera",
           "type": "string"
         },
         "start_ts": {
+          "description": "Clip start time as a Unix epoch timestamp (seconds).",
           "title": "Start Ts",
           "type": "integer"
         },
         "end_ts": {
+          "description": "Clip end time as a Unix epoch timestamp (seconds); must be after start_ts.",
           "title": "End Ts",
           "type": "integer"
         },
         "output_path": {
+          "description": "Destination filename (or path relative to the export directory); it is confined to the server's export directory.",
           "title": "Output Path",
           "type": "string"
         },
@@ -1071,10 +1342,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Safety confirmation required for this file-writing operation; the export returns a failure message until set to true.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -1085,7 +1358,8 @@
         "end_ts",
         "output_path"
       ],
-      "title": "export_camera_clipArguments"
+      "title": "export_camera_clipArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1098,20 +1372,22 @@
   },
   {
     "name": "export_network_report",
-    "description": "Export an HTML or CSV report from the portable snapshot model. Requires confirm=true.",
+    "description": "Export an HTML or CSV report rendered from the portable snapshot model.\n\nMutating operation: writes a local report file immediately, persisted in the\nexport directory. The call is rejected without writing unless confirm=true.\nFormat must be \"html\" or \"csv\" and filename must end with the matching\nextension; plugins may register additional formats. Prefer\nexport_portable_snapshot for the raw machine-readable model.\n\nArgs:\n    filename: Output report file name inside the confined export directory; must end with the chosen format extension (e.g. .html, .csv).\n    format: Report renderer to use \u2014 \"html\" or \"csv\" (plugins may register additional formats).\n    confirm: Safety confirmation. Must be True to actually write; otherwise returns a rejection message.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "filename": {
+          "description": "Output report file name inside the confined export directory; must end with the chosen format extension (e.g. .html, .csv).",
           "title": "Filename",
           "type": "string"
         },
         "format": {
+          "description": "Report renderer to use \u2014 \"html\" or \"csv\" (plugins may register additional formats).",
           "title": "Format",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Safety confirmation. Must be True to actually write; otherwise returns a rejection message.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -1120,7 +1396,8 @@
         "filename",
         "format"
       ],
-      "title": "export_network_reportArguments"
+      "title": "export_network_reportArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1133,16 +1410,17 @@
   },
   {
     "name": "export_portable_snapshot",
-    "description": "Export a deterministic secret-free JSON snapshot. Requires confirm=true.",
+    "description": "Export a deterministic secret-free JSON snapshot to a local confined file.\n\nMutating operation: writes a local file immediately, persisted in the export\ndirectory. Returns the filename, size, schema version, and a content SHA-256\nchecksum for later verification with verify_snapshot. The call is rejected\nwithout writing unless confirm=true. Use export_network_report for\nhuman-readable HTML/CSV instead of the raw JSON model.\n\nArgs:\n    filename: Target file name written inside the confined export directory (no path traversal).\n    confirm: Safety confirmation. Must be True to actually write; otherwise returns a rejection message.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "filename": {
+          "description": "Target file name written inside the confined export directory (no path traversal).",
           "title": "Filename",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Safety confirmation. Must be True to actually write; otherwise returns a rejection message.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -1150,7 +1428,8 @@
       "required": [
         "filename"
       ],
-      "title": "export_portable_snapshotArguments"
+      "title": "export_portable_snapshotArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1163,16 +1442,17 @@
   },
   {
     "name": "forget_client",
-    "description": "Remove a client from the known clients list.",
+    "description": "Remove a client from the controller's known-clients list.\n\nDestructive operation: deletes the client's stored identity and history; the\nclient can still reappear on reconnect. Use kick_client to drop a session\nwithout deletion, or block_client to deny access persistently.\n\nArgs:\n    mac: Client MAC address to target.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Client MAC address to target.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1186,13 +1466,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "forget_clientArguments"
+      "title": "forget_clientArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1205,12 +1487,12 @@
   },
   {
     "name": "get_alarms",
-    "description": "Get active alarms.",
+    "description": "Return the currently active alarms (faults and warnings) for a site.\n\nRead-only operation: it lists unacknowledged/active alarms with severity and\nmessage so you can see what needs attention. Use get_recent_events for the\nbroad event feed including non-alarm activity; clear them with\narchive_all_alarms once handled, or use analyze_network_issues for a\nconsolidated interpretation of alarms and health.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1224,10 +1506,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_alarmsArguments"
+      "title": "get_alarmsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1240,9 +1524,8 @@
   },
   {
     "name": "get_all_sites_health",
-    "description": "Get health overview across all sites.",
+    "description": "Return a health overview for every site managed by one UniFi console.\n\nRead-only operation: it walks each site on the targeted console and returns\na compact health snapshot per site (status, score, and key counts). Unlike\nget_global_health, this stays within a single console; unlike get_site_health,\nit covers all sites at once rather than one. Use get_global_health when you\nneed cross-console aggregation; prefer get_site_health when you want full\nper-subsystem detail for a single named site.\n\nArgs:\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -1254,10 +1537,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_all_sites_healthArguments"
+      "title": "get_all_sites_healthArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1270,11 +1555,11 @@
   },
   {
     "name": "get_camera_details",
-    "description": "Get detailed information about a specific camera.",
+    "description": "Get the full configuration and runtime record for one Protect camera.\n\nRead-only operation: it returns the camera's model, firmware, resolution,\nrecording mode, privacy/IR state, connection state, and live statistics. The\ncamera is resolved by ID first and then by name, so either form is accepted.\nUse list_cameras first to find the camera_id; use get_camera_snapshot to\ncapture an image, or get_camera_health_summary for a connectivity-only view.\n\nArgs:\n    camera_id: Protect camera identifier or name to look up.\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "camera_id": {
+          "description": "Protect camera identifier or name to look up.",
           "title": "Camera Id",
           "type": "string"
         },
@@ -1288,13 +1573,15 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
       "required": [
         "camera_id"
       ],
-      "title": "get_camera_detailsArguments"
+      "title": "get_camera_detailsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1307,9 +1594,8 @@
   },
   {
     "name": "get_camera_health_summary",
-    "description": "\nGet a health summary of all cameras.\n\nProvides an overview of camera status, connectivity, and potential issues.\n",
+    "description": "Summarize the connectivity and health of all cameras on one Protect console.\n\nRead-only operation: it partitions cameras into connected and disconnected\nsets, returns an overall status of \"healthy\" or \"degraded\", lists each\ndisconnected camera as a critical issue, and offers remediation\nrecommendations. Use this for a fleet-wide connectivity check; use\nlist_cameras for the full per-camera detail or get_camera_details for one\ncamera's complete record.\n\nArgs:\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -1321,10 +1607,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_camera_health_summaryArguments"
+      "title": "get_camera_health_summaryArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1337,11 +1625,11 @@
   },
   {
     "name": "get_camera_snapshot",
-    "description": "\nGet a snapshot from a camera.\n\nReturns a base64-encoded JPEG image.\n",
+    "description": "Capture a still image from a connected Protect camera as a base64 JPEG.\n\nRead-only operation: it requests a live frame from the camera and returns it\nas a base64-encoded JPEG plus camera name and id. If width and/or height are\nprovided the image is resized to those pixel dimensions; if omitted the\ncamera's native resolution is returned. A camera that is not in the\nCONNECTED state returns a success=false result rather than an image. Use\nget_camera_details to confirm the camera is online before calling.\n\nArgs:\n    camera_id: Protect camera identifier or name to capture from.\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.\n    width: Optional target pixel width for the snapshot; native width if unset.\n    height: Optional target pixel height for the snapshot; native height if unset.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "camera_id": {
+          "description": "Protect camera identifier or name to capture from.",
           "title": "Camera Id",
           "type": "string"
         },
@@ -1355,6 +1643,7 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         },
         "width": {
@@ -1367,6 +1656,7 @@
             }
           ],
           "default": null,
+          "description": "Optional target pixel width for the snapshot; native width if unset.",
           "title": "Width"
         },
         "height": {
@@ -1379,13 +1669,15 @@
             }
           ],
           "default": null,
+          "description": "Optional target pixel height for the snapshot; native height if unset.",
           "title": "Height"
         }
       },
       "required": [
         "camera_id"
       ],
-      "title": "get_camera_snapshotArguments"
+      "title": "get_camera_snapshotArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1398,16 +1690,17 @@
   },
   {
     "name": "get_client_details",
-    "description": "Get detailed information about a specific client.",
+    "description": "Get the full device record for one client by MAC address.\n\nRead-only operation: returns the client's identity, connection state, IP,\nsignal/AP association, and history. Deeper than list_clients/list_all_clients,\nwhich return summarized rows only.\n\nArgs:\n    mac: Client MAC address to target.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Client MAC address to target.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1421,13 +1714,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "get_client_detailsArguments"
+      "title": "get_client_detailsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1440,12 +1735,12 @@
   },
   {
     "name": "get_client_experience_report",
-    "description": "\nGenerate a client experience report with connection quality metrics.\n\nIncludes signal strength distribution, roaming stats, failed connections,\nand problematic clients.\n",
+    "description": "Generate a client experience report with connection-quality metrics for a site.\n\nRead-only operation: it summarizes signal-strength distribution, roaming\nstats, failed connections, and problematic clients across the site. Use\ntroubleshoot_client for a deep dive on one specific client, or\nget_device_health_summary for the infrastructure view rather than client-side.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1459,10 +1754,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_client_experience_reportArguments"
+      "title": "get_client_experience_reportArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1475,16 +1772,17 @@
   },
   {
     "name": "get_client_organization",
-    "description": "Get durable local tags and group membership for one known client.",
+    "description": "Get durable local tags and group membership for one known client.\n\nRead-only operation: resolves the client by identity, then returns its\npersisted local organization record (tags and group membership). This\ndata is local to the server (local_only) and does not mutate the controller.\nUse set_client_tags or assign_client_group to change it.\n\nArgs:\n    identity: Client MAC, IP, hostname, or alias to resolve to a known client.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "identity": {
+          "description": "Client MAC, IP, hostname, or alias to resolve to a known client.",
           "title": "Identity",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1498,13 +1796,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "identity"
       ],
-      "title": "get_client_organizationArguments"
+      "title": "get_client_organizationArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1517,9 +1817,8 @@
   },
   {
     "name": "get_client_qos_capabilities",
-    "description": "Describe validated controller QoS mutation capabilities.",
+    "description": "Describe validated controller QoS mutation capabilities.\n\nRead-only operation: reports whether a validated controller QoS adapter is\navailable for the targeted device. Previews created by plan_client_qos_policy\nare always local; apply_client_qos_policy performs no controller mutation in\nthe current release. Use this before planning a policy to set expectations.\n\nArgs:\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -1531,10 +1830,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_client_qos_capabilitiesArguments"
+      "title": "get_client_qos_capabilitiesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1547,16 +1848,17 @@
   },
   {
     "name": "get_client_traffic",
-    "description": "Get traffic statistics for a specific client.",
+    "description": "Get traffic statistics (rx/tx, throughput) for one client by MAC address.\n\nRead-only operation: returns the client's cumulative and recent traffic\ncounters. Use get_client_details for identity/connection state, or\nget_traffic_summary for site-wide traffic rather than a single client.\n\nArgs:\n    mac: Client MAC address to target.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Client MAC address to target.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1570,13 +1872,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "get_client_trafficArguments"
+      "title": "get_client_trafficArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1589,16 +1893,17 @@
   },
   {
     "name": "get_device_details",
-    "description": "Get detailed information about a specific device.",
+    "description": "Get detailed configuration and runtime record for one UniFi device.\n\nRead-only operation: returns the device's ports, radios, uplink, system\nstats, temperatures, and traffic counters. The device is resolved by MAC\nfirst, then by name. Use list_devices to find the MAC; use get_device_stats\nfor a metrics-only view without the full config dump.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1612,13 +1917,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "get_device_detailsArguments"
+      "title": "get_device_detailsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1631,12 +1938,12 @@
   },
   {
     "name": "get_device_health_summary",
-    "description": "\nSummarize device health across all APs, switches, and routers.\n\nIncludes uptime, load, memory, temperature, firmware versions,\nand devices needing attention.\n",
+    "description": "Summarize device health across all APs, switches, and routers at a site.\n\nRead-only operation: it reports uptime, load, memory, temperature, firmware\nversions, and devices needing attention. Use get_site_health or\nget_network_health for overall/site status, analyze_network_issues for\nissues folded into a report, or get_client_experience_report for the client\nperspective.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1650,10 +1957,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_device_health_summaryArguments"
+      "title": "get_device_health_summaryArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1666,16 +1975,17 @@
   },
   {
     "name": "get_device_ports",
-    "description": "List the switch/gateway ports on a device (index, name, link, speed, VLAN).",
+    "description": "List the switch/gateway ports on a device with link and VLAN details.\n\nRead-only operation: returns each port's index, name, media (GE/SFP), link\nstate, speed, native network (VLAN) ID, PoE mode, forward setting, and the\nlast connected peer MAC/IP where known. Use this to find the port_idx and\ncurrent values before calling set_device_port.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1689,13 +1999,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "get_device_portsArguments"
+      "title": "get_device_portsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1708,16 +2020,17 @@
   },
   {
     "name": "get_device_stats",
-    "description": "Get performance statistics for a device.",
+    "description": "Get performance and traffic statistics for one UniFi device.\n\nRead-only operation: returns CPU/memory load, temperatures, fan level,\nclient counts (user/guest), traffic totals, and AP radio stats where\napplicable. Use get_device_details for the full config record instead of\nmetrics, or list_devices for a lightweight summary.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1731,13 +2044,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "get_device_statsArguments"
+      "title": "get_device_statsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1750,12 +2065,12 @@
   },
   {
     "name": "get_dpi_stats",
-    "description": "Get Deep Packet Inspection statistics for the site.",
+    "description": "Return Deep Packet Inspection application-breakdown statistics for a site.\n\nRead-only operation: it ranks traffic by detected application/category so you\ncan see what protocols and apps dominate usage. Use get_traffic_summary for a\nlighter volume-only overview, get_traffic_analysis for time-windowed trends\nand top talkers, or get_client_traffic for a single client's DPI view.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1769,10 +2084,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_dpi_statsArguments"
+      "title": "get_dpi_statsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1785,11 +2102,11 @@
   },
   {
     "name": "get_event_polling_status",
-    "description": "List event source capabilities and background polling state.",
+    "description": "List event source capabilities and background polling state.\n\nRead-only operation: returns each known event source with its capabilities and\nwhether background polling is enabled. Use this to discover source names for\npoll_events_now, or list_runtime_events to read stored events.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_event_polling_statusArguments"
+      "title": "get_event_polling_statusArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1802,12 +2119,12 @@
   },
   {
     "name": "get_firewall_policies",
-    "description": "Get zone-based firewall policies (UniFi Network 9+).",
+    "description": "Get zone-based firewall policies (UniFi Network 9+).\n\nRead-only operation: returns each policy's name, action, protocol, index order,\nand source/destination zone ids. Policies are evaluated in index order; predefined\n\"(Return)\" companions appear alongside custom rules. Use create_firewall_policy to\nadd one, or set_firewall_policy_enabled / delete_firewall_policy to manage it.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1821,10 +2138,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_firewall_policiesArguments"
+      "title": "get_firewall_policiesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1837,12 +2156,12 @@
   },
   {
     "name": "get_firewall_rules",
-    "description": "Get firewall rule configurations.",
+    "description": "Get legacy firewall rule configurations for a site.\n\nRead-only operation: returns each rule's name, action, protocol, port, ruleset,\nand firewall-group bindings. Modern controllers use zone-based policies instead \u2014\nsee get_firewall_policies. Use create_firewall_policy for zone-based filtering.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -1856,10 +2175,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_firewall_rulesArguments"
+      "title": "get_firewall_rulesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1872,11 +2193,11 @@
   },
   {
     "name": "get_global_client_summary",
-    "description": "\nGet a summary of all connected clients across all controllers.\n\nAggregates client counts, top talkers, and blocked clients\nacross the entire infrastructure.\n",
+    "description": "Summarize connected clients across every configured network console.\n\nRead-only operation: it aggregates active clients from each network-enabled\ndevice and computes totals (wireless/wired/blocked), the top 10 talkers by\nusage, and a per-device client count. Use this for fleet-wide client\nvisibility; use get_global_inventory for the device roster, get_global_health\nfor subsystem health, or list_clients on a single console for the full\nper-client detail.\n\nReturns:\n    Dict with total_clients, wireless/wired/blocked counts, top_talkers,\n    per_device counts, and an errors list when a console fails.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_global_client_summaryArguments"
+      "title": "get_global_client_summaryArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1889,11 +2210,11 @@
   },
   {
     "name": "get_global_health",
-    "description": "\nGet health summary across all configured controllers.\n\nCollects site health from every network-enabled device and produces\na unified health report with per-device breakdowns.\n",
+    "description": "Aggregate site health across every configured network console into one report.\n\nRead-only operation: it collects per-subsystem site health (WAN/LAN/WLAN\nstatus, health score, and device/user counts) from each network-enabled\ndevice and folds them into a unified view with an overall \"healthy\" or\n\"degraded\" verdict. Use this for a single fleet-wide health check; use\nget_global_inventory for the device roster, get_global_client_summary for\nclient counts, or get_site_health on a single console for full subsystem\ndetail.\n\nReturns:\n    Dict with overall_status, device_count, a per-device subsystems\n    breakdown, and an errors list when a console fails.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_global_healthArguments"
+      "title": "get_global_healthArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1906,11 +2227,11 @@
   },
   {
     "name": "get_global_inventory",
-    "description": "\nGet a unified inventory of all devices across all configured controllers.\n\nAggregates list_devices from every network-enabled UniFi device.\nUse this to see the full picture across gateways, sites, or locations.\n",
+    "description": "Aggregate the full device inventory across every configured network console.\n\nRead-only operation: it calls list_devices on each network-enabled device and\nmerges the results into one list, tagging every entry with its source device\nname, plus any per-console errors. Use this to see every AP, switch, gateway,\nand router across all sites in one view; use list_unifi_devices for the\nconsole roster itself, or get_global_health / get_global_client_summary for\naggregated health and client counts rather than the raw device records.\n\nReturns:\n    Dict with total_devices, the merged devices list (each tagged\n    _source_device), and an errors list when a console fails.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_global_inventoryArguments"
+      "title": "get_global_inventoryArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1923,9 +2244,8 @@
   },
   {
     "name": "get_liveviews",
-    "description": "Get all configured Protect liveviews.",
+    "description": "List all configured UniFi Protect liveviews (camera view layouts).\n\nRead-only operation: it returns each liveview's name, id, and the cameras\nand layout it includes on the targeted console. Use this to discover view\ngroupings for dashboards or to confirm which cameras belong to a named\nliveview; it does not return footage or snapshots.\n\nArgs:\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -1937,10 +2257,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_liveviewsArguments"
+      "title": "get_liveviewsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -1953,17 +2275,18 @@
   },
   {
     "name": "get_motion_events",
-    "description": "\nGet recent motion events from cameras.\n\nRequires username and password configured for the Protect device.\n",
+    "description": "Return recent camera motion events, resolved to camera names and timestamps.\n\nRead-only operation: it queries Protect motion events over the lookback\nwindow, maps each event to its camera name and a human-readable timestamp,\nand returns the count and per-event list. Requires Protect username/password\ncredentials configured for the console. Use get_smart_detections instead when\nyou need AI classification (person/vehicle/animal/package) rather than raw\nmotion; use get_protect_event_summary for aggregate counts.\n\nArgs:\n    hours: Lookback window in hours from now (default 24).\n    limit: Maximum number of events to return (default 50).\n    camera_id: Optional Protect camera identifier or name to filter events to\n        one camera; omit for all cameras.\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "hours": {
           "default": 24,
+          "description": "Lookback window in hours from now (default 24).",
           "title": "Hours",
           "type": "integer"
         },
         "limit": {
           "default": 50,
+          "description": "Maximum number of events to return (default 50).",
           "title": "Limit",
           "type": "integer"
         },
@@ -1977,6 +2300,7 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect camera identifier or name to filter events to one camera; omit for all cameras.",
           "title": "Camera Id"
         },
         "device": {
@@ -1989,10 +2313,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_motion_eventsArguments"
+      "title": "get_motion_eventsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2005,12 +2331,12 @@
   },
   {
     "name": "get_network_health",
-    "description": "Get overall network health summary.",
+    "description": "Return a single overall health summary for one site's network.\n\nRead-only operation: it aggregates WAN/LAN/WLAN status, a composite health\nscore, and device/user tallies into one condensed report. Use get_site_health\nwhen you need full per-subsystem detail for that site, get_all_sites_health\nfor a multi-site sweep on one console, or get_global_health for cross-console\naggregation.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2024,10 +2350,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_network_healthArguments"
+      "title": "get_network_healthArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2040,12 +2368,12 @@
   },
   {
     "name": "get_networks",
-    "description": "Get all network/VLAN configurations.",
+    "description": "Get all network/VLAN configurations for a site.\n\nRead-only operation: returns each network's name, purpose, VLAN id, subnet CIDR,\nand DHCP settings. Use create_network / update_network / delete_network to change\nthem, or get_wlans for wireless networks.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2059,10 +2387,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_networksArguments"
+      "title": "get_networksArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2075,11 +2405,11 @@
   },
   {
     "name": "get_observation_retention_status",
-    "description": "Get aggregate observation count and retained time range.",
+    "description": "Get aggregate observation count and retained time range.\n\nRead-only operation. Returns how many observations are stored and the\nearliest-to-latest retained time span. Use to gauge whether\nquery_observation_trends can cover a desired window.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_observation_retention_statusArguments"
+      "title": "get_observation_retention_statusArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2092,12 +2422,12 @@
   },
   {
     "name": "get_optimization_recommendations",
-    "description": "\nAnalyze network configuration and provide optimization recommendations.\n\nChecks channel selection, TX power, VLAN efficiency, port configurations,\nand bandwidth utilization patterns.\n",
+    "description": "Analyze a site's configuration and return optimization recommendations.\n\nRead-only operation: it checks channel selection, TX power, VLAN efficiency,\nport configurations, and bandwidth utilization to suggest improvements. Use\nanalyze_network_issues when you want a fault/issue report instead of\nproactive tuning advice, or get_device_health_summary for device status only.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2111,10 +2441,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_optimization_recommendationsArguments"
+      "title": "get_optimization_recommendationsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2127,11 +2459,11 @@
   },
   {
     "name": "get_plugin_status",
-    "description": "List redacted trusted-plugin loading outcomes. Requires admin scope over HTTP.",
+    "description": "List redacted trusted-plugin loading outcomes.\n\nRead-only operation. Returns whether trusted code and sandboxing are active\nplus each plugin's load outcome. Requires admin scope when called over HTTP.\nUse to audit which plugins loaded successfully after startup.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_plugin_statusArguments"
+      "title": "get_plugin_statusArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2144,12 +2476,12 @@
   },
   {
     "name": "get_port_forwards",
-    "description": "Get all port forwarding rules (external port+protocol \u2192 internal IP+port).",
+    "description": "Get all port forwarding rules for a site.\n\nRead-only operation: returns each rule mapping an external port+protocol to an\ninternal IP+port on the gateway. Use this to audit forwards and to find a rule id\nbefore delete_port_forward, or create_port_forward to add one.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2163,10 +2495,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_port_forwardsArguments"
+      "title": "get_port_forwardsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2179,12 +2513,12 @@
   },
   {
     "name": "get_port_profiles",
-    "description": "Get switch port profile configurations.",
+    "description": "Get switch port profile configurations for a site.\n\nRead-only operation: returns each port profile's name and the settings applied\nto member switch ports (PoE, VLAN, forwarding). Use set_device_port to apply\nchanges to a specific physical port.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2198,10 +2532,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_port_profilesArguments"
+      "title": "get_port_profilesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2214,9 +2550,8 @@
   },
   {
     "name": "get_protect_accessories",
-    "description": "Get all Protect accessories (lights, sensors, chimes, viewers).",
+    "description": "Inventory all UniFi Protect accessories: lights, sensors, chimes, and viewers.\n\nRead-only operation: it queries each accessory type on the targeted console\nand returns the raw records grouped by type along with a per-type count\nsummary. Use this to audit Protect peripherals alongside cameras; it does not\nreturn camera devices (see list_cameras) nor event history.\n\nArgs:\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -2228,10 +2563,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_protect_accessoriesArguments"
+      "title": "get_protect_accessoriesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2244,12 +2581,12 @@
   },
   {
     "name": "get_protect_event_summary",
-    "description": "\nGet a summary of all Protect events for the time period.\n\nShows motion count, smart detections breakdown, and doorbell activity.\nRequires username and password configured for the Protect device.\n",
+    "description": "Summarize all Protect events (motion, smart detections, doorbell) over a window.\n\nRead-only operation: it aggregates event counts by type and camera activity\nfor the lookback window on the targeted console. Requires Protect\nusername/password credentials configured for the console. Use this for a\nsingle high-level tally; use get_motion_events or get_smart_detections for\nthe underlying event records, or get_recent_protect_activity for the latest\nraw events.\n\nArgs:\n    hours: Lookback window in hours from now (default 24).\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "hours": {
           "default": 24,
+          "description": "Lookback window in hours from now (default 24).",
           "title": "Hours",
           "type": "integer"
         },
@@ -2263,10 +2600,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_protect_event_summaryArguments"
+      "title": "get_protect_event_summaryArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2279,9 +2618,8 @@
   },
   {
     "name": "get_protect_system_info",
-    "description": "Get UniFi Protect system information including camera and accessory counts.",
+    "description": "Return UniFi Protect system information for one console, including device counts.\n\nRead-only operation: it reports the Protect system version, NVR/storage\nstatus, and counts of cameras and accessories managed by the targeted\nconsole. Use this for a high-level overlay of a Protect deployment; use\nlist_cameras or get_protect_accessories for the individual device inventory,\nor get_camera_health_summary for camera connectivity.\n\nArgs:\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -2293,10 +2631,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_protect_system_infoArguments"
+      "title": "get_protect_system_infoArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2309,17 +2649,18 @@
   },
   {
     "name": "get_recent_events",
-    "description": "Get recent network events.",
+    "description": "Return recent network events (connections, roams, admin actions) for a site.\n\nRead-only operation: it surfaces the newest logged events with type,\ntimestamp, and subject so you can trace what changed on the network. Use\nget_alarms when you only care about active fault/warning alarms rather than\nthe full event stream; use get_optimization_recommendations or\nanalyze_network_issues for interpreted, actionable findings.\n\nArgs:\n    limit: Maximum number of events to return (default 50).\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "limit": {
           "default": 50,
+          "description": "Maximum number of events to return (default 50).",
           "title": "Limit",
           "type": "integer"
         },
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2333,10 +2674,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_recent_eventsArguments"
+      "title": "get_recent_eventsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2349,12 +2692,12 @@
   },
   {
     "name": "get_recent_protect_activity",
-    "description": "\nGet recent activity across all cameras.\n\nProvides a quick overview of the most recent events.\nRequires username and password configured for the Protect device.\n",
+    "description": "Return the most recent Protect events across all cameras as a quick overview.\n\nRead-only operation: it fetches the latest events (up to limit) for the\ntargeted console with camera names and timestamps resolved. Requires Protect\nusername/password credentials configured for the console. Use this for a fast\n\"what just happened\" check; use get_protect_event_summary for aggregate\ncounts or get_motion_events/get_smart_detections for filtered, time-windowed\nhistory.\n\nArgs:\n    limit: Maximum number of recent events to return (default 20).\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "limit": {
           "default": 20,
+          "description": "Maximum number of recent events to return (default 20).",
           "title": "Limit",
           "type": "integer"
         },
@@ -2368,10 +2711,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_recent_protect_activityArguments"
+      "title": "get_recent_protect_activityArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2384,12 +2729,12 @@
   },
   {
     "name": "get_routing_table",
-    "description": "Get the current routing table.",
+    "description": "Return the live Layer-3 routing table for a site's gateway.\n\nRead-only operation: it lists each route with destination, next-hop,\ninterface, and source/metric so you can verify static and learned routes.\nUse get_networks to inspect configured VLAN/subnet definitions rather than\nactive forwarding paths.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2403,10 +2748,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_routing_tableArguments"
+      "title": "get_routing_tableArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2419,11 +2766,11 @@
   },
   {
     "name": "get_server_health",
-    "description": "Get redaction-safe UniFi MCP runtime health and service counts.",
+    "description": "Return redaction-safe UniFi MCP runtime health and service counts.\n\nRead-only operation. Reports counts of registered tools, configured data\nsources, and plugin status without exposing any secrets. Use to confirm the\nserver and its sources are healthy before issuing deeper queries.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_server_healthArguments"
+      "title": "get_server_healthArguments",
+      "type": "object"
     },
     "outputSchema": {
       "$defs": {
@@ -2568,12 +2915,12 @@
   },
   {
     "name": "get_site_health",
-    "description": "Get comprehensive health status for a site.",
+    "description": "Get comprehensive health status for a site.\n\nRead-only operation: returns per-subsystem health (WAN/LAN/WLAN status, score,\nand device/user counts) for the named site. Use get_network_health for a lighter\nsummary, or get_global_health across consoles.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2587,10 +2934,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_site_healthArguments"
+      "title": "get_site_healthArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2603,12 +2952,12 @@
   },
   {
     "name": "get_site_settings",
-    "description": "Get site configuration settings.",
+    "description": "Get the configuration settings for a site.\n\nRead-only operation: returns the site's settings record (network, wireless,\nand advanced options) as stored on the controller. Use get_sysinfo for controller\nidentity rather than tunable settings.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2622,10 +2971,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_site_settingsArguments"
+      "title": "get_site_settingsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2638,17 +2989,18 @@
   },
   {
     "name": "get_smart_detections",
-    "description": "\nGet smart detection events (person, vehicle, animal, package).\n\nRequires username and password configured for the Protect device.\n",
+    "description": "Return AI smart-detection events (person, vehicle, animal, package) with types.\n\nRead-only operation: it queries Protect smart-detection events over the\nlookback window, maps each to its camera name and timestamp, and includes the\nsmartDetectTypes and confidence score. Requires Protect username/password\ncredentials configured for the console. Use detection_type to narrow to one\nclass (e.g. \"person\"); use get_motion_events for raw motion without\nclassification, or get_protect_event_summary for aggregate counts.\n\nArgs:\n    hours: Lookback window in hours from now (default 24).\n    limit: Maximum number of events to return (default 50).\n    detection_type: Optional class filter - one of \"person\", \"vehicle\",\n        \"animal\", \"package\"; omit for all smart-detection types.\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "hours": {
           "default": 24,
+          "description": "Lookback window in hours from now (default 24).",
           "title": "Hours",
           "type": "integer"
         },
         "limit": {
           "default": 50,
+          "description": "Maximum number of events to return (default 50).",
           "title": "Limit",
           "type": "integer"
         },
@@ -2662,6 +3014,7 @@
             }
           ],
           "default": null,
+          "description": "Optional class filter - one of \"person\", \"vehicle\", \"animal\", \"package\"; omit for all smart-detection types.",
           "title": "Detection Type"
         },
         "device": {
@@ -2674,10 +3027,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "get_smart_detectionsArguments"
+      "title": "get_smart_detectionsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2690,11 +3045,11 @@
   },
   {
     "name": "get_snapshot_capabilities",
-    "description": "Describe portable snapshot/report capabilities and native backup limitations.",
+    "description": "Describe portable snapshot and report capabilities plus native backup limits.\n\nRead-only operation. Returns supported report formats (html, csv), whether\nnative controller backup/restore are available, and the configured source\nlist. Use to learn what export_portable_snapshot and export_network_report\ncan produce before calling them.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "get_snapshot_capabilitiesArguments"
+      "title": "get_snapshot_capabilitiesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2707,12 +3062,12 @@
   },
   {
     "name": "get_speed_test_status",
-    "description": "Get speed test status and results.",
+    "description": "Return the latest WAN speed-test result and run state for a site.\n\nRead-only operation: it reports download/upload/latency from the most recent\ntest and whether a test is in progress. Use run_speed_test to initiate a new\nmeasurement; this does not start one.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2726,10 +3081,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_speed_test_statusArguments"
+      "title": "get_speed_test_statusArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2742,12 +3099,12 @@
   },
   {
     "name": "get_sysinfo",
-    "description": "Get system information for the site controller.",
+    "description": "Get system information for the site controller.\n\nRead-only operation: returns controller identity, firmware version, and\nhardware/model details for the named site. Use get_site_settings for tunable\nsettings instead of controller metadata.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2761,10 +3118,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_sysinfoArguments"
+      "title": "get_sysinfoArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2777,17 +3136,18 @@
   },
   {
     "name": "get_traffic_analysis",
-    "description": "\nAnalyze traffic patterns over the specified time period.\n\nIncludes top talkers, application breakdown (DPI), bandwidth trends,\nand unusual activity.\n",
+    "description": "Analyze site traffic patterns over a configurable time window.\n\nRead-only operation: it reports top talkers, application breakdown (DPI),\nbandwidth trends, and unusual activity for the lookback period. Use\nget_traffic_summary for a quick volume-only snapshot, get_dpi_stats for the\napp breakdown without the time series, or get_client_traffic for one client.\n\nArgs:\n    hours: Lookback window in hours from now (default 24).\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "hours": {
           "default": 24,
+          "description": "Lookback window in hours from now (default 24).",
           "title": "Hours",
           "type": "integer"
         },
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2801,10 +3161,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_traffic_analysisArguments"
+      "title": "get_traffic_analysisArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2817,12 +3179,12 @@
   },
   {
     "name": "get_traffic_summary",
-    "description": "Get traffic summary for the site.",
+    "description": "Return a condensed traffic-volume summary for a site.\n\nRead-only operation: it reports overall throughput and totals without the\nper-app or time-series detail. Use get_dpi_stats for application-level\nbreakdown, get_traffic_analysis for windowed trends and top talkers, or\nget_client_traffic for a specific client.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2836,10 +3198,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "get_traffic_summaryArguments"
+      "title": "get_traffic_summaryArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2852,12 +3216,12 @@
   },
   {
     "name": "get_wlans",
-    "description": "Get all wireless network (SSID) configurations.",
+    "description": "Get all wireless network (SSID) configurations for a site.\n\nRead-only operation: returns each WLAN's name, id, enabled state, guest flag,\nand security settings. Use create_wlan / update_wlan / delete_wlan to change\nthem, or get_networks for wired networks.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2871,10 +3235,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
-      "title": "get_wlansArguments"
+      "title": "get_wlansArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2887,16 +3253,17 @@
   },
   {
     "name": "kick_client",
-    "description": "Disconnect a client (they can reconnect).",
+    "description": "Force-disconnect a client; it may reconnect normally.\n\nMutating operation: drops the active session without a persistent block, so\nthe client can re-associate. Use block_client/unblock_client for a lasting\nblock, or forget_client to remove the client record entirely.\n\nArgs:\n    mac: Client MAC address to target.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Client MAC address to target.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2910,13 +3277,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "kick_clientArguments"
+      "title": "kick_clientArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2929,12 +3298,12 @@
   },
   {
     "name": "list_all_clients",
-    "description": "List all known clients (including offline).",
+    "description": "List every known client (connected and offline) on a site.\n\nRead-only operation: includes clients not currently connected, so it is the\nsuperset of list_clients. Use get_client_details for deep per-client detail or\nlist_clients when you only need active connections.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -2948,10 +3317,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
-      "title": "list_all_clientsArguments"
+      "title": "list_all_clientsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2964,9 +3335,8 @@
   },
   {
     "name": "list_cameras",
-    "description": "List all UniFi Protect cameras with status.",
+    "description": "List every UniFi Protect camera with its online state and identity.\n\nRead-only operation: it returns a summary per camera (name, model, state,\nand connection status) for the targeted Protect console. Use this to\ndiscover the camera_id values needed by get_camera_details,\nget_camera_snapshot, get_camera_health_summary, and the event tools. Use\nget_camera_health_summary when you only need aggregate connected/disconnected\ncounts rather than the full per-camera list.\n\nArgs:\n    device: Optional Protect console name to target a specific UniFi Protect\n        device; omit to use the first Protect-enabled device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -2978,10 +3348,12 @@
             }
           ],
           "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
           "title": "Device"
         }
       },
-      "title": "list_camerasArguments"
+      "title": "list_camerasArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -2994,12 +3366,12 @@
   },
   {
     "name": "list_client_groups",
-    "description": "List local client groups and deterministic member counts.",
+    "description": "List local client groups and deterministic member counts.\n\nRead-only operation: returns the local groups (local_only) for the\ncontroller/site with a deterministic member count per group. Use\nlist_clients_by_organization to enumerate the actual member identities.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3013,10 +3385,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
-      "title": "list_client_groupsArguments"
+      "title": "list_client_groupsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3029,12 +3403,12 @@
   },
   {
     "name": "list_clients",
-    "description": "List all currently connected clients.",
+    "description": "List all currently connected (online) clients on a site.\n\nRead-only operation: returns only clients with an active connection at query\ntime. For the historical/known roster including offline clients use\nlist_all_clients; for deep per-client detail use get_client_details.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3048,10 +3422,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
-      "title": "list_clientsArguments"
+      "title": "list_clientsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3064,9 +3440,8 @@
   },
   {
     "name": "list_clients_by_organization",
-    "description": "List stable client identities for exactly one local tag or group.",
+    "description": "List stable client identities for exactly one local tag or group.\n\nRead-only operation: returns the persisted client keys (MACs) that match a\nsingle tag or group filter (local_only). Exactly one of tag or group must be\nsupplied; supplying neither or both is an error. Use list_client_groups to\ndiscover group names.\n\nArgs:\n    tag: Optional local tag to filter clients by; mutually exclusive with group.\n    group: Optional local group name to filter clients by; mutually exclusive\n        with tag.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "tag": {
           "anyOf": [
@@ -3078,6 +3453,7 @@
             }
           ],
           "default": null,
+          "description": "Optional local tag to filter clients by; mutually exclusive with group.",
           "title": "Tag"
         },
         "group": {
@@ -3090,10 +3466,12 @@
             }
           ],
           "default": null,
+          "description": "Optional local group name to filter clients by; mutually exclusive with tag.",
           "title": "Group"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3107,10 +3485,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
-      "title": "list_clients_by_organizationArguments"
+      "title": "list_clients_by_organizationArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3123,12 +3503,12 @@
   },
   {
     "name": "list_devices",
-    "description": "List all UniFi network devices (APs, switches, routers).",
+    "description": "List all UniFi network devices (APs, switches, routers) on a site.\n\nRead-only operation: returns a per-device summary for the targeted site,\nincluding name, MAC, model, type, IP, online state, uptime, and firmware\nversion. Use this to discover the MAC values needed by get_device_details,\nrestart_device, and the other device tools.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3142,10 +3522,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
-      "title": "list_devicesArguments"
+      "title": "list_devicesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3158,17 +3540,18 @@
   },
   {
     "name": "list_job_runs",
-    "description": "List redacted background job run outcomes.",
+    "description": "List redacted background job run outcomes.\n\nRead-only operation: returns up to `limit` recent schedule/job run records\n(status, timestamps) with secret values redacted. Use run_schedule_now or\nlist_schedules to discover runnable schedules.\n\nArgs:\n    limit: Maximum number of job runs to return. Defaults to 100.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "limit": {
           "default": 100,
+          "description": "Maximum number of job runs to return. Defaults to 100.",
           "title": "Limit",
           "type": "integer"
         }
       },
-      "title": "list_job_runsArguments"
+      "title": "list_job_runsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3181,11 +3564,11 @@
   },
   {
     "name": "list_observation_scopes",
-    "description": "List aggregate observation scopes currently retained.",
+    "description": "List the aggregate observation scopes currently retained.\n\nRead-only operation. Returns the distinct scope dimensions (source,\ncontroller, site) present in the observation store. Use to discover valid\nfilter values for query_observation_trends.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "list_observation_scopesArguments"
+      "title": "list_observation_scopesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3198,17 +3581,18 @@
   },
   {
     "name": "list_runtime_events",
-    "description": "List normalized events retained by the optional runtime store.",
+    "description": "List normalized events retained by the optional runtime store.\n\nRead-only operation: returns up to `limit` normalized events persisted by the\nruntime store. Requires UNIFI_RUNTIME_ENABLED=true; otherwise unavailable. Use\nget_event_polling_status to see which sources feed events.\n\nArgs:\n    limit: Maximum number of events to return. Defaults to 100.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "limit": {
           "default": 100,
+          "description": "Maximum number of events to return. Defaults to 100.",
           "title": "Limit",
           "type": "integer"
         }
       },
-      "title": "list_runtime_eventsArguments"
+      "title": "list_runtime_eventsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3221,11 +3605,11 @@
   },
   {
     "name": "list_schedules",
-    "description": "List allowlisted interval schedules.",
+    "description": "List allowlisted interval schedules.\n\nRead-only operation: returns the persisted interval schedules (name, job,\ninterval, enabled) and whether background automation is enabled. Use\ncreate_interval_schedule to add one, or run_schedule_now to trigger it.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "list_schedulesArguments"
+      "title": "list_schedulesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3238,9 +3622,8 @@
   },
   {
     "name": "list_sites",
-    "description": "List all UniFi sites accessible to the current user.",
+    "description": "List all UniFi sites accessible to the current user.\n\nRead-only operation: returns each site's id and name from the targeted\nconsole(s). Use get_site_health / get_site_settings for per-site detail once\nyou have a site name.\n\nArgs:\n    device: Optional console name to target a specific UniFi device; omit for\n        the default device.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "device": {
           "anyOf": [
@@ -3252,10 +3635,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for the default device.",
           "title": "Device"
         }
       },
-      "title": "list_sitesArguments"
+      "title": "list_sitesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3268,11 +3653,11 @@
   },
   {
     "name": "list_unifi_devices",
-    "description": "\nList all configured UniFi devices.\n\nShows device names, URLs, and available services (network, protect).\nUse the device name with other tools to target specific devices.\n",
+    "description": "List every UniFi device (console) configured for this server.\n\nRead-only operation: it returns each configured device's name, controller\nURL, site, and the services it exposes (network, protect), plus convenience\nlists of network-only and protect-only device names. This is the authoritative\nsource for the device name accepted by every other tool's optional ``device``\nparameter. Use get_global_inventory / get_global_health when you instead want\naggregated data across those consoles rather than the console roster itself.\n\nReturns:\n    Dict with total_devices, a per-device list, and network_devices /\n    protect_devices name lists.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "list_unifi_devicesArguments"
+      "title": "list_unifi_devicesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3285,17 +3670,18 @@
   },
   {
     "name": "list_webhook_deliveries",
-    "description": "List redacted webhook delivery and dead-letter state.",
+    "description": "List redacted webhook delivery and dead-letter state.\n\nRead-only operation: returns up to `limit` delivery records (status, attempts,\ndead-letter state) with secret values redacted. Use test_webhook_destination to\ntrigger a send, or list_webhook_destinations to see configured endpoints.\n\nArgs:\n    limit: Maximum number of delivery records to return. Defaults to 100.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "limit": {
           "default": 100,
+          "description": "Maximum number of delivery records to return. Defaults to 100.",
           "title": "Limit",
           "type": "integer"
         }
       },
-      "title": "list_webhook_deliveriesArguments"
+      "title": "list_webhook_deliveriesArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3308,11 +3694,11 @@
   },
   {
     "name": "list_webhook_destinations",
-    "description": "List webhook destinations without secret values.",
+    "description": "List webhook destinations without secret values.\n\nRead-only operation: returns configured outbound webhook destinations with\nsecret material omitted. Use create_webhook_destination to add one, or\nlist_webhook_deliveries to see send history.",
     "inputSchema": {
-      "type": "object",
       "properties": {},
-      "title": "list_webhook_destinationsArguments"
+      "title": "list_webhook_destinationsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3325,21 +3711,23 @@
   },
   {
     "name": "locate_device",
-    "description": "Enable/disable LED blinking to locate a device.",
+    "description": "Enable or disable LED blinking to physically locate a device.\n\nMutating operation: toggles the locator LED on the device and is persisted\non the console. Set enabled=True to start blinking, False to stop. This\nchanges only the LED state and has no effect on connectivity or config.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    enabled: True to start LED blinking, False to stop. Defaults to True.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "enabled": {
           "default": true,
+          "description": "True to start LED blinking, False to stop. Defaults to True.",
           "title": "Enabled",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3353,13 +3741,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "locate_deviceArguments"
+      "title": "locate_deviceArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3372,28 +3762,32 @@
   },
   {
     "name": "plan_client_qos_policy",
-    "description": "Persist a deterministic QoS target preview without controller mutation.",
+    "description": "Persist a deterministic QoS target preview without controller mutation.\n\nMutating (local) operation: resolves selector_type/selector_value to concrete\nclient keys and stores a durable QoS plan (plan_token) on the server with the\nrequested download/upload limits. It does NOT change the controller. Pair the\nreturned plan_token with apply_client_qos_policy to attempt activation. Requires\nUNIFI_RUNTIME_ENABLED=true; use get_client_qos_capabilities to check adapters.\n\nArgs:\n    selector_type: Scope of the policy - \"client\", \"tag\", or \"group\".\n    selector_value: Client identity (MAC/IP/hostname) when selector_type is\n        \"client\", otherwise the tag or group name to expand to clients.\n    download_kbps: Maximum download bandwidth in kilobits per second.\n    upload_kbps: Maximum upload bandwidth in kilobits per second.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "selector_type": {
+          "description": "Scope of the policy - \"client\", \"tag\", or \"group\".",
           "title": "Selector Type",
           "type": "string"
         },
         "selector_value": {
+          "description": "Client identity (MAC/IP/hostname) when selector_type is \"client\", otherwise the tag or group name to expand to clients.",
           "title": "Selector Value",
           "type": "string"
         },
         "download_kbps": {
+          "description": "Maximum download bandwidth in kilobits per second.",
           "title": "Download Kbps",
           "type": "integer"
         },
         "upload_kbps": {
+          "description": "Maximum upload bandwidth in kilobits per second.",
           "title": "Upload Kbps",
           "type": "integer"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3407,6 +3801,7 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
@@ -3416,16 +3811,16 @@
         "download_kbps",
         "upload_kbps"
       ],
-      "title": "plan_client_qos_policyArguments"
+      "title": "plan_client_qos_policyArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": null
   },
   {
     "name": "poll_events_now",
-    "description": "Poll supported event sources now and durably deduplicate results.",
+    "description": "Poll supported event sources now and durably deduplicate results.\n\nMutating (local) operation: triggers an immediate poll of matching event\nsources, inserts new normalized events into the runtime store, and\ndeduplicates against what is already persisted. Requires UNIFI_RUNTIME_ENABLED=true.\nUse get_event_polling_status to discover source names; use list_runtime_events\nto read stored results.\n\nArgs:\n    source: Optional source name to poll a single source; omit for all sources.\n    device_name: Optional console/device name to filter sources; omit for all.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "source": {
           "anyOf": [
@@ -3437,6 +3832,7 @@
             }
           ],
           "default": null,
+          "description": "Optional source name to poll a single source; omit for all sources.",
           "title": "Source"
         },
         "device_name": {
@@ -3449,10 +3845,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to filter sources; omit for all.",
           "title": "Device Name"
         }
       },
-      "title": "poll_events_nowArguments"
+      "title": "poll_events_nowArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3465,16 +3863,17 @@
   },
   {
     "name": "provision_device",
-    "description": "Force re-provision a device with current configuration.",
+    "description": "Force re-provision a device with its current configuration.\n\nMutating operation: re-pushes the existing config to the device and is\npersisted on the console, without changing firmware or power-cycling like\nupgrade_device or restart_device. Use after config edits to force the\ndevice to re-adopt current settings.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3488,13 +3887,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "provision_deviceArguments"
+      "title": "provision_deviceArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3507,28 +3908,32 @@
   },
   {
     "name": "query_observation_trends",
-    "description": "Query bounded UTC trend buckets with explicit missing intervals.",
+    "description": "Query bounded UTC trend buckets for an observation kind and metric.\n\nRead-only operation. Returns evenly spaced time buckets between start and end\nwith explicit gaps for missing intervals, so callers can distinguish absence\nfrom zero. Bucket size defaults to 300 seconds. Use capture_observations_now\nfirst if recent data is missing.\n\nArgs:\n    kind: Observation category to query (e.g. \"health\", \"client\", \"device\").\n    metric: Metric name within the kind (e.g. \"latency_ms\", \"cpu_pct\").\n    start: Inclusive UTC start timestamp (ISO-8601).\n    end: Inclusive UTC end timestamp (ISO-8601).\n    bucket_seconds: Width of each trend bucket in seconds. Defaults to 300.\n    source: Optional source filter (e.g. controller type); omit for all sources.\n    controller: Optional controller identifier filter; omit for all controllers.\n    site: Optional site name filter (e.g. \"default\"); omit for all sites.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "kind": {
+          "description": "Observation category to query (e.g. \"health\", \"client\", \"device\").",
           "title": "Kind",
           "type": "string"
         },
         "metric": {
+          "description": "Metric name within the kind (e.g. \"latency_ms\", \"cpu_pct\").",
           "title": "Metric",
           "type": "string"
         },
         "start": {
+          "description": "Inclusive UTC start timestamp (ISO-8601).",
           "title": "Start",
           "type": "string"
         },
         "end": {
+          "description": "Inclusive UTC end timestamp (ISO-8601).",
           "title": "End",
           "type": "string"
         },
         "bucket_seconds": {
           "default": 300,
+          "description": "Width of each trend bucket in seconds. Defaults to 300.",
           "title": "Bucket Seconds",
           "type": "integer"
         },
@@ -3542,6 +3947,7 @@
             }
           ],
           "default": null,
+          "description": "Optional source filter (e.g. controller type); omit for all sources.",
           "title": "Source"
         },
         "controller": {
@@ -3554,6 +3960,7 @@
             }
           ],
           "default": null,
+          "description": "Optional controller identifier filter; omit for all controllers.",
           "title": "Controller"
         },
         "site": {
@@ -3566,6 +3973,7 @@
             }
           ],
           "default": null,
+          "description": "Optional site name filter (e.g. \"default\"); omit for all sites.",
           "title": "Site"
         }
       },
@@ -3575,7 +3983,8 @@
         "start",
         "end"
       ],
-      "title": "query_observation_trendsArguments"
+      "title": "query_observation_trendsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3588,11 +3997,11 @@
   },
   {
     "name": "reserve_client_ip",
-    "description": "Reserve a device's current IP (or a specific one) via DHCP reservation.",
+    "description": "Create a DHCP reservation pinning an IP to a client.\n\nMutating operation: reserves the client's current IP (when ip is omitted) or\nthe given IPv4 address, so the client keeps it across leases. Requires the\nclient to be known; use list_clients to find the current IP if needed.\n\nArgs:\n    client: Client MAC address or name to reserve an IP for.\n    ip: Optional IPv4 address to reserve; omit to keep the client's current IP.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "client": {
+          "description": "Client MAC address or name to reserve an IP for.",
           "title": "Client",
           "type": "string"
         },
@@ -3606,10 +4015,12 @@
             }
           ],
           "default": null,
+          "description": "Optional IPv4 address to reserve; omit to keep the client's current IP.",
           "title": "Ip"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3623,13 +4034,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "client"
       ],
-      "title": "reserve_client_ipArguments"
+      "title": "reserve_client_ipArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3642,16 +4055,17 @@
   },
   {
     "name": "restart_device",
-    "description": "Restart a UniFi device.",
+    "description": "Restart (reboot) a UniFi device by MAC address.\n\nMutating operation: sends a reboot command that is persisted on the\nconsole; the device goes offline briefly and reconnects. Unlike\nprovision_device (re-push config without reboot) and upgrade_device\n(firmware update), this power-cycles the device. No other config change is\nneeded.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3665,13 +4079,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "restart_deviceArguments"
+      "title": "restart_deviceArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3684,16 +4100,17 @@
   },
   {
     "name": "run_schedule_now",
-    "description": "Run one allowlisted schedule immediately. Requires confirm=true.",
+    "description": "Run one allowlisted schedule immediately. Requires confirm=true.\n\nMutating operation: executes the identified schedule's job once, outside its\nnormal interval, and records the run. Returns success=false unless confirm=true.\nUse list_job_runs to inspect the outcome; use set_schedule_enabled to disable\nauto-runs.\n\nArgs:\n    schedule_id: Identifier of the schedule to run immediately.\n    confirm: Must be True to run the schedule; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "schedule_id": {
+          "description": "Identifier of the schedule to run immediately.",
           "title": "Schedule Id",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to run the schedule; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -3701,7 +4118,8 @@
       "required": [
         "schedule_id"
       ],
-      "title": "run_schedule_nowArguments"
+      "title": "run_schedule_nowArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3714,12 +4132,12 @@
   },
   {
     "name": "run_speed_test",
-    "description": "Initiate a WAN speed test.",
+    "description": "Start an on-demand WAN speed test from the site gateway.\n\nMutating/long-running operation: it triggers a test against the speed-test\nendpoint and returns a handle or immediate result; poll get_speed_test_status\nfor completion. Use get_speed_test_status to read the latest result without\nstarting a new test.\n\nArgs:\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3733,10 +4151,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
-      "title": "run_speed_testArguments"
+      "title": "run_speed_testArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3749,15 +4169,16 @@
   },
   {
     "name": "set_client_tags",
-    "description": "Replace local client tags by stable identity. Requires confirm=true.",
+    "description": "Replace local client tags by stable identity. Requires confirm=true.\n\nMutating operation: overwrites the client's persisted local tags with the\nsupplied list and is stored on the server (local_only), not the controller.\nReturns success=false unless confirm=true. Use get_client_organization to\nread current tags first; use assign_client_group for group membership.\n\nArgs:\n    identity: Client MAC, IP, hostname, or alias to resolve to a known client.\n    tags: Full replacement tag list; an empty list clears all tags.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.\n    confirm: Must be True to apply the change; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "identity": {
+          "description": "Client MAC, IP, hostname, or alias to resolve to a known client.",
           "title": "Identity",
           "type": "string"
         },
         "tags": {
+          "description": "Full replacement tag list; an empty list clears all tags.",
           "items": {
             "type": "string"
           },
@@ -3766,6 +4187,7 @@
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3779,10 +4201,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to apply the change; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -3791,7 +4215,8 @@
         "identity",
         "tags"
       ],
-      "title": "set_client_tagsArguments"
+      "title": "set_client_tagsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3804,15 +4229,16 @@
   },
   {
     "name": "set_device_port",
-    "description": "Configure a single switch port: native VLAN, PoE mode, name, or enable state.",
+    "description": "Configure a single switch port: native VLAN, PoE mode, name, or enable state.\n\nMutating operation: applied immediately and persisted on the console,\nchanging untagged VLAN traffic, PoE delivery, or link state on that port.\nOnly the fields you provide change. Requires confirm=true because a port\nchange can disrupt connectivity for the attached device or downstream\nnetwork. Use get_device_ports first to find the port_idx and current values.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    port_idx: Port number to configure (1-based; e.g. 1-24 or SFP 25/26).\n    name: Optional custom port name (e.g. \"Cameras\").\n    native_network: Optional network or VLAN name (or its ID) to set as the\n        port's native/untagged VLAN.\n    poe_mode: Optional PoE mode - \"auto\", \"on\", \"off\", or \"passv24\".\n    forward: Optional VLAN forwarding - \"all\" (every VLAN) or \"customize\".\n    enabled: Optional port enable state; True connects, False disables.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.\n    confirm: Must be True to apply the port change. Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "port_idx": {
+          "description": "Port number to configure (1-based; e.g. 1-24 or SFP 25/26).",
           "title": "Port Idx",
           "type": "integer"
         },
@@ -3826,6 +4252,7 @@
             }
           ],
           "default": null,
+          "description": "Optional custom port name (e.g. \"Cameras\").",
           "title": "Name"
         },
         "native_network": {
@@ -3838,6 +4265,7 @@
             }
           ],
           "default": null,
+          "description": "Optional network or VLAN name (or its ID) to set as the port's native/untagged VLAN.",
           "title": "Native Network"
         },
         "poe_mode": {
@@ -3850,6 +4278,7 @@
             }
           ],
           "default": null,
+          "description": "Optional PoE mode - \"auto\", \"on\", \"off\", or \"passv24\".",
           "title": "Poe Mode"
         },
         "forward": {
@@ -3862,6 +4291,7 @@
             }
           ],
           "default": null,
+          "description": "Optional VLAN forwarding - \"all\" (every VLAN) or \"customize\".",
           "title": "Forward"
         },
         "enabled": {
@@ -3874,10 +4304,12 @@
             }
           ],
           "default": null,
+          "description": "Optional port enable state; True connects, False disables.",
           "title": "Enabled"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3891,10 +4323,12 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to apply the port change. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -3903,7 +4337,8 @@
         "mac",
         "port_idx"
       ],
-      "title": "set_device_portArguments"
+      "title": "set_device_portArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3916,20 +4351,22 @@
   },
   {
     "name": "set_firewall_policy_enabled",
-    "description": "Enable or disable a zone-based firewall policy.",
+    "description": "Enable or disable a zone-based firewall policy.\n\nMutating operation: applied immediately and persisted on the UniFi console.\nTargets the policy by id from get_firewall_policies. Predefined controller policies\ncan be toggled but not deleted. Inspect state with get_firewall_policies.\n\nArgs:\n    policy_id: Policy id to toggle (from get_firewall_policies).\n    enabled: True to enable, False to disable.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "policy_id": {
+          "description": "Policy id to toggle (from get_firewall_policies).",
           "title": "Policy Id",
           "type": "string"
         },
         "enabled": {
+          "description": "True to enable, False to disable.",
           "title": "Enabled",
           "type": "boolean"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -3943,6 +4380,7 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
@@ -3950,7 +4388,8 @@
         "policy_id",
         "enabled"
       ],
-      "title": "set_firewall_policy_enabledArguments"
+      "title": "set_firewall_policy_enabledArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3963,20 +4402,22 @@
   },
   {
     "name": "set_schedule_enabled",
-    "description": "Enable or pause a schedule. Requires confirm=true.",
+    "description": "Enable or pause a schedule. Requires confirm=true.\n\nMutating operation: flips the enabled flag on the identified schedule and\npersists it. Returns success=false unless confirm=true. Use\ncreate_interval_schedule to add, or delete_schedule to remove.\n\nArgs:\n    schedule_id: Identifier of the schedule to modify.\n    enabled: True to enable (run on interval) or False to pause it.\n    confirm: Must be True to change the schedule; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "schedule_id": {
+          "description": "Identifier of the schedule to modify.",
           "title": "Schedule Id",
           "type": "string"
         },
         "enabled": {
+          "description": "True to enable (run on interval) or False to pause it.",
           "title": "Enabled",
           "type": "boolean"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to change the schedule; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -3985,7 +4426,8 @@
         "schedule_id",
         "enabled"
       ],
-      "title": "set_schedule_enabledArguments"
+      "title": "set_schedule_enabledArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -3998,20 +4440,22 @@
   },
   {
     "name": "set_webhook_destination_enabled",
-    "description": "Enable or pause a webhook destination. Requires confirm=true.",
+    "description": "Enable or pause a webhook destination. Requires confirm=true.\n\nMutating operation: flips the enabled flag on the identified webhook destination\nand persists it. Returns success=false unless confirm=true. Use\ncreate_webhook_destination to add, or delete_webhook_destination to remove.\n\nArgs:\n    destination_id: Identifier of the webhook destination to modify.\n    enabled: True to enable delivery or False to pause it.\n    confirm: Must be True to change the destination; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "destination_id": {
+          "description": "Identifier of the webhook destination to modify.",
           "title": "Destination Id",
           "type": "string"
         },
         "enabled": {
+          "description": "True to enable delivery or False to pause it.",
           "title": "Enabled",
           "type": "boolean"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to change the destination; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -4020,7 +4464,8 @@
         "destination_id",
         "enabled"
       ],
-      "title": "set_webhook_destination_enabledArguments"
+      "title": "set_webhook_destination_enabledArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4033,16 +4478,17 @@
   },
   {
     "name": "test_webhook_destination",
-    "description": "Send a synthetic payload to a webhook destination. Requires confirm=true.",
+    "description": "Send a synthetic payload to a webhook destination. Requires confirm=true.\n\nMutating (external) operation: dispatches a synthetic test payload to the\nidentified destination and records the delivery outcome. Returns success=false\nunless confirm=true. Use list_webhook_deliveries to inspect the result.\n\nArgs:\n    destination_id: Identifier of the webhook destination to test.\n    confirm: Must be True to send the test payload; without it the call is a no-op.\n        Defaults to False.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "destination_id": {
+          "description": "Identifier of the webhook destination to test.",
           "title": "Destination Id",
           "type": "string"
         },
         "confirm": {
           "default": false,
+          "description": "Must be True to send the test payload; without it the call is a no-op. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -4050,7 +4496,8 @@
       "required": [
         "destination_id"
       ],
-      "title": "test_webhook_destinationArguments"
+      "title": "test_webhook_destinationArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4063,16 +4510,17 @@
   },
   {
     "name": "troubleshoot_client",
-    "description": "\nDeep-dive troubleshooting for a specific client.\n\nIncludes connection history, signal quality, AP associations,\nroaming events, and potential issues.\n",
+    "description": "Run a deep-dive troubleshooting analysis for one specific client.\n\nRead-only operation: it examines connection history, signal quality, AP\nassociations, roaming events, and potential issues for the named client. Use\nget_client_experience_report for a site-wide client-quality overview, or\nget_client_details for the raw record of one client without the analysis.\n\nArgs:\n    mac: MAC address of the client to troubleshoot.\n    site: Site to query. Defaults to \"default\".\n    device: Optional console/device name to target a specific UniFi console;\n        omit to use the default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "MAC address of the client to troubleshoot.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to query. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -4086,13 +4534,15 @@
             }
           ],
           "default": null,
+          "description": "Optional console/device name to target a specific UniFi console; omit to use the default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "troubleshoot_clientArguments"
+      "title": "troubleshoot_clientArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4105,16 +4555,17 @@
   },
   {
     "name": "unblock_client",
-    "description": "Unblock a previously blocked client.",
+    "description": "Remove a prior block so a client can reconnect to the network.\n\nMutating operation: clears the persistent block set by block_client. Use\nblock_client to re-block, or kick_client for a non-persistent disconnect.\n\nArgs:\n    mac: Client MAC address to target.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Client MAC address to target.",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -4128,13 +4579,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "unblock_clientArguments"
+      "title": "unblock_clientArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4146,12 +4599,258 @@
     }
   },
   {
-    "name": "update_network",
-    "description": "Update a network/VLAN by name or ID - only provided fields change.",
+    "name": "update_camera",
+    "description": "Update a camera's configuration.\n\nMutating operation: changes are applied immediately and persisted on the\nProtect console. Requires username/password configured for the device.\n\nArgs:\n    camera: Camera ID or name (resolved by name if not an ID)\n    name: New camera name\n    is_recording_enabled: Enable/disable recording\n    recording_mode: Recording mode \u2014 \"always\", \"motion\", \"smart_detect\", \"never\"\n    device: Optional Protect console name to target a specific UniFi Protect device; omit for first configured Protect device.\n\nReturns:\n    Updated camera configuration",
     "inputSchema": {
-      "type": "object",
+      "properties": {
+        "camera": {
+          "description": "Protect camera identifier or name to update.",
+          "title": "Camera",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "New camera name.",
+          "title": "Name"
+        },
+        "is_recording_enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Enable/disable recording.",
+          "title": "Is Recording Enabled"
+        },
+        "recording_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Recording mode \u2014 \"always\", \"motion\", \"smart_detect\", \"never\".",
+          "title": "Recording Mode"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional Protect console name to target a specific UniFi Protect device; omit to use the first Protect-enabled device.",
+          "title": "Device"
+        }
+      },
+      "required": [
+        "camera"
+      ],
+      "title": "update_cameraArguments",
+      "type": "object"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "update_firewall_rule",
+    "description": "Update a legacy firewall rule. Only provided fields are changed.\n\nMutating operation: applied immediately and persisted on the controller.\nUse get_firewall_rules to find the rule ID first.\n\nArgs:\n    rule_id: Firewall rule ID (from get_firewall_rules)\n    name: New rule name\n    action: Action \u2014 \"accept\", \"drop\", or \"reject\"\n    protocol: Protocol \u2014 \"tcp\", \"udp\", \"icmp\", \"all\", or IANA number\n    dst_port: Destination port or range\n    src_zone: Source zone ID\n    dst_zone: Destination zone ID\n    src_port: Source port or range\n    logging: Enable/disable logging\n    enabled: Enable/disable the rule\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific console; omit for default.\n\nReturns:\n    Updated firewall rule configuration",
+    "inputSchema": {
+      "properties": {
+        "rule_id": {
+          "description": "Firewall rule ID (from get_firewall_rules).",
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "New rule name.",
+          "title": "Name"
+        },
+        "action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Action \u2014 \"accept\", \"drop\", or \"reject\"",
+          "title": "Action"
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Protocol \u2014 \"tcp\", \"udp\", \"icmp\", \"all\", or IANA number",
+          "title": "Protocol"
+        },
+        "dst_port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Destination port or range.",
+          "title": "Dst Port"
+        },
+        "src_zone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source zone ID.",
+          "title": "Src Zone"
+        },
+        "dst_zone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Destination zone ID.",
+          "title": "Dst Zone"
+        },
+        "src_port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source port or range.",
+          "title": "Src Port"
+        },
+        "logging": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Enable/disable logging.",
+          "title": "Logging"
+        },
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Enable/disable the rule.",
+          "title": "Enabled"
+        },
+        "site": {
+          "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
+          "title": "Device"
+        }
+      },
+      "required": [
+        "rule_id"
+      ],
+      "title": "update_firewall_ruleArguments",
+      "type": "object"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "update_network",
+    "description": "Update a network/VLAN; only the fields you provide change.\n\nMutating operation: applied immediately and persisted on the UniFi console.\nA single field change preserves the network's other settings. Pass both empty\ndhcp_start and dhcp_stop to disable DHCP. Requires confirm=true because VLAN,\nrouting, or enable-state changes can disconnect clients. Inspect with get_networks.\n\nArgs:\n    name: Network name or record id to update.\n    name_new: Rename the network to this value.\n    subnet: New subnet in CIDR form (e.g. \"192.168.50.1/24\").\n    vlan: New VLAN id (1-4094); pass -1 to clear VLAN tagging.\n    domain_name: New DNS domain name for clients.\n    dhcp_start: New DHCP pool start IP; pair with dhcp_stop to enable DHCP.\n    dhcp_stop: New DHCP pool end IP; pair with dhcp_start to enable DHCP.\n    dhcp_lease_time: New DHCP lease duration in seconds.\n    enabled: Enable or disable the network.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.\n    confirm: Safety gate: must be True to apply. Defaults to False.",
+    "inputSchema": {
       "properties": {
         "name": {
+          "description": "Network name or record id to update.",
           "title": "Name",
           "type": "string"
         },
@@ -4165,6 +4864,7 @@
             }
           ],
           "default": null,
+          "description": "Rename the network to this value.",
           "title": "Name New"
         },
         "subnet": {
@@ -4177,6 +4877,7 @@
             }
           ],
           "default": null,
+          "description": "New subnet in CIDR form (e.g. \"192.168.50.1/24\").",
           "title": "Subnet"
         },
         "vlan": {
@@ -4189,6 +4890,7 @@
             }
           ],
           "default": null,
+          "description": "New VLAN id (1-4094); pass -1 to clear VLAN tagging.",
           "title": "Vlan"
         },
         "domain_name": {
@@ -4201,6 +4903,7 @@
             }
           ],
           "default": null,
+          "description": "New DNS domain name for clients.",
           "title": "Domain Name"
         },
         "dhcp_start": {
@@ -4213,6 +4916,7 @@
             }
           ],
           "default": null,
+          "description": "New DHCP pool start IP; pair with dhcp_stop to enable DHCP.",
           "title": "Dhcp Start"
         },
         "dhcp_stop": {
@@ -4225,6 +4929,7 @@
             }
           ],
           "default": null,
+          "description": "New DHCP pool end IP; pair with dhcp_start to enable DHCP.",
           "title": "Dhcp Stop"
         },
         "dhcp_lease_time": {
@@ -4237,6 +4942,7 @@
             }
           ],
           "default": null,
+          "description": "New DHCP lease duration in seconds.",
           "title": "Dhcp Lease Time"
         },
         "enabled": {
@@ -4249,10 +4955,12 @@
             }
           ],
           "default": null,
+          "description": "Enable or disable the network.",
           "title": "Enabled"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -4266,10 +4974,12 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         },
         "confirm": {
           "default": false,
+          "description": "Safety gate: must be True to apply. Defaults to False.",
           "title": "Confirm",
           "type": "boolean"
         }
@@ -4277,7 +4987,54 @@
       "required": [
         "name"
       ],
-      "title": "update_networkArguments"
+      "title": "update_networkArguments",
+      "type": "object"
+    },
+    "outputSchema": null,
+    "annotations": {
+      "title": null,
+      "readOnlyHint": null,
+      "destructiveHint": true,
+      "idempotentHint": null,
+      "openWorldHint": null
+    }
+  },
+  {
+    "name": "update_site_settings",
+    "description": "Update site settings.\n\nMutating operation: changes are applied immediately and persisted.\nSettings are key-value pairs matching the UniFi site setting schema.\nUse get_site_settings first to see available settings and their current values.\n\nArgs:\n    settings: Dictionary of settings to update (e.g., {\"auto_backup_enabled\": true})\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for default.",
+    "inputSchema": {
+      "properties": {
+        "settings": {
+          "additionalProperties": true,
+          "description": "Dictionary of settings to update (e.g., {'auto_backup_enabled': true}).",
+          "title": "Settings",
+          "type": "object"
+        },
+        "site": {
+          "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
+          "title": "Site",
+          "type": "string"
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
+          "title": "Device"
+        }
+      },
+      "required": [
+        "settings"
+      ],
+      "title": "update_site_settingsArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4290,11 +5047,11 @@
   },
   {
     "name": "update_wlan",
-    "description": "Update a wireless network (SSID) by ID or name - only provided fields change.",
+    "description": "Update a wireless network (SSID); only the fields you provide change.\n\nMutating operation: applied immediately and persisted on the UniFi console.\nAny single field updates the matching SSID (resolved by ID or name). Requoting\npassphrase sets the WiFi password; pmf_mode is disabled|optional|required. Inspect\nwith get_wlans.\n\nArgs:\n    wlan: WLAN id or SSID name to update.\n    enabled: Enable or disable the SSID.\n    hide_ssid: Hide the SSID from beacon broadcasts.\n    passphrase: New WiFi password (minimum 8 characters).\n    wpa3_support: Enable WPA3 support on the SSID.\n    wpa3_transition: WPA2/WPA3 transition mode (keeps WPA2 for legacy clients).\n    pmf_mode: Protected Management Frames mode \u2014 \"disabled\", \"optional\", or \"required\".\n    bss_transition: Enable 802.11k/v band and AP steering.\n    fast_roaming_enabled: Enable 802.11r fast roaming.\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for\n        default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "wlan": {
+          "description": "WLAN id or SSID name to update.",
           "title": "Wlan",
           "type": "string"
         },
@@ -4308,6 +5065,7 @@
             }
           ],
           "default": null,
+          "description": "Enable or disable the SSID.",
           "title": "Enabled"
         },
         "hide_ssid": {
@@ -4320,6 +5078,7 @@
             }
           ],
           "default": null,
+          "description": "Hide the SSID from beacon broadcasts.",
           "title": "Hide Ssid"
         },
         "passphrase": {
@@ -4332,6 +5091,7 @@
             }
           ],
           "default": null,
+          "description": "New WiFi password (minimum 8 characters).",
           "title": "Passphrase"
         },
         "wpa3_support": {
@@ -4344,6 +5104,7 @@
             }
           ],
           "default": null,
+          "description": "Enable WPA3 support on the SSID.",
           "title": "Wpa3 Support"
         },
         "wpa3_transition": {
@@ -4356,6 +5117,7 @@
             }
           ],
           "default": null,
+          "description": "WPA2/WPA3 transition mode (keeps WPA2 for legacy clients).",
           "title": "Wpa3 Transition"
         },
         "pmf_mode": {
@@ -4368,6 +5130,7 @@
             }
           ],
           "default": null,
+          "description": "Protected Management Frames mode \u2014 \"disabled\", \"optional\", or \"required\".",
           "title": "Pmf Mode"
         },
         "bss_transition": {
@@ -4380,6 +5143,7 @@
             }
           ],
           "default": null,
+          "description": "Enable 802.11k/v band and AP steering.",
           "title": "Bss Transition"
         },
         "fast_roaming_enabled": {
@@ -4392,10 +5156,12 @@
             }
           ],
           "default": null,
+          "description": "Enable 802.11r fast roaming.",
           "title": "Fast Roaming Enabled"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -4409,13 +5175,15 @@
             }
           ],
           "default": null,
+          "description": "Optional console name to target a specific UniFi device; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "wlan"
       ],
-      "title": "update_wlanArguments"
+      "title": "update_wlanArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4428,16 +5196,17 @@
   },
   {
     "name": "upgrade_device",
-    "description": "Upgrade device firmware to the latest version.",
+    "description": "Upgrade a device's firmware to the latest available version.\n\nMutating operation: initiates a firmware upgrade that is persisted once\napplied; the device reboots during the update. Unlike restart_device (plain\nreboot) and provision_device (config re-push), this changes the running\nfirmware. Only proceeds when an upgrade is available on the console.\n\nArgs:\n    mac: Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or\n        aabbccddeeff).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "mac": {
+          "description": "Device MAC address (case-insensitive; aa:bb:cc:dd:ee:ff or aabbccddeeff).",
           "title": "Mac",
           "type": "string"
         },
         "site": {
           "default": "default",
+          "description": "Site to operate on. Defaults to \"default\".",
           "title": "Site",
           "type": "string"
         },
@@ -4451,13 +5220,15 @@
             }
           ],
           "default": null,
+          "description": "Optional device name to target a specific console; omit for default.",
           "title": "Device"
         }
       },
       "required": [
         "mac"
       ],
-      "title": "upgrade_deviceArguments"
+      "title": "upgrade_deviceArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
@@ -4470,11 +5241,11 @@
   },
   {
     "name": "verify_snapshot",
-    "description": "Verify the schema and checksum of a confined snapshot export.",
+    "description": "Verify the schema and checksum of a confined snapshot export.\n\nRead-only operation. Reads the named snapshot from the export directory and\nvalidates its schema, redaction status, and content SHA-256. Returns validity\nplus schema version and checksum for integrity checks. Use after\nexport_portable_snapshot to confirm the file is intact and secret-free.\n\nArgs:\n    filename: Name of the snapshot file (within the confined export directory) to validate.",
     "inputSchema": {
-      "type": "object",
       "properties": {
         "filename": {
+          "description": "Name of the snapshot file (within the confined export directory) to validate.",
           "title": "Filename",
           "type": "string"
         }
@@ -4482,7 +5253,8 @@
       "required": [
         "filename"
       ],
-      "title": "verify_snapshotArguments"
+      "title": "verify_snapshotArguments",
+      "type": "object"
     },
     "outputSchema": null,
     "annotations": {
