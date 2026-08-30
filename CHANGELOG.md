@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Glama MCP Directory listing via a conformant `glama.json` manifest
+  (`$schema`, `maintainers`, description, tags, license, repository, homepage,
+  version, documentation).
+
+### Fixed
+- Hardened webhook delivery (validated upstream IP, preserved SNI/Host), stale
+  `delivering` recovery, isolated scheduler failures for removed plugin jobs, and
+  event-cap truncation guards.
+- Server now starts and exposes all tools without a configured device, so it can be
+  deployed (e.g. Glama) and configured via environment variables at runtime;
+  device-bound calls return a clear `No device configured` error.
+- Release workflow builds with `uv` and publishes via `uv publish` using
+  `PYPI_API_TOKEN` (trusted publishing remains available as an alternative).
+
 ## [0.9.0] - 2026-08-29
 
 ### Added

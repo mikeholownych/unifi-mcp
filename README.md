@@ -118,6 +118,33 @@ your MCP client prefixes them automatically.
 - UniFi Network Application (self-hosted)
 - Traditional Cloud Key (Gen1, Gen2, Gen2+)
 
+## Limitations & Supported Versions
+
+This server is built for operation **on a trusted local network**, talking to UniFi
+consoles by IP address. With that in mind:
+
+- **TLS verification is disabled by default** (`UNIFI_VERIFY_SSL=false`). UniFi OS
+  ships self-signed certificates, and controllers are reached by IP on the LAN, so
+  certificate verification is expected to fail. Enable `UNIFI_VERIFY_SSL=true` only
+  when your controller presents a CA-trusted certificate.
+- **No device configured at startup is allowed.** The server boots and exposes all
+  tools even before `UNIFI_*` credentials are supplied (e.g. when deployed and
+  configured via environment variables). Device-bound tool calls then return a clear
+  `No device configured` error until a device is set.
+- **Scope enforcement applies to remote transports only.** When running over
+  Streamable HTTP, every `tools/call` is gated by read/write/admin OIDC scopes, and
+  startup fails if any tool is unclassified. Over stdio (local IPC) no auth is
+  required — stdio is assumed to be a trusted local process.
+- **Integration API key limitations.** A subset of controller features is only
+  available via legacy session auth (`UNIFI_MODE=local`): network events, alarms,
+  DPI statistics, speed tests, WLAN/firewall configs, port profiles, and routing
+  tables. Tools for these return a clear error explaining how to enable them.
+- **Tested against recent UniFi OS / Network / Protect.** Newer controllers that
+  removed legacy endpoints (e.g. UniFi Network 10 removed alarms/events endpoints)
+  are handled by degrading gracefully rather than erroring.
+- **Not a substitute for controller backups.** Snapshots and reports are read-only
+  exports; they do not configure or restore a controller.
+
 ## Installation
 
 ### Using uv (Recommended)
@@ -563,7 +590,12 @@ See [CHANGELOG.md](CHANGELOG.md) for release history and [CONTRIBUTING.md](CONTR
 ## Security Notes
 
 - Credentials are passed via environment variables — never commit `.env`
-- SSL verification is disabled by default for self-signed certificates
+- **TLS verification is disabled by default** (`UNIFI_VERIFY_SSL=false`) because the
+  server is designed to run on a trusted LAN against UniFi consoles reached by IP
+  with self-signed certificates. Enable it only with a CA-trusted certificate.
+- Over stdio (local IPC), no authentication is required — the transport is assumed
+  to be a trusted local process. Over Streamable HTTP, all tool calls require a
+  valid OIDC token with the appropriate read/write/admin scope, enforced server-side.
 - The server exposes both read and write tools
 - Disruptive or destructive tools are annotated and/or explicitly confirm-gated where implemented; MCP clients decide how to present or honor annotations
 - Especially dangerous operations such as factory reset remain unexposed
