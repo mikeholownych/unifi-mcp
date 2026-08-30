@@ -397,9 +397,10 @@ async def create_app_lifespan(
             auth = UniFiCloudAuth(settings.cloud_api_key)
             logger.info("Using cloud authentication (api.ui.com)")
         else:
-            raise UniFiConfigError(
-                "No UniFi devices configured. Set UNIFI_DEVICES (JSON array) "
-                "or UNIFI_CONTROLLER_URL + UNIFI_CLOUD_API_KEY."
+            logger.warning(
+                "No UniFi devices configured at startup. Tools remain available, but "
+                "device-bound calls will fail until UNIFI_DEVICES (JSON array) or "
+                "UNIFI_CONTROLLER_URL + UNIFI_CLOUD_API_KEY is set."
             )
 
         ctx = AppContext(

@@ -117,7 +117,7 @@ class TestToolRegistration:
 
 
 class TestLifespanConfigValidation:
-    async def test_lifespan_requires_configuration(self):
+    async def test_lifespan_starts_without_configuration(self):
         empty = UniFiSettings(
             _env_file=None,
             mode="local_api_key",
@@ -126,12 +126,11 @@ class TestLifespanConfigValidation:
             cloud_api_key=None,
             runtime_enabled=False,
         )
-        with (
-            patch("unifi_mcp.clients.base.settings", empty),
-            pytest.raises(Exception, match="No UniFi devices"),
-        ):
+        with patch("unifi_mcp.clients.base.settings", empty):
             async with Client(mcp):
-                pass
+                # Server must start and expose tools even without a device
+                # configured, so it can be deployed and configured via env vars.
+                assert len(mcp._tool_manager.list_tools()) > 0
 
     def test_settings_load_from_env_file(self):
         # The project .env should produce at least one device
