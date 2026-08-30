@@ -1,9 +1,13 @@
 {
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "unifi-mcp",
-  "description": "MCP server for Ubiquiti UniFi Network and Protect with 63 tools for device management, client monitoring, VLAN/firewall configuration, WiFi optimization, camera snapshots, and multi-site orchestration.",
+  "description": "MCP server for Ubiquiti UniFi Network and Protect, exposing device and client management, VLAN/firewall configuration, WiFi optimization, client QoS planning, camera snapshots, event automation, and portable snapshots/reports.",
   "repository": "https://github.com/mikeholownych/unifi-mcp",
   "homepage": "https://github.com/mikeholownych/unifi-mcp",
   "license": "MIT",
   "category": "networking",
-  "tags": ["unifi", "ubiquiti", "network", "firewall", "wifi", "iot", "monitoring"]
+  "tags": ["unifi", "ubiquiti", "network", "firewall", "wifi", "iot", "monitoring"],
+  "maintainers": [
+    "mikeholownych"
+  ]
 }
