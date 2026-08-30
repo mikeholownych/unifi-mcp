@@ -196,11 +196,11 @@ async def test_existing_tool_contract_is_preserved():
     server_health = tools["get_server_health"]
     wire_health = server_health.model_dump(by_alias=True)
     assert wire_health["inputSchema"]["properties"] == {}
-    assert server_health.description == (
+    assert inspect.cleandoc(server_health.description) == (
         "Return redaction-safe UniFi MCP runtime health and service counts.\n\n"
         "Read-only operation. Reports counts of registered tools, configured data\n"
         "sources, and plugin status without exposing any secrets. Use to confirm the\n"
-        "server and its sources are healthy before issuing deeper queries.\n"
+        "server and its sources are healthy before issuing deeper queries."
     )
     assert server_health.annotations.read_only_hint is True
     assert wire_health["annotations"]["readOnlyHint"] is True
