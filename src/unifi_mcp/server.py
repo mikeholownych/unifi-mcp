@@ -1328,6 +1328,10 @@ async def list_devices(
     version. Use this to discover the MAC values needed by get_device_details,
     restart_device, and the other device tools.
 
+    Distinction: use list_unifi_devices to see the server's configured consoles
+    (controller roster); use get_global_inventory for an aggregated inventory
+    across all consoles. This tool lists devices *within* one site on one console.
+
     Args:
         site: Site to operate on. Defaults to "default".
         device: Optional device name to target a specific console; omit for default.

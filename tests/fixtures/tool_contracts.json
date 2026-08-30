@@ -3503,7 +3503,7 @@
   },
   {
     "name": "list_devices",
-    "description": "List all UniFi network devices (APs, switches, routers) on a site.\n\nRead-only operation: returns a per-device summary for the targeted site,\nincluding name, MAC, model, type, IP, online state, uptime, and firmware\nversion. Use this to discover the MAC values needed by get_device_details,\nrestart_device, and the other device tools.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
+    "description": "List all UniFi network devices (APs, switches, routers) on a site.\n\nRead-only operation: returns a per-device summary for the targeted site,\nincluding name, MAC, model, type, IP, online state, uptime, and firmware\nversion. Use this to discover the MAC values needed by get_device_details,\nrestart_device, and the other device tools.\n\nDistinction: use list_unifi_devices to see the server's configured consoles\n(controller roster); use get_global_inventory for an aggregated inventory\nacross all consoles. This tool lists devices *within* one site on one console.\n\nArgs:\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional device name to target a specific console; omit for default.",
     "inputSchema": {
       "properties": {
         "site": {
