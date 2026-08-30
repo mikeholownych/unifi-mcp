@@ -193,6 +193,20 @@ class UniFiProtectClient:
         """
         return await self._get(f"/cameras/{camera_id}")
 
+    async def update_camera(
+        self, camera_id: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update a camera's configuration.
+
+        Args:
+            camera_id: Camera ID
+            data: Configuration fields to update (name, recording settings, etc.)
+
+        Returns:
+            Updated camera configuration
+        """
+        return await self._patch(f"/cameras/{camera_id}", json=data)
+
     async def get_camera_by_name(self, name: str) -> dict[str, Any]:
         """Get a camera by name.
 
