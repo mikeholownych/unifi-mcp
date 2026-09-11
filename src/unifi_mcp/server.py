@@ -2192,7 +2192,8 @@ async def update_site_settings(
     settings: Annotated[
         dict[str, Any],
         Field(
-            description="Dictionary of settings to update (e.g., {'auto_backup_enabled': true})."
+            description="Settings to update, including a 'key' field naming the section "
+            "to write (e.g., {'key': 'locale', 'timezone': 'America/Los_Angeles'})."
         ),
     ],
     site: Annotated[
@@ -2205,14 +2206,16 @@ async def update_site_settings(
         ),
     ] = None,
 ):
-    """Update site settings.
+    """Update one section of a site's settings.
 
     Mutating operation: changes are applied immediately and persisted.
-    Settings are key-value pairs matching the UniFi site setting schema.
-    Use get_site_settings first to see available settings and their current values.
+    Site settings are grouped into sections ("locale", "ntp", "mgmt", ...) and each
+    call writes a single section, named by the "key" field in settings.
+    Use get_site_settings first to see the sections and their current values.
 
     Args:
-        settings: Dictionary of settings to update (e.g., {"auto_backup_enabled": true})
+        settings: Dictionary of settings to update, including a "key" field naming
+            the section (e.g., {"key": "locale", "timezone": "America/Los_Angeles"}).
         site: Site to operate on. Defaults to "default".
         device: Optional console name to target a specific UniFi device; omit for default.
     """

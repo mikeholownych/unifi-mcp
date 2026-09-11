@@ -253,20 +253,38 @@ class UniFiNetworkClient(UniFiHTTPClient):
     async def update_site_settings(
         self, data: dict[str, Any], site: str | None = None
     ) -> dict[str, Any]:
-        """Update site settings.
+        """Update one section of a site's settings.
+
+        Site settings are stored as sections ("locale", "ntp", "mgmt", ...), and
+        the controller routes writes by section: the target section must be named
+        in the path. The unsectioned ``rest/setting`` collection has no usable
+        write route and returns HTTP 500, so writes go to ``set/setting/{key}``.
 
         Args:
-            data: Settings to update (key-value pairs matching UniFi setting schema)
+            data: Settings to update, including a "key" field naming the section
+                to write (e.g. {"key": "locale", "timezone": "America/Los_Angeles"}).
+                Call get_site_settings to see the sections and their current values.
             site: Site name
 
         Returns:
             Updated settings response
+
+        Raises:
+            UniFiAPIError: If data does not name a section via "key".
         """
         if self.is_integration_api or self.is_cloud:
             self._require_traditional_api("site settings update")
 
-        endpoint = self._site_endpoint("rest/setting", site)
-        response = await self.put(endpoint, json=data)
+        key = data.get("key")
+        if not isinstance(key, str) or not key:
+            raise UniFiAPIError(
+                'Site settings update requires a "key" field naming the section to '
+                'write (e.g. {"key": "locale", "timezone": "America/Los_Angeles"}). '
+                "Call get_site_settings to see available sections."
+            )
+
+        endpoint = self._site_endpoint(f"set/setting/{key}", site)
+        response = await self.post(endpoint, json=data)
         return response
 
     async def get_sysinfo(self, site: str | None = None) -> dict[str, Any]:
