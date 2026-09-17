@@ -213,6 +213,41 @@ class TestWlanWrites:
         await client.delete_wlan("new1")
 
 
+class TestSiteSettingsWrites:
+    @respx.mock
+    async def test_update_site_settings_posts_to_section_endpoint(self):
+        """Site settings are sectioned; writes must name the section in the path.
+
+        The controller returns HTTP 500 for a PUT to the unsectioned
+        ``rest/setting`` collection, so the write has to go to
+        ``set/setting/{key}`` instead.
+        """
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        route = respx.post(
+            "https://10.0.0.1/proxy/network/api/s/default/set/setting/locale"
+        ).respond(
+            json={
+                "meta": {"rc": "ok"},
+                "data": [{"_id": "loc1", "key": "locale", "timezone": "America/Los_Angeles"}],
+            }
+        )
+        client = UniFiNetworkClient(ctx)
+        await client.update_site_settings({"key": "locale", "timezone": "America/Los_Angeles"})
+
+        assert route.called
+        assert json.loads(route.calls.last.request.content)["timezone"] == "America/Los_Angeles"
+
+    @respx.mock
+    async def test_update_site_settings_without_section_key_raises(self):
+        """A payload that names no section cannot be routed; fail before the request."""
+        ctx = _local_ctx()
+        respx.get("https://10.0.0.1/api/auth/login").respond(200, json={})
+        client = UniFiNetworkClient(ctx)
+        with pytest.raises(UniFiAPIError, match="key"):
+            await client.update_site_settings({"timezone": "America/Los_Angeles"})
+
+
 class TestNetworkWrites:
     @respx.mock
     async def test_separate_client_instances_share_read_cache(self):

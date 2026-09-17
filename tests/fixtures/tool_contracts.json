@@ -5001,12 +5001,12 @@
   },
   {
     "name": "update_site_settings",
-    "description": "Update site settings.\n\nMutating operation: changes are applied immediately and persisted.\nSettings are key-value pairs matching the UniFi site setting schema.\nUse get_site_settings first to see available settings and their current values.\n\nArgs:\n    settings: Dictionary of settings to update (e.g., {\"auto_backup_enabled\": true})\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for default.",
+    "description": "Update one section of a site's settings.\n\nMutating operation: changes are applied immediately and persisted.\nSite settings are grouped into sections (\"locale\", \"ntp\", \"mgmt\", ...) and each\ncall writes a single section, named by the \"key\" field in settings.\nUse get_site_settings first to see the sections and their current values.\n\nArgs:\n    settings: Dictionary of settings to update, including a \"key\" field naming\n        the section (e.g., {\"key\": \"locale\", \"timezone\": \"America/Los_Angeles\"}).\n    site: Site to operate on. Defaults to \"default\".\n    device: Optional console name to target a specific UniFi device; omit for default.",
     "inputSchema": {
       "properties": {
         "settings": {
           "additionalProperties": true,
-          "description": "Dictionary of settings to update (e.g., {'auto_backup_enabled': true}).",
+          "description": "Settings to update, including a 'key' field naming the section to write (e.g., {'key': 'locale', 'timezone': 'America/Los_Angeles'}).",
           "title": "Settings",
           "type": "object"
         },
